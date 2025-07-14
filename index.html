@@ -1,0 +1,2692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medas Digital Research Terminal</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono:wght@400&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', monospace;
+            background: 
+                radial-gradient(ellipse at center, rgba(0, 255, 255, 0.1) 0%, transparent 70%),
+                linear-gradient(45deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f1419 75%, #000000 100%);
+            min-height: 100vh;
+            color: #00ffff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                repeating-linear-gradient(
+                    90deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 255, 255, 0.03) 2px,
+                    rgba(0, 255, 255, 0.03) 4px
+                ),
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 255, 255, 0.03) 2px,
+                    rgba(0, 255, 255, 0.03) 4px
+                );
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #00ffff;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(255, 0, 255, 0.1) 100%);
+            border: 2px solid #00ffff;
+            border-radius: 0;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 255, 0.3),
+                inset 0 0 20px rgba(0, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+            animation: scan 4s infinite;
+        }
+
+        .solar-system-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(180deg);
+            width: 200px;
+            height: 200px;
+            opacity: 0.8;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .system-info {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-icon {
+            width: 64px;
+            height: 64px;
+            background: 
+                radial-gradient(circle at 30% 30%, #ff00ff 0%, #00ffff 50%, #0099ff 100%);
+            border: 2px solid #00ffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-size: 28px;
+            font-weight: 900;
+            position: relative;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+            overflow: hidden;
+        }
+
+        .logo-svg {
+            width: 48px;
+            height: 48px;
+            filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.8));
+        }
+
+        .logo-image {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            filter: 
+                brightness(1.2)
+                contrast(1.3)
+                drop-shadow(0 0 5px rgba(0, 255, 255, 0.8));
+        }
+
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff, #00ffff);
+            z-index: -1;
+            animation: rotate 4s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .system-title {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-title {
+            font-size: 28px;
+            font-weight: 900;
+            color: #00ffff;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px #00ffff;
+            line-height: 1;
+        }
+
+        .sub-title {
+            font-size: 14px;
+            color: #ff00ff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 4px;
+        }
+
+        .status-display {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: 1px solid;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+        }
+
+        .status-connected {
+            border-color: #00ff00;
+            color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .status-disconnected {
+            border-color: #ff3030;
+            color: #ff3030;
+            background: rgba(255, 48, 48, 0.1);
+            box-shadow: 0 0 10px rgba(255, 48, 48, 0.3);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .dot-connected {
+            background: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        .dot-disconnected {
+            background: #ff3030;
+            box-shadow: 0 0 10px #ff3030;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .timestamp {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            color: #999999;
+            letter-spacing: 1px;
+        }
+
+        .main-interface {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 24px;
+        }
+
+        .control-panel {
+            background: linear-gradient(135deg, rgba(0, 100, 150, 0.1) 0%, rgba(0, 50, 100, 0.1) 100%);
+            border: 2px solid #0099ff;
+            padding: 24px;
+            box-shadow: 
+                0 0 20px rgba(0, 153, 255, 0.2),
+                inset 0 0 20px rgba(0, 153, 255, 0.05);
+            height: fit-content;
+            position: relative;
+        }
+
+        .control-panel::before {
+            content: 'CONTROL PANEL';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: #0a0a0a;
+            padding: 0 12px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #0099ff;
+            letter-spacing: 2px;
+        }
+
+        .terminal-tabs {
+            display: flex;
+            margin-bottom: 0;
+            border: 2px solid #00cc66;
+            border-bottom: none;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 16px 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border: none;
+            border-right: 1px solid #00cc66;
+            color: #666666;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .tab-button:last-child {
+            border-right: none;
+        }
+
+        .tab-button.active {
+            color: #00cc66;
+            background: rgba(0, 204, 102, 0.1);
+            box-shadow: inset 0 0 20px rgba(0, 204, 102, 0.2);
+        }
+
+        .tab-button:not(.active):hover {
+            color: #00ffff;
+            background: rgba(0, 255, 255, 0.05);
+        }
+
+        .tab-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 204, 102, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .tab-button.active::before {
+            left: 100%;
+        }
+
+        .communication-display {
+            background: linear-gradient(135deg, rgba(0, 150, 100, 0.1) 0%, rgba(0, 100, 50, 0.1) 100%);
+            border: 2px solid #00cc66;
+            display: flex;
+            flex-direction: column;
+            height: 700px;
+            position: relative;
+            box-shadow: 
+                0 0 20px rgba(0, 204, 102, 0.2),
+                inset 0 0 20px rgba(0, 204, 102, 0.05);
+        }
+
+        .communication-display::before {
+            content: 'RESEARCH INTERFACE';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: #0a0a0a;
+            padding: 0 12px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #00cc66;
+            letter-spacing: 2px;
+        }
+
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        .section-header {
+            font-size: 16px;
+            font-weight: 700;
+            color: #00ffff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #00ffff;
+            padding-bottom: 8px;
+        }
+
+        .auth-module {
+            margin-bottom: 32px;
+        }
+
+        .module-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #ff00ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .module-title::before {
+            content: '▶';
+            color: #ff00ff;
+            font-size: 12px;
+        }
+
+        .terminal-button {
+            padding: 12px 24px;
+            border: 2px solid;
+            background: transparent;
+            font-family: 'Share Tech Mono', monospace;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            font-size: 13px;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .btn-primary {
+            border-color: #00ffff;
+            color: #00ffff;
+        }
+
+        .btn-primary:hover {
+            background: rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-danger {
+            border-color: #ff3030;
+            color: #ff3030;
+        }
+
+        .btn-danger:hover {
+            background: rgba(255, 48, 48, 0.1);
+            box-shadow: 0 0 15px rgba(255, 48, 48, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+
+        .btn-success:hover {
+            background: rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .wallet-display {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #00ffff;
+            padding: 16px;
+            margin: 16px 0;
+            position: relative;
+        }
+
+        .wallet-display::before {
+            content: 'WALLET DATA';
+            position: absolute;
+            top: -8px;
+            left: 12px;
+            background: #0a0a0a;
+            padding: 0 8px;
+            font-size: 10px;
+            color: #00ffff;
+            letter-spacing: 1px;
+        }
+
+        .data-field {
+            margin-bottom: 12px;
+        }
+
+        .field-label {
+            font-size: 11px;
+            color: #999999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .field-value {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: #00ffff;
+            word-break: break-all;
+            background: rgba(0, 255, 255, 0.1);
+            padding: 4px 8px;
+            border-left: 2px solid #00ffff;
+        }
+
+        .balance-display {
+            color: #00ff00;
+            font-size: 14px;
+            font-weight: 700;
+            text-shadow: 0 0 10px #00ff00;
+        }
+
+        .systems-status {
+            margin-top: 32px;
+        }
+
+        .system-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+        }
+
+        .system-name {
+            color: #cccccc;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .system-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .indicator-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #00ff00;
+            box-shadow: 0 0 8px #00ff00;
+            animation: pulse 2s infinite;
+        }
+
+        .indicator-offline {
+            background: #ff3030;
+            box-shadow: 0 0 8px #ff3030;
+        }
+
+        .comm-header {
+            padding: 20px 24px;
+            border-bottom: 2px solid #00cc66;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .comm-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #00cc66;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 4px;
+        }
+
+        .comm-subtitle {
+            font-size: 12px;
+            color: #999999;
+            font-family: 'Share Tech Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .message-display {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .message-display::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .message-display::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .message-display::-webkit-scrollbar-thumb {
+            background: #00cc66;
+            border-radius: 4px;
+        }
+
+        .input-module {
+            padding: 20px 24px;
+            border-top: 2px solid #00cc66;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .terminal-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #00cc66;
+            background: rgba(0, 0, 0, 0.5);
+            color: #00cc66;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+        }
+
+        .terminal-input:focus {
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            color: #00ffff;
+        }
+
+        .terminal-input::placeholder {
+            color: rgba(0, 204, 102, 0.5);
+            font-style: italic;
+        }
+
+        .explorer-section {
+            margin-bottom: 24px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #00cc66;
+            padding: 16px;
+            position: relative;
+        }
+
+        .explorer-section::before {
+            position: absolute;
+            top: -8px;
+            left: 12px;
+            background: #0a0a0a;
+            padding: 0 8px;
+            font-size: 10px;
+            color: #00cc66;
+            letter-spacing: 1px;
+        }
+
+        .network-overview::before { content: 'NETWORK OVERVIEW'; }
+        .recent-blocks::before { content: 'RECENT BLOCKS'; }
+        .search-section::before { content: 'BLOCKCHAIN SEARCH'; }
+        .wallet-history::before { content: 'WALLET HISTORY'; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 12px;
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #00ffff;
+            font-family: 'Share Tech Mono', monospace;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #999999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .block-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 4px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 3px solid #00cc66;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+        }
+
+        .block-height {
+            color: #00ffff;
+            font-weight: 700;
+        }
+
+        .block-time {
+            color: #999999;
+        }
+
+        .block-txs {
+            color: #ff00ff;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #00cc66;
+            background: rgba(0, 0, 0, 0.5);
+            color: #00cc66;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .search-input:focus {
+            border-color: #00ffff;
+            color: #00ffff;
+            outline: none;
+        }
+
+        .delegation-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #00cc66;
+        }
+
+        .validator-info {
+            flex: 1;
+        }
+
+        .validator-name {
+            color: #00ffff;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .validator-details {
+            font-size: 10px;
+            color: #999999;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .delegation-amount {
+            color: #00ff00;
+            font-weight: 700;
+            text-align: right;
+            margin-right: 12px;
+        }
+
+        .stake-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 10px;
+            border: 1px solid;
+            background: transparent;
+            cursor: pointer;
+            color: inherit;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .amount-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #00cc66;
+            background: rgba(0, 0, 0, 0.5);
+            color: #00cc66;
+            font-family: 'Share Tech Mono', monospace;
+            margin: 8px 0;
+        }
+
+        .amount-input:focus {
+            border-color: #00ffff;
+            color: #00ffff;
+            outline: none;
+        }
+
+        .balance-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .balance-item {
+            text-align: center;
+            padding: 16px 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid #00ffff;
+        }
+
+        .balance-amount {
+            font-size: 16px;
+            font-weight: 700;
+            color: #00ff00;
+            font-family: 'Share Tech Mono', monospace;
+            margin-bottom: 4px;
+        }
+
+        .balance-label {
+            font-size: 10px;
+            color: #999999;
+            text-transform: uppercase;
+        }
+
+        .send-form {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #00cc66;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            color: #999999;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #00cc66;
+            background: rgba(0, 0, 0, 0.5);
+            color: #00cc66;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+        }
+
+        .form-input:focus {
+            border-color: #00ffff;
+            color: #00ffff;
+            outline: none;
+        }
+
+        .max-button {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #ff00ff;
+            color: #000;
+            border: none;
+            padding: 2px 6px;
+            font-size: 8px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .tx-filter {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .filter-btn {
+            padding: 6px 12px;
+            border: 1px solid #666;
+            background: transparent;
+            color: #666;
+            font-size: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .filter-btn.active {
+            border-color: #00ffff;
+            color: #00ffff;
+        }
+
+        .tx-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 4px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 3px solid;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+        }
+
+        .tx-sent { border-left-color: #ff3030; }
+        .tx-received { border-left-color: #00ff00; }
+        .tx-delegate { border-left-color: #ff00ff; }
+        .tx-undelegate { border-left-color: #ffaa00; }
+
+        .tx-type {
+            color: #00ffff;
+            font-weight: 700;
+            min-width: 80px;
+        }
+
+        .tx-amount {
+            color: #00ff00;
+            margin: 0 12px;
+        }
+
+        .tx-time {
+            color: #999999;
+            font-size: 9px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #666666;
+            padding: 60px 20px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 12px;
+            color: #00cc66;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .empty-state .icon {
+            font-size: 48px;
+            margin: 20px 0;
+            color: #00cc66;
+            animation: pulse 3s infinite;
+        }
+
+        .message-item {
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            border-left: 3px solid;
+            background: rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .message-sent {
+            border-left-color: #00ffff;
+            background: rgba(0, 255, 255, 0.05);
+            margin-left: 60px;
+        }
+
+        .message-received {
+            border-left-color: #ff00ff;
+            background: rgba(255, 0, 255, 0.05);
+            margin-right: 60px;
+        }
+
+        .message-system {
+            border-left-color: #ffaa00;
+            background: rgba(255, 170, 0, 0.05);
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 11px;
+            font-family: 'Share Tech Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .message-sender {
+            color: #cccccc;
+        }
+
+        .message-time {
+            color: #666666;
+        }
+
+        .message-content {
+            color: #ffffff;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        .error-display {
+            background: rgba(255, 48, 48, 0.1);
+            border: 1px solid #ff3030;
+            color: #ff3030;
+            padding: 12px 16px;
+            margin: 8px 0;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            border-left: 4px solid #ff3030;
+        }
+
+        .success-display {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 12px 16px;
+            margin: 8px 0;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            border-left: 4px solid #00ff00;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-top: 2px solid #00ffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .disabled {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        @media (max-width: 1024px) {
+            .main-interface {
+                grid-template-columns: 1fr;
+            }
+            
+            .terminal-header {
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .system-info {
+                flex-direction: column;
+                gap: 16px;
+                width: 100%;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .balance-overview {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .glitch {
+            animation: glitch 0.3s infinite;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .content-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .content-area::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .content-area::-webkit-scrollbar-thumb {
+            background: #00cc66;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="container">
+        <div class="header">
+            <div class="solar-system-bg">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="sunGradientBg" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" style="stop-color:#ffff00;stop-opacity:0.8" />
+                            <stop offset="70%" style="stop-color:#ff8800;stop-opacity:0.6" />
+                            <stop offset="100%" style="stop-color:#ff4400;stop-opacity:0.4" />
+                        </radialGradient>
+                        <filter id="bgGlow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+                            <feMerge> 
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    
+                    <circle cx="100" cy="100" r="2.0" fill="url(#sunGradientBg)" filter="url(#bgGlow)">
+                        <animate attributeName="r" values="2.0;2.3;2.0" dur="4s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="4" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="0.08"/>
+                    <circle cx="104" cy="100" r="0.15" fill="#8c7853" stroke="rgba(140,120,83,0.8)" stroke-width="0.05">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;360 100 100" dur="8s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="5.5" fill="none" stroke="rgba(255,200,100,0.5)" stroke-width="0.08"/>
+                    <circle cx="105.5" cy="100" r="0.18" fill="#ffc649" stroke="rgba(255,198,73,0.9)" stroke-width="0.05">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;-360 100 100" dur="12s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="7" fill="none" stroke="rgba(100,200,255,0.6)" stroke-width="0.1"/>
+                    <circle cx="107" cy="100" r="0.2" fill="#6B93D6" stroke="rgba(107,147,214,0.9)" stroke-width="0.05">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;360 100 100" dur="16s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="108.2" cy="100" r="0.08" fill="#cccccc" stroke="rgba(204,204,204,0.8)" stroke-width="0.02">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;360 100 100" dur="16s" repeatCount="indefinite"/>
+                        <animateTransform attributeName="transform" type="rotate" values="0 107 100;360 107 100" dur="2s" repeatCount="indefinite" additive="sum"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="8.5" fill="none" stroke="rgba(255,100,100,0.5)" stroke-width="0.08"/>
+                    <circle cx="108.5" cy="100" r="0.15" fill="#cd5c5c" stroke="rgba(205,92,92,0.8)" stroke-width="0.05">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;-360 100 100" dur="24s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="10" fill="none" stroke="rgba(150,150,150,0.4)" stroke-width="0.2" stroke-dasharray="0.1,0.3">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;360 100 100" dur="60s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="12" fill="none" stroke="rgba(255,165,0,0.5)" stroke-width="0.12"/>
+                    <circle cx="112" cy="100" r="0.5" fill="#d8ca9d" stroke="rgba(216,202,157,0.9)" stroke-width="0.08">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;360 100 100" dur="40s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="14" fill="none" stroke="rgba(255,215,0,0.5)" stroke-width="0.12"/>
+                    <g>
+                        <circle cx="114" cy="100" r="0.4" fill="#fab27b" stroke="rgba(250,178,123,0.9)" stroke-width="0.06"/>
+                        <ellipse cx="114" cy="100" rx="0.7" ry="0.12" fill="none" stroke="rgba(255,215,0,0.8)" stroke-width="0.08"/>
+                        <ellipse cx="114" cy="100" rx="0.5" ry="0.08" fill="none" stroke="rgba(255,215,0,0.6)" stroke-width="0.06"/>
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;-360 100 100" dur="55s" repeatCount="indefinite"/>
+                    </g>
+                    
+                    <circle cx="100" cy="100" r="16" fill="none" stroke="rgba(100,255,255,0.5)" stroke-width="0.12"/>
+                    <circle cx="116" cy="100" r="0.25" fill="#4fd0e3" stroke="rgba(79,208,227,0.9)" stroke-width="0.06">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;360 100 100" dur="80s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="18" fill="none" stroke="rgba(0,100,255,0.6)" stroke-width="0.15"/>
+                    <circle cx="118" cy="100" r="0.25" fill="#4b70dd" stroke="rgba(75,112,221,0.9)" stroke-width="0.06">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;-360 100 100" dur="100s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="22" fill="none" stroke="rgba(100,100,255,0.5)" stroke-width="0.25" stroke-dasharray="0.15,0.4" opacity="0.7">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;360 100 100" dur="150s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <ellipse cx="145" cy="100" rx="80" ry="30" fill="none" stroke="rgba(255,100,0,0.8)" stroke-width="1.2" opacity="0.9" stroke-dasharray="4,2" transform="rotate(25 100 100)">
+                        <animateTransform attributeName="transform" type="rotate" values="25 100 100;385 100 100" dur="300s" repeatCount="indefinite"/>
+                    </ellipse>
+                    
+                    <circle cx="180" cy="70" r="1.2" fill="#ff4400" opacity="1" stroke="#ff6600" stroke-width="0.4">
+                        <animateTransform attributeName="transform" type="rotate" values="25 100 100;385 100 100" dur="300s" repeatCount="indefinite"/>
+                        <animate attributeName="opacity" values="0.9;1;0.9" dur="4s" repeatCount="indefinite"/>
+                        <animate attributeName="r" values="1.2;1.4;1.2" dur="6s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <ellipse cx="130" cy="100" rx="70" ry="25" fill="none" stroke="rgba(255,0,255,0.7)" stroke-width="1.0" opacity="0.8" stroke-dasharray="3,1" transform="rotate(12 100 100)">
+                        <animateTransform attributeName="transform" type="rotate" values="12 100 100;372 100 100" dur="400s" repeatCount="indefinite"/>
+                    </ellipse>
+                    <circle cx="160" cy="85" r="0.6" fill="#ff4d94" stroke="rgba(255,77,148,0.8)" stroke-width="0.15" opacity="0.9">
+                        <animateTransform attributeName="transform" type="rotate" values="12 100 100;372 100 100" dur="400s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <ellipse cx="135" cy="100" rx="75" ry="28" fill="none" stroke="rgba(255,0,255,0.6)" stroke-width="0.8" opacity="0.7" stroke-dasharray="2,2" transform="rotate(22 100 100)">
+                        <animateTransform attributeName="transform" type="rotate" values="22 100 100;382 100 100" dur="450s" repeatCount="indefinite"/>
+                    </ellipse>
+                    <circle cx="165" cy="82" r="0.5" fill="#ff66aa" stroke="rgba(255,102,170,0.8)" stroke-width="0.12" opacity="0.8">
+                        <animateTransform attributeName="transform" type="rotate" values="22 100 100;382 100 100" dur="450s" repeatCount="indefinite"/>
+                    </circle>
+                </svg>
+            </div>
+            
+            <div class="terminal-header">
+                <div class="system-info">
+                    <div class="logo-section">
+                        <div class="logo-icon">
+                            <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#00ffff;stop-opacity:1" />
+                                        <stop offset="50%" style="stop-color:#0099ff;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#00ffff;stop-opacity:1" />
+                                    </linearGradient>
+                                    <filter id="logoGlow" x="-50%" y="-50%" width="200%" height="200%">
+                                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                                        <feMerge> 
+                                            <feMergeNode in="coloredBlur"/>
+                                            <feMergeNode in="SourceGraphic"/>
+                                        </feMerge>
+                                    </filter>
+                                </defs>
+                                
+                                <path d="M 20 50 Q 20 20, 50 20 Q 80 20, 80 50 Q 80 80, 50 80 Q 35 80, 25 70" 
+                                      fill="none" 
+                                      stroke="url(#logoGradient)" 
+                                      stroke-width="4" 
+                                      filter="url(#logoGlow)"/>
+                                
+                                <text x="50" y="55" text-anchor="middle" fill="url(#logoGradient)" 
+                                      font-family="Orbitron" font-size="18" font-weight="bold" filter="url(#logoGlow)">md</text>
+                            </svg>
+                        </div>
+                        <div class="system-title">
+                            <div class="main-title">Medas Digital</div>
+                            <div class="sub-title">Research Terminal v0.9</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="status-display">
+                    <div id="connection-status" class="connection-status status-disconnected">
+                        <div class="status-dot dot-disconnected"></div>
+                        <span>Network Offline</span>
+                    </div>
+                    <div id="blockchain-status" class="connection-status status-disconnected" style="font-size: 11px; margin-top: 4px;">
+                        <div class="status-dot dot-disconnected"></div>
+                        <span>Block: ---</span>
+                    </div>
+                    <div class="timestamp" id="current-time"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-interface">
+            <div class="control-panel">
+                <div class="section-header">System Control</div>
+                
+                <div class="auth-module">
+                    <div class="module-title">Quantum Wallet Interface</div>
+                    <div id="wallet-interface">
+                        <p style="color: #999999; margin-bottom: 16px; font-family: 'Share Tech Mono', monospace; font-size: 12px;">
+                            Initialize Keplr quantum authentication protocol
+                        </p>
+                        <button id="connect-wallet" class="terminal-button btn-primary">
+                            Connect Keplr Wallet
+                        </button>
+                    </div>
+                </div>
+
+                <div class="systems-status">
+                    <div class="module-title">System Status</div>
+                    <div class="system-item">
+                        <span class="system-name">Quantum Relay</span>
+                        <div class="system-indicator">
+                            <div class="indicator-dot indicator-offline"></div>
+                            <span style="color: #ff3030; font-size: 10px;">OFFLINE</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Blockchain Sync</span>
+                        <div class="system-indicator">
+                            <div class="indicator-dot indicator-offline" id="blockchain-indicator"></div>
+                            <span style="color: #ff3030; font-size: 10px;" id="blockchain-status-text">OFFLINE</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Block Height</span>
+                        <div class="system-indicator">
+                            <span style="color: #00ffff; font-size: 10px; font-family: 'Share Tech Mono', monospace;" id="block-height">---</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Network Latency</span>
+                        <div class="system-indicator">
+                            <span style="color: #00ffff; font-size: 10px; font-family: 'Share Tech Mono', monospace;" id="network-latency">--- ms</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Encryption Matrix</span>
+                        <div class="system-indicator">
+                            <div class="indicator-dot"></div>
+                            <span style="color: #00ff00; font-size: 10px;">SECURE</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Observatory Link</span>
+                        <div class="system-indicator">
+                            <div class="indicator-dot indicator-offline"></div>
+                            <span style="color: #ff3030; font-size: 10px;">STANDBY</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Daemon Protocol</span>
+                        <div class="system-indicator">
+                            <div class="indicator-dot indicator-offline"></div>
+                            <span style="color: #ff3030; font-size: 10px;">OFFLINE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="communication-display">
+                <div class="terminal-tabs">
+                    <button class="tab-button active" data-tab="comm">💬 COMM</button>
+                    <button class="tab-button" data-tab="explorer">🔍 SCAN</button>
+                    <button class="tab-button" data-tab="staking">🥩 STAKE</button>
+                    <button class="tab-button" data-tab="wallet">👛 WALLET</button>
+                </div>
+
+                <div id="comm-tab" class="tab-content active">
+                    <div class="comm-header">
+                        <div class="comm-title">Interstellar Communication Array</div>
+                        <div class="comm-subtitle">Quantum-encrypted research collaboration network</div>
+                    </div>
+                    
+                    <div class="message-display" id="message-display">
+                        <div class="empty-state">
+                            <h3>System Standby</h3>
+                            <div class="icon">◉</div>
+                            <p>Awaiting quantum wallet authentication...</p>
+                            <p style="font-size: 11px; margin-top: 8px;">Initialize Keplr interface to establish secure communication channel</p>
+                        </div>
+                    </div>
+
+                    <div class="input-module">
+                        <textarea 
+                            id="message-input" 
+                            class="terminal-input" 
+                            placeholder="Enter transmission data..."
+                            rows="2"
+                            disabled
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div id="explorer-tab" class="tab-content">
+                    <div class="comm-header">
+                        <div class="comm-title">Blockchain Scanner</div>
+                        <div class="comm-subtitle">Real-time network analysis & transaction explorer</div>
+                    </div>
+                    
+                    <div class="content-area">
+                        <div class="explorer-section network-overview">
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <div class="stat-value" id="latest-block">2,847,392</div>
+                                    <div class="stat-label">Latest Block</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value" id="validator-count">147</div>
+                                    <div class="stat-label">Validators</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value" id="bonded-ratio">68.4%</div>
+                                    <div class="stat-label">Bonded Ratio</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value" id="block-time">6.2s</div>
+                                    <div class="stat-label">Avg Block Time</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="explorer-section recent-blocks">
+                            <div id="recent-blocks-list">
+                            </div>
+                        </div>
+
+                        <div class="explorer-section search-section">
+                            <input type="text" class="search-input" placeholder="Search transaction hash or address..." id="blockchain-search">
+                            <button class="terminal-button btn-primary" style="width: auto; padding: 8px 16px; margin: 0;">Search Blockchain</button>
+                        </div>
+
+                        <div class="explorer-section wallet-history" style="display: none;" id="wallet-history-section">
+                            <div id="wallet-transactions">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="staking-tab" class="tab-content">
+                    <div class="comm-header">
+                        <div class="comm-title">Staking Interface</div>
+                        <div class="comm-subtitle">Delegate tokens & earn rewards</div>
+                    </div>
+                    
+                    <div class="content-area">
+                        <div class="explorer-section" style="display: none;" id="my-delegations-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">MY DELEGATIONS</div>
+                            <div id="current-delegations">
+                            </div>
+                            <div style="text-align: center; margin-top: 12px;">
+                                <span style="color: #00ff00; font-weight: 700;">Total Pending Rewards: </span>
+                                <span id="total-rewards" style="color: #00ff00; font-family: 'Share Tech Mono', monospace;">0.000000 MEDAS</span>
+                                <button class="terminal-button btn-success" style="width: auto; padding: 8px 16px; margin-left: 12px; font-size: 11px;">Claim All Rewards</button>
+                            </div>
+                        </div>
+
+                        <div class="explorer-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">TOP VALIDATORS</div>
+                            <div id="validators-list">
+                            </div>
+                        </div>
+
+                        <div class="explorer-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">QUICK STAKE</div>
+                            <div class="form-group">
+                                <label class="form-label">Select Validator</label>
+                                <select id="validator-select" class="form-input">
+                                    <option>Select a validator...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Amount (MEDAS)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="stake-amount" class="form-input" placeholder="0.000000" step="0.000001" min="0">
+                                    <button class="max-button" onclick="setMaxStakeAmount()">MAX</button>
+                                </div>
+                            </div>
+                            <button class="terminal-button btn-primary" onclick="delegateTokens()" style="margin-top: 8px;">Delegate Tokens</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="wallet-tab" class="tab-content">
+                    <div class="comm-header">
+                        <div class="comm-title">Wallet Management</div>
+                        <div class="comm-subtitle">Token transfers & account overview</div>
+                    </div>
+                    
+                    <div class="content-area">
+                        <div class="explorer-section" style="display: none;" id="balance-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">BALANCE OVERVIEW</div>
+                            <div class="balance-overview">
+                                <div class="balance-item">
+                                    <div class="balance-amount" id="available-balance">0.000000</div>
+                                    <div class="balance-label">Available</div>
+                                </div>
+                                <div class="balance-item">
+                                    <div class="balance-amount" id="delegated-balance">0.000000</div>
+                                    <div class="balance-label">Delegated</div>
+                                </div>
+                                <div class="balance-item">
+                                    <div class="balance-amount" id="rewards-balance">0.000000</div>
+                                    <div class="balance-label">Rewards</div>
+                                </div>
+                                <div class="balance-item">
+                                    <div class="balance-amount" id="total-balance">0.000000</div>
+                                    <div class="balance-label">Total</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="explorer-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">SEND TOKENS</div>
+                            <div class="send-form">
+                                <div class="form-group">
+                                    <label class="form-label">Recipient Address</label>
+                                    <input type="text" id="send-address" class="form-input" placeholder="medas1...">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Amount (MEDAS)</label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="send-amount" class="form-input" placeholder="0.000000" step="0.000001" min="0">
+                                        <button class="max-button" onclick="setMaxSendAmount()">MAX</button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Memo (Optional)</label>
+                                    <input type="text" id="send-memo" class="form-input" placeholder="Transaction memo...">
+                                </div>
+                                <button class="terminal-button btn-primary" onclick="sendTokens()">Send Transaction</button>
+                            </div>
+                        </div>
+
+                        <div class="explorer-section" style="display: none;" id="transaction-history-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">TRANSACTION HISTORY</div>
+                            <div class="tx-filter">
+                                <button class="filter-btn active" data-filter="all">All</button>
+                                <button class="filter-btn" data-filter="sent">Sent</button>
+                                <button class="filter-btn" data-filter="received">Received</button>
+                                <button class="filter-btn" data-filter="staking">Staking</button>
+                            </div>
+                            <div id="transaction-list">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate starfield
+        function createStarfield() {
+            const starsContainer = document.getElementById('stars');
+            const numStars = 150;
+            
+            for (let i = 0; i < numStars; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // Update timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            const timeString = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+            document.getElementById('current-time').textContent = timeString;
+        }
+
+        // Medas Digital chain configuration
+        const MEDAS_CHAIN_CONFIG = {
+            chainId: "medasdigital-1",
+            chainName: "Medas Digital",
+            rpc: "https://rpc.medas-digital.io:26657",
+            rest: "https://api.medas-digital.io:1317",
+            bip44: { coinType: 118 },
+            bech32Config: {
+                bech32PrefixAccAddr: "medas",
+                bech32PrefixAccPub: "medaspub",
+                bech32PrefixValAddr: "medasvaloper",
+                bech32PrefixValPub: "medasvaloperpub",
+                bech32PrefixConsAddr: "medasvalcons",
+                bech32PrefixConsPub: "medasvalconspub",
+            },
+            currencies: [{
+                coinDenom: "MEDAS",
+                coinMinimalDenom: "umedas",
+                coinDecimals: 6,
+            }],
+            feeCurrencies: [{
+                coinDenom: "MEDAS",
+                coinMinimalDenom: "umedas",
+                coinDecimals: 6,
+                gasPriceStep: { low: 0.01, average: 0.025, high: 0.04 },
+            }],
+            stakeCurrency: {
+                coinDenom: "MEDAS",
+                coinMinimalDenom: "umedas",
+                coinDecimals: 6,
+            },
+        };
+
+        // Daemon API Configuration
+        const DAEMON_CONFIG = {
+            urls: [
+                'http://localhost:8080',
+                'http://127.0.0.1:8080',
+                'http://localhost:8081'
+            ],
+            endpoints: {
+                status: '/api/v1/status',
+                messages: '/api/v1/messages',
+                contacts: '/api/v1/contacts',
+                channels: '/api/v1/channels',
+                relays: '/api/v1/relays'
+            },
+            websocket: '/ws/messages'
+        };
+
+        // Mock data for demonstration
+        const mockValidators = [
+            { name: "Observatory Node Alpha", commission: "5.0%", apy: "12.4%", status: "Active", voting_power: "4.2M MEDAS" },
+            { name: "Quantum Research Pool", commission: "3.5%", apy: "13.1%", status: "Active", voting_power: "3.8M MEDAS" },
+            { name: "Stellar Computing Cluster", commission: "6.0%", apy: "11.8%", status: "Active", voting_power: "3.1M MEDAS" },
+            { name: "Deep Space Validator", commission: "4.2%", apy: "12.8%", status: "Active", voting_power: "2.9M MEDAS" },
+            { name: "Astronomical Network", commission: "2.8%", apy: "13.5%", status: "Active", voting_power: "2.7M MEDAS" },
+            { name: "Cosmic Research Node", commission: "5.5%", apy: "12.2%", status: "Active", voting_power: "2.4M MEDAS" },
+            { name: "Planetary Science Pool", commission: "4.8%", apy: "12.6%", status: "Active", voting_power: "2.1M MEDAS" },
+            { name: "Galactic Computation Hub", commission: "3.2%", apy: "13.3%", status: "Active", voting_power: "1.9M MEDAS" }
+        ];
+
+        const mockTransactions = [
+            { type: "received", amount: "+125.500000", time: "2 hours ago", hash: "A1B2C3..." },
+            { type: "delegate", amount: "-1000.000000", time: "1 day ago", hash: "D4E5F6..." },
+            { type: "sent", amount: "-50.250000", time: "2 days ago", hash: "G7H8I9..." },
+            { type: "received", amount: "+75.000000", time: "3 days ago", hash: "J1K2L3..." },
+            { type: "undelegate", amount: "+500.000000", time: "5 days ago", hash: "M4N5O6..." }
+        ];
+
+        class MedasResearchTerminal {
+            constructor() {
+                this.keplr = null;
+                this.account = null;
+                this.connected = false;
+                this.daemonUrl = null;
+                this.daemonConnected = false;
+                this.websocket = null;
+                this.blockchainOnline = false;
+                this.currentBlock = 0;
+                this.networkLatency = 0;
+                this.activeTab = 'comm';
+                this.contacts = new Map();
+                this.messageHistory = new Map();
+                this.channels = new Map();
+                
+                this.initializeTerminal();
+                this.initializeEventListeners();
+                this.checkKeplrAvailability();
+                this.checkDaemonConnection();
+                this.startBlockchainMonitoring();
+                this.initializeTabSystem();
+            }
+
+            initializeTerminal() {
+                createStarfield();
+                updateTimestamp();
+                setInterval(updateTimestamp, 1000);
+                
+                // Add some atmospheric terminal boot messages
+                setTimeout(() => {
+                    this.addSystemMessage('Research Terminal v0.9 initialized');
+                }, 1000);
+                setTimeout(() => {
+                    this.addSystemMessage('Quantum encryption protocols loaded');
+                }, 2000);
+                setTimeout(() => {
+                    this.addSystemMessage('Scanning blockchain network...');
+                }, 3000);
+                setTimeout(() => {
+                    this.addSystemMessage('Awaiting researcher authentication...');
+                }, 4500);
+            }
+
+            initializeEventListeners() {
+                document.getElementById('connect-wallet').addEventListener('click', () => {
+                    this.connectWallet();
+                });
+
+                document.getElementById('message-input').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                if (window.keplr) {
+                    window.addEventListener('keplr_keystorechange', () => {
+                        this.handleAccountChange();
+                    });
+                }
+
+                // Tab navigation
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('tab-button')) {
+                        this.switchTab(e.target.dataset.tab);
+                    }
+                });
+
+                // Staking actions
+                window.delegateTokens = () => this.delegateTokens();
+                window.setMaxStakeAmount = () => this.setMaxStakeAmount();
+                window.setMaxSendAmount = () => this.setMaxSendAmount();
+                window.sendTokens = () => this.sendTokens();
+
+                // Filter buttons
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('filter-btn')) {
+                        this.filterTransactions(e.target.dataset.filter);
+                    }
+                });
+            }
+
+            // Daemon Connection Management
+            async checkDaemonConnection() {
+                for (const url of DAEMON_CONFIG.urls) {
+                    try {
+                        const response = await fetch(`${url}${DAEMON_CONFIG.endpoints.status}`, {
+                            method: 'GET',
+                            timeout: 3000
+                        });
+                        
+                        if (response.ok) {
+                            this.daemonUrl = url;
+                            this.daemonConnected = true;
+                            this.updateDaemonStatus(true);
+                            this.addSystemMessage(`Chat daemon connected at ${url}`);
+                            this.connectWebSocket();
+                            this.loadContacts();
+                            this.loadMessageHistory();
+                            return;
+                        }
+                    } catch (error) {
+                        // Try next URL
+                    }
+                }
+                
+                this.daemonConnected = false;
+                this.updateDaemonStatus(false);
+                this.addSystemMessage('Chat daemon offline - Install medas-digital-daemon');
+                this.showDaemonSetupInstructions();
+            }
+
+            updateDaemonStatus(connected) {
+                const systems = document.querySelectorAll('.system-item');
+                systems.forEach(system => {
+                    const name = system.querySelector('.system-name').textContent;
+                    if (name === 'Daemon Protocol') {
+                        const indicator = system.querySelector('.indicator-dot');
+                        const status = system.querySelector('.system-indicator span');
+                        if (connected) {
+                            indicator.className = 'indicator-dot';
+                            status.textContent = 'ACTIVE';
+                            status.style.color = '#00ff00';
+                        } else {
+                            indicator.className = 'indicator-dot indicator-offline';
+                            status.textContent = 'OFFLINE';
+                            status.style.color = '#ff3030';
+                        }
+                    }
+                });
+            }
+
+            showDaemonSetupInstructions() {
+                setTimeout(() => {
+                    this.addMessageToUI({
+                        type: 'system',
+                        content: `🐳 DAEMON SETUP INSTRUCTIONS:
+
+Start the Medas Digital daemon for full chat functionality:
+
+docker run -d --name medas-digital-daemon \\
+  -p 8080:8080 \\
+  -v ~/.medas-digital:/data \\
+  medas-digital/daemon:latest
+
+Then refresh this page to connect.
+
+Current mode: Blockchain-only (no chat)`,
+                        timestamp: new Date(),
+                        sender: 'SYSTEM'
+                    });
+                }, 2000);
+            }
+
+            // WebSocket Connection for Real-time Messages
+            connectWebSocket() {
+                if (!this.daemonUrl) return;
+
+                const wsUrl = this.daemonUrl.replace('http', 'ws') + DAEMON_CONFIG.websocket;
+                
+                try {
+                    this.websocket = new WebSocket(wsUrl);
+                    
+                    this.websocket.onopen = () => {
+                        this.addSystemMessage('Real-time messaging connected');
+                    };
+                    
+                    this.websocket.onmessage = (event) => {
+                        const message = JSON.parse(event.data);
+                        this.handleIncomingMessage(message);
+                    };
+                    
+                    this.websocket.onclose = () => {
+                        this.addSystemMessage('Real-time connection lost - attempting reconnect...');
+                        setTimeout(() => this.connectWebSocket(), 5000);
+                    };
+                    
+                    this.websocket.onerror = (error) => {
+                        console.warn('WebSocket error:', error);
+                    };
+                } catch (error) {
+                    console.warn('WebSocket connection failed:', error);
+                }
+            }
+
+            handleIncomingMessage(message) {
+                // Add message to appropriate conversation
+                if (!this.messageHistory.has(message.from)) {
+                    this.messageHistory.set(message.from, []);
+                }
+                
+                this.messageHistory.get(message.from).push({
+                    ...message,
+                    type: 'received'
+                });
+
+                // Update UI if chat tab is active
+                if (this.activeTab === 'comm') {
+                    this.addMessageToUI({
+                        from: message.from,
+                        content: message.content,
+                        timestamp: new Date(message.timestamp),
+                        type: 'received',
+                        sender: this.getContactName(message.from)
+                    });
+                }
+
+                // Add notification
+                this.showNotification(`New message from ${this.getContactName(message.from)}`);
+            }
+
+            getContactName(address) {
+                const contact = this.contacts.get(address);
+                return contact ? contact.displayName : address.substring(0, 12) + '...';
+            }
+
+            showNotification(message) {
+                // Simple notification - could be enhanced with browser notifications
+                const notification = document.createElement('div');
+                notification.className = 'notification';
+                notification.textContent = message;
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: rgba(0, 255, 255, 0.9);
+                    color: #000;
+                    padding: 12px 20px;
+                    border-radius: 4px;
+                    z-index: 1000;
+                    animation: slideIn 0.3s ease;
+                `;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+
+            checkKeplrAvailability() {
+                if (window.keplr) {
+                    this.keplr = window.keplr;
+                    this.showSystemMessage('Keplr quantum interface detected', 'success');
+                } else {
+                    this.showSystemMessage('Keplr interface not found - Install Keplr extension', 'error');
+                    this.updateConnectButton('Install Keplr Protocol', () => {
+                        window.open('https://www.keplr.app/download', '_blank');
+                    });
+                }
+            }
+
+            // Tab System Management
+            initializeTabSystem() {
+                this.switchTab('comm'); // Default tab
+                this.populateValidators();
+                this.populateRecentBlocks();
+            }
+
+            switchTab(tabName) {
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                // Hide all tab buttons
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Show selected tab
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+                
+                this.activeTab = tabName;
+                
+                // Load tab-specific data
+                this.loadTabData(tabName);
+            }
+
+            loadTabData(tabName) {
+                switch(tabName) {
+                    case 'explorer':
+                        this.updateExplorerData();
+                        break;
+                    case 'staking':
+                        this.updateStakingData();
+                        break;
+                    case 'wallet':
+                        this.updateWalletData();
+                        break;
+                }
+            }
+
+            // Contact Management
+            async loadContacts() {
+                if (!this.daemonConnected) return;
+
+                try {
+                    const response = await fetch(`${this.daemonUrl}${DAEMON_CONFIG.endpoints.contacts}`);
+                    if (response.ok) {
+                        const contacts = await response.json();
+                        contacts.forEach(contact => {
+                            this.contacts.set(contact.address, contact);
+                        });
+                    }
+                } catch (error) {
+                    console.warn('Failed to load contacts:', error);
+                }
+            }
+
+            async loadMessageHistory() {
+                if (!this.daemonConnected) return;
+
+                try {
+                    const response = await fetch(`${this.daemonUrl}${DAEMON_CONFIG.endpoints.messages}/history?limit=50`);
+                    if (response.ok) {
+                        const messages = await response.json();
+                        
+                        // Group messages by conversation
+                        messages.forEach(message => {
+                            const contactAddress = message.from === this.account?.address ? message.to : message.from;
+                            
+                            if (!this.messageHistory.has(contactAddress)) {
+                                this.messageHistory.set(contactAddress, []);
+                            }
+                            
+                            this.messageHistory.get(contactAddress).push(message);
+                        });
+                        
+                        // Update UI with recent messages
+                        this.updateChatDisplay();
+                    }
+                } catch (error) {
+                    console.warn('Failed to load message history:', error);
+                }
+            }
+
+            updateChatDisplay() {
+                if (this.messageHistory.size === 0) return;
+
+                const messagesContainer = document.getElementById('message-display');
+                messagesContainer.innerHTML = '';
+
+                // Show messages from all conversations (could be enhanced to show per-contact)
+                const allMessages = [];
+                this.messageHistory.forEach((messages, contact) => {
+                    allMessages.push(...messages);
+                });
+
+                // Sort by timestamp
+                allMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+                // Display recent messages
+                allMessages.slice(-20).forEach(message => {
+                    this.addMessageToUI({
+                        from: message.from,
+                        content: message.content,
+                        timestamp: new Date(message.timestamp),
+                        type: message.from === this.account?.address ? 'sent' : 'received',
+                        sender: message.from === this.account?.address ? 'YOU' : this.getContactName(message.from)
+                    });
+                });
+            }
+
+            startBlockchainMonitoring() {
+                // Check blockchain status immediately
+                this.checkBlockchainStatus();
+                
+                // Then check every 10 seconds
+                setInterval(() => {
+                    this.checkBlockchainStatus();
+                }, 10000);
+                
+                // Check block height every 30 seconds when online
+                setInterval(() => {
+                    if (this.blockchainOnline) {
+                        this.updateBlockHeight();
+                    }
+                }, 30000);
+            }
+
+            async checkBlockchainStatus() {
+                try {
+                    const startTime = Date.now();
+                    const response = await fetch(`${MEDAS_CHAIN_CONFIG.rpc}/status`, {
+                        method: 'GET',
+                        timeout: 5000
+                    });
+                    
+                    const endTime = Date.now();
+                    this.networkLatency = endTime - startTime;
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.blockchainOnline = true;
+                        this.currentBlock = parseInt(data.result.sync_info.latest_block_height);
+                        
+                        this.updateBlockchainUI(true);
+                        this.updateNetworkLatency();
+                        
+                        if (!this.blockchainStatusLogged) {
+                            this.addSystemMessage('Blockchain network detected - Medas Digital chain active');
+                            this.blockchainStatusLogged = true;
+                        }
+                    } else {
+                        throw new Error('RPC not responding');
+                    }
+                } catch (error) {
+                    this.blockchainOnline = false;
+                    this.updateBlockchainUI(false);
+                    this.updateNetworkLatency();
+                    
+                    if (this.blockchainStatusLogged) {
+                        this.addSystemMessage('Blockchain network connection lost');
+                        this.blockchainStatusLogged = false;
+                    }
+                }
+            }
+
+            async updateBlockHeight() {
+                if (!this.blockchainOnline) return;
+                
+                try {
+                    const response = await fetch(`${MEDAS_CHAIN_CONFIG.rpc}/status`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        const newBlock = parseInt(data.result.sync_info.latest_block_height);
+                        
+                        if (newBlock > this.currentBlock) {
+                            this.currentBlock = newBlock;
+                            this.updateBlockchainUI(true);
+                            
+                            // Occasionally show block updates
+                            if (Math.random() < 0.1) { // 10% chance
+                                this.addSystemMessage(`New block mined: #${this.currentBlock}`);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Block height update failed:', error);
+                }
+            }
+
+            updateBlockchainUI(online) {
+                // Update header blockchain status
+                const blockchainStatus = document.getElementById('blockchain-status');
+                const blockchainIndicator = document.getElementById('blockchain-indicator');
+                const blockchainStatusText = document.getElementById('blockchain-status-text');
+                const blockHeightElement = document.getElementById('block-height');
+                
+                if (online) {
+                    blockchainStatus.className = 'connection-status status-connected';
+                    blockchainStatus.innerHTML = `
+                        <div class="status-dot dot-connected"></div>
+                        <span>Block: ${this.currentBlock.toLocaleString()}</span>
+                    `;
+                    
+                    blockchainIndicator.className = 'indicator-dot';
+                    blockchainStatusText.textContent = 'SYNCED';
+                    blockchainStatusText.style.color = '#00ff00';
+                    blockHeightElement.textContent = this.currentBlock.toLocaleString();
+                    blockHeightElement.style.color = '#00ff00';
+                } else {
+                    blockchainStatus.className = 'connection-status status-disconnected';
+                    blockchainStatus.innerHTML = `
+                        <div class="status-dot dot-disconnected"></div>
+                        <span>Block: ---</span>
+                    `;
+                    
+                    blockchainIndicator.className = 'indicator-dot indicator-offline';
+                    blockchainStatusText.textContent = 'OFFLINE';
+                    blockchainStatusText.style.color = '#ff3030';
+                    blockHeightElement.textContent = '---';
+                    blockHeightElement.style.color = '#ff3030';
+                }
+            }
+
+            updateNetworkLatency() {
+                const latencyElement = document.getElementById('network-latency');
+                if (this.blockchainOnline && this.networkLatency > 0) {
+                    latencyElement.textContent = `${this.networkLatency} ms`;
+                    
+                    // Color code latency
+                    if (this.networkLatency < 500) {
+                        latencyElement.style.color = '#00ff00'; // Green for good
+                    } else if (this.networkLatency < 1000) {
+                        latencyElement.style.color = '#ffaa00'; // Orange for okay
+                    } else {
+                        latencyElement.style.color = '#ff3030'; // Red for bad
+                    }
+                } else {
+                    latencyElement.textContent = '--- ms';
+                    latencyElement.style.color = '#ff3030';
+                }
+            }
+
+            async connectWallet() {
+                if (!this.keplr) {
+                    this.showSystemMessage('Keplr quantum interface unavailable', 'error');
+                    return;
+                }
+
+                try {
+                    this.updateConnectButton('Initializing...', null, true);
+                    this.addSystemMessage('Initializing quantum authentication protocol...');
+
+                    try {
+                        await this.keplr.experimentalSuggestChain(MEDAS_CHAIN_CONFIG);
+                        this.addSystemMessage('Medas Digital chain configuration uploaded');
+                    } catch (error) {
+                        this.addSystemMessage('Chain configuration verified');
+                    }
+
+                    await this.keplr.enable(MEDAS_CHAIN_CONFIG.chainId);
+                    this.addSystemMessage('Quantum tunnel established');
+
+                    const offlineSigner = await this.keplr.getOfflineSigner(MEDAS_CHAIN_CONFIG.chainId);
+                    const accounts = await offlineSigner.getAccounts();
+
+                    if (accounts.length === 0) {
+                        throw new Error('No quantum keys detected');
+                    }
+
+                    this.account = accounts[0];
+                    this.connected = true;
+
+                    const balance = await this.getBalance();
+
+                    this.updateUIAfterConnection(balance);
+                    this.updateConnectionStatus(true);
+                    this.addSystemMessage('Researcher authentication complete');
+                    this.addSystemMessage(`Quantum address verified: ${this.account.address.substring(0, 20)}...`);
+                    this.showSystemMessage('Quantum link established - Research network active', 'success');
+
+                    document.getElementById('message-input').disabled = false;
+                    
+                    // Enable chat functionality if daemon is connected
+                    if (this.daemonConnected) {
+                        this.updateChatDisplay();
+                    } else {
+                        this.checkDaemonConnection();
+                    }
+
+                } catch (error) {
+                    console.error('Quantum authentication failed:', error);
+                    this.showSystemMessage(`Authentication error: ${error.message}`, 'error');
+                    this.updateConnectButton('Connect Keplr Wallet');
+                    this.addSystemMessage('Authentication protocol failed - Retrying...');
+                }
+            }
+
+            async getBalance() {
+                try {
+                    const response = await fetch(`${MEDAS_CHAIN_CONFIG.rest}/cosmos/bank/v1beta1/balances/${this.account.address}`);
+                    const data = await response.json();
+                    
+                    const medasBalance = data.balances.find(b => b.denom === 'umedas');
+                    if (medasBalance) {
+                        const balance = (parseInt(medasBalance.amount) / 1000000).toFixed(6);
+                        this.addSystemMessage(`Account balance verified: ${balance} MEDAS`);
+                        return balance;
+                    }
+                    return '0.000000';
+                } catch (error) {
+                    console.error('Balance query failed:', error);
+                    this.addSystemMessage('Balance query failed - Using cached data');
+                    return 'ERROR';
+                }
+            }
+
+            async sendMessage() {
+                const input = document.getElementById('message-input');
+                const message = input.value.trim();
+                
+                if (!message) return;
+
+                if (!this.daemonConnected) {
+                    this.showSystemMessage('Chat daemon required for messaging', 'error');
+                    return;
+                }
+
+                try {
+                    // Add message to UI immediately
+                    this.addMessageToUI({
+                        from: this.account?.address,
+                        content: message,
+                        timestamp: new Date(),
+                        type: 'sent',
+                        sender: 'YOU'
+                    });
+
+                    input.value = '';
+
+                    // Send to daemon
+                    const response = await fetch(`${this.daemonUrl}${DAEMON_CONFIG.endpoints.messages}/send`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            to: 'broadcast', // Could be enhanced for specific recipients
+                            content: message,
+                            from: this.account?.address,
+                            type: 'text'
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to send message');
+                    }
+
+                    const result = await response.json();
+                    this.addSystemMessage(`Message sent via ${result.relay || 'daemon'}`);
+
+                } catch (error) {
+                    console.error('Message send failed:', error);
+                    this.showSystemMessage('Message send failed - check daemon connection', 'error');
+                    
+                    // Remove the message from UI on failure
+                    const messages = document.querySelectorAll('.message-sent');
+                    if (messages.length > 0) {
+                        messages[messages.length - 1].style.opacity = '0.5';
+                        messages[messages.length - 1].title = 'Failed to send';
+                    }
+                }
+            }
+
+            addMessageToUI(message) {
+                const messagesContainer = document.getElementById('message-display');
+                
+                if (messagesContainer.querySelector('.empty-state')) {
+                    messagesContainer.innerHTML = '';
+                }
+
+                const messageElement = document.createElement('div');
+                let messageClass = 'message-item ';
+                
+                switch (message.type) {
+                    case 'sent':
+                        messageClass += 'message-sent';
+                        break;
+                    case 'system':
+                        messageClass += 'message-system';
+                        break;
+                    default:
+                        messageClass += 'message-received';
+                }
+                
+                messageElement.className = messageClass;
+
+                const timestamp = new Date(message.timestamp).toLocaleTimeString();
+                const sender = message.sender || (message.type === 'sent' ? 'YOU' : 
+                               message.from?.substring(0, 12) + '...' || 'UNKNOWN');
+
+                messageElement.innerHTML = `
+                    <div class="message-header">
+                        <span class="message-sender">${sender}</span>
+                        <span class="message-time">${timestamp}</span>
+                    </div>
+                    <div class="message-content">${message.content}</div>
+                `;
+
+                messagesContainer.appendChild(messageElement);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            addSystemMessage(message) {
+                this.addMessageToUI({
+                    type: 'system',
+                    content: message,
+                    timestamp: new Date(),
+                    sender: 'SYSTEM'
+                });
+            }
+
+            // Explorer Tab Functions
+            updateExplorerData() {
+                this.populateRecentBlocks();
+                this.updateNetworkStats();
+                
+                if (this.connected) {
+                    document.getElementById('wallet-history-section').style.display = 'block';
+                    this.populateWalletTransactions();
+                }
+            }
+
+            populateRecentBlocks() {
+                const blocksContainer = document.getElementById('recent-blocks-list');
+                const blocks = [];
+                
+                // Generate recent blocks (simulated data - replace with real API calls)
+                for (let i = 0; i < 10; i++) {
+                    blocks.push({
+                        height: this.currentBlock - i,
+                        time: new Date(Date.now() - (i * 6000)).toLocaleTimeString(),
+                        txs: Math.floor(Math.random() * 20) + 1
+                    });
+                }
+                
+                blocksContainer.innerHTML = blocks.map(block => `
+                    <div class="block-item">
+                        <span class="block-height">#${block.height.toLocaleString()}</span>
+                        <span class="block-txs">${block.txs} TXs</span>
+                        <span class="block-time">${block.time}</span>
+                    </div>
+                `).join('');
+            }
+
+            updateNetworkStats() {
+                // Update with real data from blockchain
+                document.getElementById('latest-block').textContent = this.currentBlock.toLocaleString();
+                
+                // Simulated data - replace with real API calls
+                document.getElementById('validator-count').textContent = '147';
+                document.getElementById('bonded-ratio').textContent = '68.4%';
+                document.getElementById('block-time').textContent = '6.2s';
+            }
+
+            // Staking Tab Functions
+            updateStakingData() {
+                this.populateValidators();
+                
+                if (this.connected) {
+                    document.getElementById('my-delegations-section').style.display = 'block';
+                    this.populateUserDelegations();
+                    this.updateValidatorSelect();
+                }
+            }
+
+            populateValidators() {
+                const validatorsContainer = document.getElementById('validators-list');
+                
+                validatorsContainer.innerHTML = mockValidators.map(validator => `
+                    <div class="delegation-item">
+                        <div class="validator-info">
+                            <div class="validator-name">${validator.name}</div>
+                            <div class="validator-details">
+                                Commission: ${validator.commission} | APY: ${validator.apy} | Power: ${validator.voting_power}
+                            </div>
+                        </div>
+                        <div class="stake-actions">
+                            <button class="btn-small btn-primary" style="border-color: #00ffff; color: #00ffff;">
+                                Select
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            populateUserDelegations() {
+                // Simulated user delegations
+                const delegations = [
+                    { validator: 'Observatory Node Alpha', amount: '1,250.000000', rewards: '12.450000' },
+                    { validator: 'Quantum Research Pool', amount: '800.000000', rewards: '8.120000' }
+                ];
+
+                const delegationsContainer = document.getElementById('current-delegations');
+                delegationsContainer.innerHTML = delegations.map(delegation => `
+                    <div class="delegation-item">
+                        <div class="validator-info">
+                            <div class="validator-name">${delegation.validator}</div>
+                            <div class="validator-details">Delegated: ${delegation.amount} MEDAS</div>
+                        </div>
+                        <div class="delegation-amount">
+                            <div style="color: #00ff00;">+${delegation.rewards} MEDAS</div>
+                            <div style="font-size: 10px; color: #999;">Pending Rewards</div>
+                        </div>
+                        <div class="stake-actions">
+                            <button class="btn-small" style="border-color: #ff00ff; color: #ff00ff;">
+                                Claim
+                            </button>
+                            <button class="btn-small" style="border-color: #ffaa00; color: #ffaa00;">
+                                Undelegate
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Update total rewards
+                const totalRewards = delegations.reduce((sum, d) => sum + parseFloat(d.rewards), 0);
+                document.getElementById('total-rewards').textContent = `${totalRewards.toFixed(6)} MEDAS`;
+            }
+
+            updateValidatorSelect() {
+                const select = document.getElementById('validator-select');
+                select.innerHTML = '<option>Select a validator...</option>' +
+                    mockValidators.map(v => `<option value="${v.name}">${v.name}</option>`).join('');
+            }
+
+            // Wallet Tab Functions
+            updateWalletData() {
+                if (this.connected) {
+                    document.getElementById('balance-section').style.display = 'block';
+                    document.getElementById('transaction-history-section').style.display = 'block';
+                    this.updateBalanceOverview();
+                    this.populateTransactionHistory();
+                }
+            }
+
+            updateBalanceOverview() {
+                // Simulated balance data - replace with real API calls
+                const balances = {
+                    available: '1,245.670000',
+                    delegated: '2,050.000000',
+                    rewards: '20.570000',
+                    total: '3,316.240000'
+                };
+
+                document.getElementById('available-balance').textContent = balances.available;
+                document.getElementById('delegated-balance').textContent = balances.delegated;
+                document.getElementById('rewards-balance').textContent = balances.rewards;
+                document.getElementById('total-balance').textContent = balances.total;
+            }
+
+            populateTransactionHistory() {
+                const transactionsContainer = document.getElementById('transaction-list');
+                
+                transactionsContainer.innerHTML = mockTransactions.map(tx => `
+                    <div class="tx-item tx-${tx.type}">
+                        <span class="tx-type">${tx.type.toUpperCase()}</span>
+                        <span class="tx-amount">${tx.amount} MEDAS</span>
+                        <span class="tx-time">${tx.time}</span>
+                    </div>
+                `).join('');
+            }
+
+            populateWalletTransactions() {
+                // Similar to populateTransactionHistory but for explorer tab
+                const walletContainer = document.getElementById('wallet-transactions');
+                if (walletContainer) {
+                    walletContainer.innerHTML = mockTransactions.slice(0, 5).map(tx => `
+                        <div class="tx-item tx-${tx.type}">
+                            <span class="tx-type">${tx.type.toUpperCase()}</span>
+                            <span class="tx-amount">${tx.amount} MEDAS</span>
+                            <span class="tx-time">${tx.time}</span>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            // Action Handlers
+            delegateTokens() {
+                const validator = document.getElementById('validator-select').value;
+                const amount = document.getElementById('stake-amount').value;
+                
+                if (!validator || validator === 'Select a validator...') {
+                    this.showSystemMessage('Please select a validator', 'error');
+                    return;
+                }
+                
+                if (!amount || parseFloat(amount) <= 0) {
+                    this.showSystemMessage('Please enter a valid amount', 'error');
+                    return;
+                }
+                
+                this.addSystemMessage(`Delegating ${amount} MEDAS to ${validator}`);
+                // Implement actual delegation logic here
+            }
+
+            setMaxStakeAmount() {
+                // Set maximum available balance
+                document.getElementById('stake-amount').value = '1245.670000';
+            }
+
+            setMaxSendAmount() {
+                // Set maximum available balance for sending
+                document.getElementById('send-amount').value = '1245.670000';
+            }
+
+            sendTokens() {
+                const address = document.getElementById('send-address').value;
+                const amount = document.getElementById('send-amount').value;
+                const memo = document.getElementById('send-memo').value;
+                
+                if (!address) {
+                    this.showSystemMessage('Please enter recipient address', 'error');
+                    return;
+                }
+                
+                if (!amount || parseFloat(amount) <= 0) {
+                    this.showSystemMessage('Please enter a valid amount', 'error');
+                    return;
+                }
+                
+                this.addSystemMessage(`Sending ${amount} MEDAS to ${address.substring(0, 20)}...`);
+                // Implement actual send logic here
+            }
+
+            filterTransactions(filterType) {
+                // Update filter button states
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-filter="${filterType}"]`).classList.add('active');
+                
+                // Filter transactions (implement filtering logic)
+                this.populateTransactionHistory(); // For now, just refresh
+            }
+
+            updateUIAfterConnection(balance) {
+                const walletInterface = document.getElementById('wallet-interface');
+                walletInterface.innerHTML = `
+                    <div class="wallet-display">
+                        <div class="data-field">
+                            <div class="field-label">Quantum Address</div>
+                            <div class="field-value">${this.account.address}</div>
+                        </div>
+                        <div class="data-field">
+                            <div class="field-label">MEDAS Balance</div>
+                            <div class="field-value balance-display">${balance} MEDAS</div>
+                        </div>
+                    </div>
+                    <button id="disconnect-wallet" class="terminal-button btn-danger">
+                        Disconnect Protocol
+                    </button>
+                `;
+
+                document.getElementById('disconnect-wallet').addEventListener('click', () => {
+                    this.disconnectWallet();
+                });
+
+                this.updateSystemStatus('Quantum Relay', true);
+            }
+
+            disconnectWallet() {
+                this.account = null;
+                this.connected = false;
+                
+                this.updateConnectionStatus(false);
+                this.updateConnectButton('Connect Keplr Wallet');
+                
+                const walletInterface = document.getElementById('wallet-interface');
+                walletInterface.innerHTML = `
+                    <p style="color: #999999; margin-bottom: 16px; font-family: 'Share Tech Mono', monospace; font-size: 12px;">
+                        Initialize Keplr quantum authentication protocol
+                    </p>
+                    <button id="connect-wallet" class="terminal-button btn-primary">
+                        Connect Keplr Wallet
+                    </button>
+                `;
+
+                document.getElementById('connect-wallet').addEventListener('click', () => {
+                    this.connectWallet();
+                });
+
+                document.getElementById('message-input').disabled = true;
+                document.getElementById('message-display').innerHTML = `
+                    <div class="empty-state">
+                        <h3>System Standby</h3>
+                        <div class="icon">◉</div>
+                        <p>Awaiting quantum wallet authentication...</p>
+                        <p style="font-size: 11px; margin-top: 8px;">Initialize Keplr interface to establish secure communication channel</p>
+                    </div>
+                `;
+
+                this.updateSystemStatus('Quantum Relay', false);
+                this.addSystemMessage('Quantum authentication terminated');
+            }
+
+            updateConnectionStatus(connected) {
+                const statusElement = document.getElementById('connection-status');
+                if (connected) {
+                    statusElement.className = 'connection-status status-connected';
+                    statusElement.innerHTML = `
+                        <div class="status-dot dot-connected"></div>
+                        <span>Network Active</span>
+                    `;
+                } else {
+                    statusElement.className = 'connection-status status-disconnected';
+                    statusElement.innerHTML = `
+                        <div class="status-dot dot-disconnected"></div>
+                        <span>Network Offline</span>
+                    `;
+                }
+            }
+
+            updateSystemStatus(systemName, online) {
+                const systems = document.querySelectorAll('.system-item');
+                systems.forEach(system => {
+                    const name = system.querySelector('.system-name').textContent;
+                    if (name === systemName) {
+                        const indicator = system.querySelector('.indicator-dot');
+                        const status = system.querySelector('.system-indicator span');
+                        if (online) {
+                            indicator.className = 'indicator-dot';
+                            status.textContent = 'ACTIVE';
+                            status.style.color = '#00ff00';
+                        } else {
+                            indicator.className = 'indicator-dot indicator-offline';
+                            status.textContent = 'OFFLINE';
+                            status.style.color = '#ff3030';
+                        }
+                    }
+                });
+            }
+
+            updateConnectButton(text, onClick = null, loading = false) {
+                const button = document.getElementById('connect-wallet');
+                if (button) {
+                    button.innerHTML = loading ? 
+                        `<div class="loading-spinner"></div> ${text}` : text;
+                    button.disabled = loading;
+                    
+                    if (onClick) {
+                        button.onclick = onClick;
+                    } else {
+                        button.onclick = () => this.connectWallet();
+                    }
+                }
+            }
+
+            showSystemMessage(message, type) {
+                const existingMessages = document.querySelectorAll('.error-display, .success-display');
+                existingMessages.forEach(msg => msg.remove());
+
+                const messageElement = document.createElement('div');
+                messageElement.className = type === 'error' ? 'error-display' : 'success-display';
+                messageElement.textContent = message;
+
+                const walletInterface = document.getElementById('wallet-interface');
+                walletInterface.appendChild(messageElement);
+
+                setTimeout(() => {
+                    if (messageElement.parentNode) {
+                        messageElement.remove();
+                    }
+                }, 5000);
+            }
+
+            handleAccountChange() {
+                if (this.connected) {
+                    this.showSystemMessage('Quantum signature changed - Reconnection required', 'error');
+                    this.disconnectWallet();
+                }
+            }
+        }
+
+        // Initialize the research terminal
+        document.addEventListener('DOMContentLoaded', () => {
+            new MedasResearchTerminal();
+        });
+    </script>
+</body>
+</html>
