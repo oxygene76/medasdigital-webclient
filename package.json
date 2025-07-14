@@ -1,0 +1,58 @@
+{
+“name”: “medasdigital-webclient”,
+“version”: “0.9.0”,
+“description”: “Advanced blockchain web client with Planet 9 visualization for Medas Digital”,
+“main”: “index.html”,
+“scripts”: {
+“start”: “python -m http.server 8000”,
+“dev”: “live-server –port=8000 –open=/”,
+“build”: “echo ‘No build step required - static HTML’”,
+“deploy”: “./scripts/deploy.sh”,
+“daemon”: “docker run -d –name medas-digital-daemon -p 8080:8080 medas-digital/daemon:latest”
+},
+“keywords”: [
+“blockchain”,
+“cosmos”,
+“keplr”,
+“astronomy”,
+“planet9”,
+“defi”,
+“staking”,
+“research”,
+“medas-digital”,
+“chat”,
+“real-time”
+],
+“author”: “Medas Digital Team”,
+“license”: “MIT”,
+“repository”: {
+“type”: “git”,
+“url”: “https://github.com/yourusername/medas-digital-webclient.git”
+},
+“bugs”: {
+“url”: “https://github.com/yourusername/medas-digital-webclient/issues”
+},
+“homepage”: “https://yourusername.github.io/medas-digital-webclient”,
+“devDependencies”: {
+“live-server”: “^1.2.2”
+},
+“engines”: {
+“node”: “>=16.0.0”
+},
+“config”: {
+“daemon”: {
+“urls”: [“http://localhost:8080”, “http://127.0.0.1:8080”, “http://localhost:8081”],
+“endpoints”: {
+“status”: “/api/v1/status”,
+“messages”: “/api/v1/messages”,
+“contacts”: “/api/v1/contacts”,
+“channels”: “/api/v1/channels”
+}
+},
+“blockchain”: {
+“chainId”: “medasdigital-1”,
+“rpc”: “https://rpc.medas-digital.io:26657”,
+“rest”: “https://api.medas-digital.io:1317”
+}
+}
+}
