@@ -1,0 +1,85 @@
+version: ‘3.8’
+
+services:
+
+# MedasDigital WebClient
+
+webclient:
+build: .
+container_name: medasdigital-webclient
+ports:
+- “3000:80”
+volumes:
+- ./index.html:/usr/share/nginx/html/index.html:ro
+- ./assets:/usr/share/nginx/html/assets:ro
+- ./docs:/usr/share/nginx/html/docs:ro
+depends_on:
+- daemon
+networks:
+- medas-network
+restart: unless-stopped
+healthcheck:
+test: [“CMD”, “curl”, “-f”, “http://localhost/”]
+interval: 30s
+timeout: 10s
+retries: 3
+environment:
+- NGINX_HOST=localhost
+- NGINX_PORT=80
+
+# MedasDigital Daemon (Backend)
+
+daemon:
+image: medas-digital/daemon:latest
+container_name: medasdigital-daemon
+ports:
+- “8080:8080”
+environment:
+- MEDAS_RPC_URL=https://rpc.medas-digital.io:26657
+- MEDAS_API_URL=https://api.medas-digital.io:1317
+- DAEMON_PORT=8080
+- CHAIN_ID=medasdigital-2
+- LOG_LEVEL=info
+- CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+volumes:
+- daemon-data:/data
+- daemon-logs:/logs
+networks:
+- medas-network
+restart: unless-stopped
+healthcheck:
+test: [“CMD”, “curl”, “-f”, “http://localhost:8080/api/v1/status”]
+interval: 30s
+timeout: 10s
+retries: 3
+
+# Optional: Reverse Proxy for production
+
+proxy:
+image: nginx:alpine
+container_name: medasdigital-proxy
+ports:
+- “80:80”
+- “443:443”
+volumes:
+- ./nginx.conf:/etc/nginx/nginx.conf:ro
+- ./ssl:/etc/nginx/ssl:ro
+depends_on:
+- webclient
+- daemon
+networks:
+- medas-network
+restart: unless-stopped
+profiles:
+- production
+
+volumes:
+daemon-data:
+name: medasdigital-daemon-data
+daemon-logs:
+name: medasdigital-daemon-logs
+
+networks:
+medas-network:
+name: medasdigital-network
+driver: bridge
