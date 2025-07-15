@@ -1,6 +1,9 @@
-/* MedasDigital WebClient - Mobile CSS für IHRE ALTE HTML-Struktur + Wallet Header */
+/* MedasDigital WebClient - Complete Mobile Responsive Styles - FINAL VERSION + WALLET HEADER */
 
 /* Mobile Viewport Meta Setup */
+/* Required in HTML head: <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> */
+
+/* Mobile Base Styles */
 @media only screen and (max-width: 768px) {
     /* Prevent zoom on input focus */
     input, textarea, select {
@@ -13,7 +16,7 @@
         -webkit-overflow-scrolling: touch;
         -webkit-text-size-adjust: none;
         -webkit-tap-highlight-color: transparent;
-        font-size: 14px;
+        font-size: 14px; /* Basis-Schriftgröße erhöhen */
     }
     
     /* Container adjustments - ANTI-STAUCHUNG FIX */
@@ -27,36 +30,23 @@
     }
     
     /* =================================
-       HEADER LAYOUT (ALTE STRUKTUR)
+       HEADER LAYOUT - NEUGESTALTUNG + WALLET
+       Solar System links unten, Status rechts unten, Wallet Header
        ================================= */
     
+    /* Header Container */
     .header {
         padding: 16px 12px;
-        min-height: 160px;
+        min-height: 160px; /* Mehr Platz für neue Layout */
         margin-bottom: 0;
         position: relative;
         overflow: visible;
         display: flex;
         flex-direction: column;
-        flex-shrink: 0;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 12px;
-        border: 1px solid rgba(0, 255, 255, 0.3);
+        flex-shrink: 0; /* Verhindert Stauchung */
     }
     
-    /* Solar System LINKS UNTEN positioniert */
-    .solar-system-bg {
-        position: absolute;
-        bottom: 10px;
-        left: 10px;
-        width: 100px;
-        height: 100px;
-        opacity: 0.7;
-        z-index: 1;
-        pointer-events: none;
-    }
-    
-    /* Terminal Header Grid Layout (ALTE STRUKTUR) */
+    /* Terminal Header Grid Layout */
     .terminal-header {
         display: grid;
         grid-template-columns: 1fr;
@@ -68,21 +58,18 @@
         z-index: 2;
     }
     
-    /* =================================
-       WALLET HEADER INTEGRATION (ALTE STRUKTUR)
-       ================================= */
-    
-    /* TOP ROW: Logo und Wallet */
+    /* TOP ROW: Logo und Titel zentriert + WALLET */
     .system-info {
         grid-row: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 8px;
-        padding: 8px;
+        padding: 8px 0;
         background: rgba(0, 0, 0, 0.1);
         backdrop-filter: blur(2px);
         border-radius: 8px;
+        margin-bottom: 8px;
     }
     
     .logo-section {
@@ -103,21 +90,25 @@
     }
     
     .main-title {
-        font-size: 16px;
-        margin: 0;
+        font-size: 18px;
         line-height: 1.3;
-        color: #00ffff;
-        text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+        margin-bottom: 4px;
+        text-shadow: 
+            0 0 4px rgba(0, 0, 0, 0.5),
+            0 0 8px rgba(0, 255, 255, 0.3);
     }
     
     .sub-title {
-        font-size: 11px;
+        font-size: 12px;
         opacity: 0.8;
-        color: #00ff7f;
-        margin-top: 2px;
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
     }
     
-    /* Wallet Section - HINZUFÜGEN nach logo-section */
+    /* =================================
+       WALLET HEADER INTEGRATION - NEU
+       ================================= */
+    
+    /* Wallet Section */
     .wallet-section {
         width: 100%;
         max-width: 300px;
@@ -214,17 +205,21 @@
         animation: pulse 1.5s infinite;
     }
     
-    /* MIDDLE ROW: Freier Raum */
+    /* =================================
+       FORTSETZUNG HEADER LAYOUT
+       ================================= */
+    
+    /* MIDDLE ROW: Freier Raum für Solar System */
     .header-middle {
         grid-row: 2;
         position: relative;
-        min-height: 40px;
+        min-height: 60px;
         display: flex;
         align-items: center;
-        justify-content: center;
+        justify-content: space-between;
     }
     
-    /* BOTTOM ROW: Status-Informationen */
+    /* BOTTOM ROW: Status-Informationen rechts */
     .status-display {
         grid-row: 3;
         display: flex;
@@ -235,8 +230,12 @@
         backdrop-filter: blur(2px);
         border-radius: 8px;
         padding: 8px 12px;
+        margin-top: 8px;
+        position: relative;
+        z-index: 3;
     }
     
+    /* Status Items horizontal anordnen */
     .status-row {
         display: flex;
         gap: 12px;
@@ -246,38 +245,56 @@
         flex-wrap: wrap;
     }
     
+    /* Network Status */
+    .connection-status {
+        padding: 4px 8px;
+        font-size: 10px;
+        border-radius: 4px;
+        white-space: nowrap;
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+        flex-shrink: 0;
+    }
+    
+    /* Blockchain Status */
+    #blockchain-status {
+        padding: 4px 8px;
+        font-size: 10px;
+        border-radius: 4px;
+        white-space: nowrap;
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+        flex-shrink: 0;
+    }
+    
+    /* Timestamp rechts unten */
+    .timestamp {
+        font-size: 9px;
+        padding: 3px 6px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+        align-self: flex-end;
+        margin-top: 4px;
+    }
+    
+    /* Solar System LINKS UNTEN positioniert */
+    .solar-system-bg {
+        position: absolute;
+        bottom: 10px; /* Unten statt center */
+        left: 10px;   /* Links statt center */
+        transform: rotate(180deg); /* Keine Zentrierung */
+        width: 100px; /* Kleiner */
+        height: 100px;
+        opacity: 0.7;
+        z-index: 1; /* Hinter allem anderen */
+        pointer-events: none;
+    }
+    
+    /* Status-Elemente besser strukturiert */
     .network-info {
         display: flex;
         gap: 8px;
         align-items: center;
         flex-wrap: wrap;
-    }
-    
-    .connection-status {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        padding: 4px 8px;
-        font-size: 10px;
-        border-radius: 4px;
-        background: rgba(0, 0, 0, 0.2);
-    }
-    
-    .status-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #ff3030;
-        box-shadow: 0 0 8px #ff3030;
-    }
-    
-    .dot-disconnected {
-        background: #ff3030;
-        box-shadow: 0 0 8px #ff3030;
-    }
-    
-    .status-disconnected {
-        color: #ff6b6b;
     }
     
     .block-info {
@@ -291,79 +308,62 @@
     .block-height {
         color: #00ffff;
         font-weight: bold;
-        font-family: 'Share Tech Mono', monospace;
     }
     
     .network-latency {
         color: #00ff00;
         font-family: 'Share Tech Mono', monospace;
     }
-    
-    .timestamp {
-        font-size: 9px;
-        padding: 3px 6px;
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 3px;
-        color: #00ffff;
-        font-family: 'Share Tech Mono', monospace;
-        align-self: flex-end;
-        margin-top: 4px;
-    }
-    
-    /* =================================
-       MAIN INTERFACE (ALTE STRUKTUR)
-       ================================= */
-    
+}
+
+/* Main Interface Mobile Layout - ANTI-STAUCHUNG */
+@media only screen and (max-width: 768px) {
     .main-interface {
         flex: 1;
         display: flex;
         flex-direction: column;
         gap: 16px;
-        min-height: 0;
+        min-height: 0; /* Wichtig für Flexbox */
     }
     
-    /* Control Panel wird BOTTOM SHEET */
+    /* Research Interface wird HAUPTBEREICH */
+    .communication-display {
+        order: 1; /* Erste Priorität */
+        flex: 1;
+        min-height: 500px; /* Mindesthöhe für Lesbarkeit */
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Control Panel wird SIDEBAR → BOTTOM SHEET */
     .control-panel {
-        order: 2;
+        order: 2; /* Nach Interface */
         height: auto;
         max-height: none;
         flex-shrink: 0;
-        margin-bottom: 20px;
+        margin-bottom: 20px; /* Platz am Ende */
         background: linear-gradient(135deg, rgba(0, 100, 150, 0.1) 0%, rgba(0, 50, 100, 0.1) 100%);
         border: 2px solid #0099ff;
         border-radius: 12px;
         padding: 20px;
     }
-    
-    /* Communication Display wird HAUPTBEREICH */
-    .communication-display {
-        order: 1;
-        flex: 1;
-        min-height: 500px;
-        display: flex;
-        flex-direction: column;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 12px;
-        border: 1px solid rgba(0, 255, 255, 0.3);
-        overflow: hidden;
-    }
-    
-    /* =================================
-       TAB NAVIGATION (ALTE STRUKTUR)
-       ================================= */
-    
+}
+
+/* Mobile Tab Navigation - ERWEITERT */
+@media only screen and (max-width: 768px) {
     .terminal-tabs {
-        min-height: 50px;
+        min-height: 50px; /* Größere Touch-Targets */
         padding: 0 8px;
-        background: rgba(0, 0, 0, 0.5);
-        border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+        border-radius: 8px 8px 0 0;
         flex-shrink: 0;
         overflow-x: auto;
         overflow-y: hidden;
         scrollbar-width: none;
         -ms-overflow-style: none;
+        position: sticky;
+        top: 0;
+        z-index: 100;
         display: flex;
-        align-items: center;
     }
     
     .terminal-tabs::-webkit-scrollbar {
@@ -371,144 +371,125 @@
     }
     
     .tab-button {
-        padding: 12px 16px;
-        font-size: 12px;
+        padding: 12px 16px; /* Mehr Padding */
+        font-size: 12px; /* Besser lesbar */
         min-height: 50px;
-        min-width: 90px;
+        min-width: 90px; /* Mehr Platz */
         gap: 6px;
         flex-shrink: 0;
         white-space: nowrap;
-        border: none;
-        background: transparent;
-        color: rgba(255, 255, 255, 0.6);
-        font-family: 'Share Tech Mono', monospace;
-        cursor: pointer;
+        border-radius: 6px 6px 0 0;
+        margin: 0 2px;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.2s ease;
-        border-bottom: 2px solid transparent;
-        margin: 0 2px;
-    }
-    
-    .tab-button.active {
-        color: #00ffff;
-        border-bottom-color: #00ffff;
-        background: rgba(0, 255, 255, 0.1);
-    }
-    
-    .tab-button:hover {
-        color: #00ff7f;
-        background: rgba(0, 255, 127, 0.1);
+        position: relative;
+        overflow: hidden;
     }
     
     .tab-button:active {
+        background: rgba(255, 255, 255, 0.1);
         transform: scale(0.95);
     }
     
-    /* =================================
-       TAB CONTENT (ALTE STRUKTUR)
-       ================================= */
-    
+    /* Tab Icons größer und sichtbarer */
+    .tab-button::before {
+        font-size: 16px;
+        margin-right: 4px;
+    }
+}
+
+/* Mobile Tab Content - OPTIMIERT */
+@media only screen and (max-width: 768px) {
     .tab-content {
-        display: none;
-        flex-direction: column;
         flex: 1;
         padding: 16px;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        min-height: 400px; /* Minimum für Inhalt */
+        display: none;
     }
     
     .tab-content.active {
         display: flex;
+        flex-direction: column;
     }
     
     .content-area {
-        flex: 1;
+        padding: 16px;
         overflow-y: auto;
+        height: auto;
+        min-height: 400px;
         -webkit-overflow-scrolling: touch;
     }
     
-    /* =================================
-       COMMUNICATION TAB (ALTE STRUKTUR)
-       ================================= */
+    .content-area::-webkit-scrollbar {
+        width: 4px;
+    }
     
+    .content-area::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+    }
+    
+    .content-area::-webkit-scrollbar-thumb {
+        background: rgba(0, 204, 102, 0.5);
+        border-radius: 2px;
+    }
+}
+
+/* Mobile Communication Display - ERWEITERT */
+@media only screen and (max-width: 768px) {
     .comm-header {
         padding: 16px 20px;
         flex-shrink: 0;
         border-bottom: 2px solid #00cc66;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 8px 8px 0 0;
-        margin: -16px -16px 16px -16px;
     }
     
     .comm-title {
-        font-size: 16px;
+        font-size: 16px; /* Größer */
         margin-bottom: 4px;
-        color: #00cc66;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 1px;
     }
     
     .comm-subtitle {
-        font-size: 12px;
-        color: #999;
-        font-style: italic;
+        font-size: 12px; /* Lesbar */
     }
     
+    /* Message Display größer */
     .message-display {
         flex: 1;
         padding: 20px;
-        min-height: 300px;
+        min-height: 300px; /* Ausreichend Platz */
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        background: rgba(0, 0, 0, 0.5);
-        border-radius: 8px;
-        border: 1px solid rgba(0, 255, 255, 0.2);
-        margin-bottom: 16px;
     }
     
-    .empty-state {
-        text-align: center;
-        color: #666;
-        font-family: 'Share Tech Mono', monospace;
-        padding: 60px 20px;
+    .message-display::-webkit-scrollbar {
+        width: 4px;
     }
     
-    .empty-state h3 {
-        font-size: 16px;
-        margin-bottom: 12px;
-        color: #00cc66;
-        text-transform: uppercase;
-        letter-spacing: 2px;
+    .message-display::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
     }
     
-    .empty-state p {
-        font-size: 13px;
-        line-height: 1.4;
-        margin-bottom: 8px;
+    .message-display::-webkit-scrollbar-thumb {
+        background: rgba(0, 204, 102, 0.5);
+        border-radius: 2px;
     }
     
-    .empty-state .icon {
-        font-size: 48px;
-        margin: 20px 0;
-        color: #00cc66;
-        animation: pulse 3s infinite;
-    }
-    
+    /* Input Bereich prominent */
     .input-module {
         padding: 16px 20px;
         border-top: 2px solid #00cc66;
         background: rgba(0, 0, 0, 0.8);
         flex-shrink: 0;
+        position: sticky;
+        bottom: 0;
         backdrop-filter: blur(10px);
-        border-radius: 0 0 8px 8px;
-        margin: 0 -16px -16px -16px;
     }
     
     .terminal-input {
-        padding: 14px 16px;
+        padding: 14px 16px; /* Mehr Padding */
         font-size: 16px;
         min-height: 50px;
         border-radius: 8px;
@@ -528,11 +509,10 @@
         color: #00ffff;
         outline: none;
     }
-    
-    /* =================================
-       EXPLORER SECTIONS (ALTE STRUKTUR)
-       ================================= */
-    
+}
+
+/* Mobile Explorer Sections - ERWEITERT */
+@media only screen and (max-width: 768px) {
     .explorer-section {
         margin-bottom: 20px;
         padding: 16px;
@@ -542,11 +522,27 @@
         position: relative;
     }
     
+    .explorer-section::before {
+        position: absolute;
+        top: -8px;
+        left: 12px;
+        background: #0a0a0a;
+        padding: 0 8px;
+        font-size: 10px;
+        color: #00cc66;
+        letter-spacing: 1px;
+    }
+    
+    .network-overview::before { content: 'NETWORK OVERVIEW'; }
+    .recent-blocks::before { content: 'RECENT BLOCKS'; }
+    .search-section::before { content: 'BLOCKCHAIN SEARCH'; }
+    .wallet-history::before { content: 'WALLET HISTORY'; }
+    
     .stats-grid {
-        display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 12px;
         margin-bottom: 16px;
+        display: grid;
     }
     
     .stat-item {
@@ -558,7 +554,7 @@
     }
     
     .stat-value {
-        font-size: 16px;
+        font-size: 16px; /* Größer */
         margin-bottom: 4px;
         font-weight: bold;
         color: #00ffff;
@@ -570,6 +566,34 @@
         text-transform: uppercase;
         color: #999999;
         letter-spacing: 1px;
+    }
+    
+    /* Block Items lesbarer */
+    .block-item {
+        padding: 10px 12px;
+        margin: 6px 0;
+        font-size: 11px;
+        border-radius: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.3);
+        border-left: 3px solid #00cc66;
+        font-family: 'Share Tech Mono', monospace;
+    }
+    
+    .block-height {
+        font-weight: bold;
+        font-size: 12px;
+        color: #00ffff;
+    }
+    
+    .block-time {
+        color: #999999;
+    }
+    
+    .block-txs {
+        color: #ff00ff;
     }
     
     .search-input {
@@ -590,11 +614,10 @@
         outline: none;
         box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
     }
-    
-    /* =================================
-       FORMS & BUTTONS (ALTE STRUKTUR)
-       ================================= */
-    
+}
+
+/* Mobile Forms - ERWEITERT */
+@media only screen and (max-width: 768px) {
     .form-group {
         margin-bottom: 16px;
     }
@@ -609,7 +632,7 @@
         letter-spacing: 1px;
     }
     
-    .form-input {
+    .form-input, .form-select, .form-textarea {
         padding: 14px 16px;
         font-size: 16px;
         border-radius: 8px;
@@ -622,15 +645,25 @@
         font-family: 'Share Tech Mono', monospace;
     }
     
-    .form-input:focus {
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
         border-color: #00ffff;
         color: #00ffff;
         outline: none;
         box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
     }
     
+    .form-textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+}
+
+/* Mobile Buttons - ERWEITERT */
+@media only screen and (max-width: 768px) {
     .terminal-button {
-        min-height: 50px;
+        min-height: 50px; /* Größere Buttons */
         padding: 14px 20px;
         font-size: 12px;
         border-radius: 8px;
@@ -645,6 +678,8 @@
         cursor: pointer;
         text-transform: uppercase;
         letter-spacing: 1px;
+        position: relative;
+        overflow: hidden;
     }
     
     .terminal-button:active {
@@ -661,6 +696,16 @@
         box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
     }
     
+    .btn-danger {
+        border-color: #ff3030;
+        color: #ff3030;
+    }
+    
+    .btn-danger:hover {
+        background: rgba(255, 48, 48, 0.1);
+        box-shadow: 0 0 15px rgba(255, 48, 48, 0.4);
+    }
+    
     .btn-success {
         border-color: #00ff00;
         color: #00ff00;
@@ -671,10 +716,263 @@
         box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
     }
     
-    /* =================================
-       CONTROL PANEL (ALTE STRUKTUR)
-       ================================= */
+    .btn-small {
+        padding: 8px 14px;
+        font-size: 10px;
+        min-height: 36px;
+        width: auto;
+    }
+}
+
+/* Mobile Wallet and Balance Display - ERWEITERT */
+@media only screen and (max-width: 768px) {
+    .wallet-display {
+        padding: 16px;
+        margin: 16px 0;
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid #00ffff;
+        position: relative;
+    }
     
+    .wallet-display::before {
+        content: 'WALLET DATA';
+        position: absolute;
+        top: -8px;
+        left: 12px;
+        background: #0a0a0a;
+        padding: 0 8px;
+        font-size: 10px;
+        color: #00ffff;
+        letter-spacing: 1px;
+    }
+    
+    .data-field {
+        margin-bottom: 12px;
+    }
+    
+    .field-label {
+        font-size: 11px;
+        margin-bottom: 4px;
+        color: #999999;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .field-value {
+        font-size: 12px;
+        padding: 8px 10px;
+        border-radius: 4px;
+        line-height: 1.3;
+        font-family: 'Share Tech Mono', monospace;
+        color: #00ffff;
+        word-break: break-all;
+        background: rgba(0, 255, 255, 0.1);
+        border-left: 2px solid #00ffff;
+    }
+    
+    .balance-display {
+        color: #00ff00;
+        font-size: 14px;
+        font-weight: 700;
+        text-shadow: 0 0 10px #00ff00;
+    }
+    
+    .balance-overview {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+        display: grid;
+    }
+    
+    .balance-item {
+        padding: 16px 12px;
+        border-radius: 8px;
+        text-align: center;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid #00ffff;
+    }
+    
+    .balance-amount {
+        font-size: 15px;
+        margin-bottom: 4px;
+        font-weight: bold;
+        color: #00ff00;
+        font-family: 'Share Tech Mono', monospace;
+    }
+    
+    .balance-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        color: #999999;
+    }
+    
+    .send-form {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid #00cc66;
+        padding: 16px;
+        margin: 16px 0;
+        border-radius: 8px;
+    }
+    
+    .input-wrapper {
+        position: relative;
+    }
+    
+    .max-button {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #ff00ff;
+        color: #000;
+        border: none;
+        padding: 2px 6px;
+        font-size: 8px;
+        cursor: pointer;
+        font-weight: 700;
+        border-radius: 3px;
+    }
+}
+
+/* Mobile Staking Interface - ERWEITERT */
+@media only screen and (max-width: 768px) {
+    .delegation-item {
+        padding: 12px;
+        margin: 8px 0;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid #00cc66;
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .validator-info {
+        width: 100%;
+        flex: 1;
+    }
+    
+    .validator-name {
+        font-size: 12px;
+        margin-bottom: 4px;
+        color: #00ffff;
+        font-weight: 700;
+    }
+    
+    .validator-details {
+        font-size: 10px;
+        color: #999999;
+        font-family: 'Share Tech Mono', monospace;
+    }
+    
+    .delegation-amount {
+        text-align: left;
+        margin-right: 0;
+        font-size: 11px;
+        color: #00ff00;
+        font-weight: 700;
+    }
+    
+    .stake-actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 6px;
+        display: flex;
+    }
+    
+    .amount-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #00cc66;
+        background: rgba(0, 0, 0, 0.5);
+        color: #00cc66;
+        font-family: 'Share Tech Mono', monospace;
+        margin: 8px 0;
+        border-radius: 6px;
+        font-size: 16px;
+    }
+    
+    .amount-input:focus {
+        border-color: #00ffff;
+        color: #00ffff;
+        outline: none;
+    }
+}
+
+/* Mobile Transaction History - ERWEITERT */
+@media only screen and (max-width: 768px) {
+    .tx-filter {
+        gap: 6px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+        display: flex;
+    }
+    
+    .filter-btn {
+        padding: 6px 10px;
+        font-size: 9px;
+        border-radius: 4px;
+        min-height: 32px;
+        border: 1px solid #666;
+        background: transparent;
+        color: #666;
+        cursor: pointer;
+        text-transform: uppercase;
+    }
+    
+    .filter-btn.active {
+        border-color: #00ffff;
+        color: #00ffff;
+    }
+    
+    .tx-item {
+        padding: 12px 14px;
+        margin: 8px 0;
+        border-radius: 6px;
+        font-size: 11px;
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 4px;
+        background: rgba(0, 0, 0, 0.3);
+        border-left: 3px solid;
+        font-family: 'Share Tech Mono', monospace;
+    }
+    
+    .tx-sent { border-left-color: #ff3030; }
+    .tx-received { border-left-color: #00ff00; }
+    .tx-delegate { border-left-color: #ff00ff; }
+    .tx-undelegate { border-left-color: #ffaa00; }
+    
+    .tx-type {
+        font-weight: bold;
+        min-width: 80px;
+        font-size: 11px;
+        color: #00ffff;
+    }
+    
+    .tx-amount {
+        font-size: 12px;
+        font-weight: bold;
+        color: #00ff00;
+        margin: 0 12px;
+    }
+    
+    .tx-time {
+        font-size: 9px;
+        opacity: 0.7;
+        color: #999999;
+        width: 100%;
+        margin-top: 2px;
+    }
+}
+
+/* Mobile System Status - ERWEITERT */
+@media only screen and (max-width: 768px) {
     .section-header {
         font-size: 14px;
         margin-bottom: 16px;
@@ -689,10 +987,6 @@
     
     .auth-module {
         margin-bottom: 24px;
-        padding: 16px;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 8px;
-        border: 1px solid rgba(255, 0, 255, 0.3);
     }
     
     .module-title {
@@ -703,14 +997,20 @@
         color: #ff00ff;
         text-transform: uppercase;
         letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .module-title::before {
+        content: '▶';
+        color: #ff00ff;
+        font-size: 12px;
     }
     
     .systems-status {
         margin-top: 20px;
-        padding: 16px;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 8px;
-        border: 1px solid rgba(0, 255, 255, 0.3);
     }
     
     .system-item {
@@ -750,63 +1050,137 @@
         box-shadow: 0 0 8px #ff3030;
     }
     
-    /* =================================
-       BALANCE & TRANSACTION SECTIONS
-       ================================= */
-    
-    .balance-overview {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-        margin-bottom: 20px;
-    }
-    
-    .balance-item {
-        padding: 16px 12px;
-        border-radius: 8px;
-        text-align: center;
-        background: rgba(0, 0, 0, 0.4);
-        border: 1px solid #00ffff;
-    }
-    
-    .balance-amount {
-        font-size: 15px;
-        margin-bottom: 4px;
-        font-weight: bold;
-        color: #00ff00;
-        font-family: 'Share Tech Mono', monospace;
-    }
-    
-    .balance-label {
+    .system-indicator span {
         font-size: 10px;
-        text-transform: uppercase;
-        color: #999999;
     }
-    
-    .send-form {
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid #00cc66;
-        padding: 16px;
+}
+
+/* Mobile Messages - ERWEITERT */
+@media only screen and (max-width: 768px) {
+    .message-item {
+        margin-bottom: 16px;
+        padding: 14px 16px;
         border-radius: 8px;
-    }
-    
-    .input-wrapper {
+        max-width: 90%;
+        border-left: 3px solid;
+        background: rgba(0, 0, 0, 0.3);
         position: relative;
     }
     
-    .max-button {
-        position: absolute;
-        right: 8px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: #ff00ff;
-        color: #000;
-        border: none;
-        padding: 2px 6px;
-        font-size: 8px;
-        cursor: pointer;
-        font-weight: 700;
-        border-radius: 3px;
+    .message-sent {
+        margin-left: 10%;
+        margin-right: 0;
+        background: rgba(0, 255, 255, 0.05);
+        border-left-color: #00ffff;
+    }
+    
+    .message-received {
+        margin-right: 10%;
+        margin-left: 0;
+        background: rgba(255, 0, 255, 0.05);
+        border-left-color: #ff00ff;
+    }
+    
+    .message-system {
+        border-left-color: #ffaa00;
+        background: rgba(255, 170, 0, 0.05);
+    }
+    
+    .message-header {
+        margin-bottom: 6px;
+        font-size: 11px;
+        flex-wrap: wrap;
+        gap: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-family: 'Share Tech Mono', monospace;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .message-sender {
+        font-size: 10px;
+        color: #cccccc;
+    }
+    
+    .message-time {
+        font-size: 9px;
+        color: #666666;
+    }
+    
+    .message-content {
+        font-size: 13px;
+        line-height: 1.5;
+        word-break: break-word;
+        color: #ffffff;
+        font-family: 'Share Tech Mono', monospace;
+        white-space: pre-wrap;
+    }
+    
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+        color: #666666;
+        font-family: 'Share Tech Mono', monospace;
+    }
+    
+    .empty-state h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+        color: #00cc66;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    
+    .empty-state p {
+        font-size: 13px;
+        line-height: 1.4;
+        margin-bottom: 8px;
+    }
+    
+    .empty-state .icon {
+        font-size: 48px;
+        margin: 20px 0;
+        color: #00cc66;
+        animation: pulse 3s infinite;
+    }
+}
+
+/* Error and Success States */
+@media only screen and (max-width: 768px) {
+    .error-display {
+        background: rgba(255, 48, 48, 0.1);
+        border: 1px solid #ff3030;
+        color: #ff3030;
+        padding: 12px 16px;
+        margin: 8px 0;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 12px;
+        border-left: 4px solid #ff3030;
+        border-radius: 6px;
+    }
+    
+    .success-display {
+        background: rgba(0, 255, 0, 0.1);
+        border: 1px solid #00ff00;
+        color: #00ff00;
+        padding: 12px 16px;
+        margin: 8px 0;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 12px;
+        border-left: 4px solid #00ff00;
+        border-radius: 6px;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        border-top: 2px solid #00ffff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
     }
 }
 
@@ -817,12 +1191,17 @@
         padding: 20px 16px;
     }
     
+    .terminal-header {
+        min-height: 160px;
+        gap: 16px;
+    }
+    
     .main-title {
-        font-size: 18px;
+        font-size: 20px;
     }
     
     .sub-title {
-        font-size: 12px;
+        font-size: 13px;
     }
     
     .logo-icon {
@@ -837,13 +1216,37 @@
         left: 15px;
     }
     
-    .wallet-display {
+    .connection-status,
+    #blockchain-status {
+        font-size: 11px;
         padding: 6px 10px;
+    }
+    
+    .timestamp {
+        font-size: 10px;
     }
     
     .stats-grid,
     .balance-overview {
         grid-template-columns: repeat(2, 1fr);
+    }
+    
+    /* Wallet Header für Tablets */
+    .wallet-display {
+        padding: 6px 10px;
+    }
+    
+    .wallet-status {
+        font-size: 10px;
+    }
+    
+    .address-text {
+        font-size: 9px;
+    }
+    
+    .copy-btn {
+        font-size: 10px;
+        padding: 1px 3px;
     }
 }
 
@@ -858,12 +1261,17 @@
         padding: 12px 8px;
     }
     
+    .terminal-header {
+        min-height: 120px;
+        gap: 8px;
+    }
+    
     .main-title {
-        font-size: 14px;
+        font-size: 16px;
     }
     
     .sub-title {
-        font-size: 10px;
+        font-size: 11px;
     }
     
     .logo-icon {
@@ -878,38 +1286,104 @@
         left: 8px;
     }
     
-    .wallet-display {
-        padding: 5px 8px;
+    .status-display {
+        padding: 6px 8px;
     }
     
+    .connection-status,
+    #blockchain-status {
+        font-size: 9px;
+        padding: 3px 6px;
+    }
+    
+    .timestamp {
+        font-size: 8px;
+    }
+    
+    .tab-button {
+        min-width: 70px;
+        padding: 10px 12px;
+        font-size: 11px;
+    }
+    
+    .stats-grid,
+    .balance-overview {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .control-panel,
+    .tab-content {
+        padding: 12px;
+    }
+    
+    /* Responsive Status Layout */
+    .status-row {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+    }
+    
+    .network-info {
+        align-self: stretch;
+        justify-content: space-between;
+    }
+    
+    /* Wallet für sehr kleine Phones */
     .logo-section {
         flex-direction: column;
         text-align: center;
         gap: 5px;
+        margin-bottom: 5px;
     }
     
     .wallet-section {
         max-width: 100%;
     }
     
-    .stats-grid,
-    .balance-overview {
-        grid-template-columns: 1fr;
+    .wallet-display {
+        padding: 5px 8px;
+    }
+    
+    .wallet-status {
+        font-size: 9px;
+    }
+    
+    .status-icon {
+        font-size: 11px;
+    }
+    
+    .wallet-address {
+        font-size: 8px;
+    }
+    
+    .copy-btn {
+        font-size: 9px;
+        padding: 1px 2px;
     }
 }
 
-/* Landscape Mode */
-@media only screen and (max-width: 768px) and (orientation: landscape) {
+/* Landscape Mode (Phone horizontal) */
+@media only screen and (max-height: 500px) and (orientation: landscape) {
     .header {
         min-height: 120px;
-        padding: 8px 12px;
+        padding: 12px 16px;
+    }
+    
+    .terminal-header {
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto;
+        min-height: 100px;
+        gap: 8px;
     }
     
     .system-info {
+        grid-column: 1;
+        grid-row: 1;
         flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        padding: 5px 10px;
+        justify-content: flex-start;
+        margin-bottom: 0;
+        gap: 12px;
     }
     
     .logo-section {
@@ -927,11 +1401,275 @@
         padding: 4px 8px;
     }
     
+    .status-display {
+        grid-column: 2;
+        grid-row: 1 / 3;
+        margin-top: 0;
+        align-self: stretch;
+        justify-content: center;
+        min-width: 200px;
+    }
+    
     .solar-system-bg {
-        width: 60px;
-        height: 60px;
+        width: 70px;
+        height: 70px;
         bottom: 8px;
         left: 8px;
+        opacity: 0.5;
+    }
+    
+    .status-row {
+        flex-direction: column;
+        align-items: flex-end;
+    }
+    
+    .main-interface {
+        flex-direction: row;
+        gap: 16px;
+        height: calc(100vh - 140px);
+    }
+    
+    .communication-display {
+        flex: 2;
+        min-height: 350px;
+    }
+    
+    .control-panel {
+        flex: 1;
+        max-width: 300px;
+    }
+    
+    .tab-button {
+        min-height: 36px;
+        padding: 6px 10px;
+    }
+    
+    .message-display {
+        max-height: calc(100vh - 200px);
+    }
+}
+
+/* iOS Specific Adjustments */
+@supports (-webkit-touch-callout: none) {
+    .container {
+        height: -webkit-fill-available;
+    }
+    
+    .input-module {
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    }
+    
+    .terminal-input,
+    .form-input,
+    .search-input {
+        -webkit-appearance: none;
+        border-radius: 8px;
+    }
+    
+    /* Disable iOS zoom on double tap */
+    * {
+        touch-action: manipulation;
+    }
+}
+
+/* Android Specific Adjustments */
+@media screen and (-webkit-min-device-pixel-ratio: 0) and (min-resolution: .001dpcm) {
+    .terminal-input,
+    .form-input,
+    .search-input {
+        font-size: 16px;
+    }
+}
+
+/* High DPI Displays */
+@media only screen and (-webkit-min-device-pixel-ratio: 2), 
+       only screen and (min-resolution: 192dpi),
+       only screen and (min-resolution: 2dppx) {
+    .indicator-dot,
+    .solar-system-bg svg {
+        transform: translateZ(0);
+        backface-visibility: hidden;
+    }
+    
+    .logo-icon svg,
+    .solar-system-bg svg {
+        shape-rendering: geometricPrecision;
+    }
+}
+
+/* Dark Mode Mobile Adjustments */
+@media (prefers-color-scheme: dark) and (max-width: 768px) {
+    .system-info,
+    .status-display {
+        background: rgba(26, 26, 46, 0.15);
+        border: 1px solid rgba(0, 255, 255, 0.1);
+    }
+    
+    .solar-system-bg {
+        opacity: 0.5;
+    }
+    
+    .terminal-tabs {
+        background: rgba(26, 26, 26, 0.98);
+        backdrop-filter: blur(20px);
+    }
+    
+    .input-module {
+        background: rgba(26, 26, 26, 0.98);
+        backdrop-filter: blur(20px);
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) and (max-width: 768px) {
+    .system-info,
+    .status-display {
+        border: 2px solid #00ffff;
+        background: rgba(0, 0, 0, 0.3);
+    }
+    
+    .connection-status,
+    #blockchain-status {
+        border-width: 2px;
+    }
+    
+    .terminal-button {
+        border-width: 2px;
+    }
+    
+    .tab-button.active {
+        border-bottom-width: 3px;
+    }
+    
+    .main-title,
+    .sub-title {
+        text-shadow: 
+            0 0 2px rgba(0, 0, 0, 1),
+            0 0 4px rgba(0, 255, 255, 0.8);
+    }
+    
+    .wallet-display {
+        border-width: 2px;
+    }
+    
+    .copy-btn {
+        border: 1px solid #00ff7f;
+    }
+}
+
+/* Accessibility Improvements for Mobile */
+@media only screen and (max-width: 768px) {
+    /* Focus indicators */
+    .tab-button:focus,
+    .terminal-button:focus,
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus,
+    .search-input:focus,
+    .copy-btn:focus,
+    .address-text:focus {
+        outline: 2px solid #00ffff;
+        outline-offset: 2px;
+    }
+}
+
+/* Animation Performance Optimization */
+@media only screen and (max-width: 768px) {
+    /* Reduce animation complexity on mobile */
+    .solar-system-bg circle[r="2.0"] {
+        animation-duration: 8s;
+    }
+    
+    .solar-system-bg circle[cx="104"] {
+        animation-duration: 16s;
+    }
+    
+    .solar-system-bg circle[cx="105.5"] {
+        animation-duration: 24s;
+    }
+    
+    /* Hardware acceleration for smooth animations */
+    .tab-button,
+    .terminal-button,
+    .tab-content,
+    .solar-system-bg *,
+    .wallet-display,
+    .copy-btn {
+        will-change: transform;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+    }
+}
+
+/* Reduced Motion for Mobile */
+@media (prefers-reduced-motion: reduce) and (max-width: 768px) {
+    .solar-system-bg * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+    
+    .tab-button:active,
+    .terminal-button:active,
+    .copy-btn:active {
+        transform: none;
+    }
+    
+    * {
+        transition-duration: 0.01ms !important;
+    }
+    
+    .indicator-dot {
+        animation: none;
+    }
+    
+    .wallet-display.connecting .status-icon {
+        animation: none;
+    }
+    
+    .copy-success {
+        animation: none;
+    }
+}
+
+/* Utility Classes for Mobile */
+@media only screen and (max-width: 768px) {
+    .mobile-only { display: block !important; }
+    .desktop-only { display: none !important; }
+    .mobile-hidden { display: none !important; }
+    
+    .mobile-full-width { width: 100% !important; }
+    .mobile-text-center { text-align: center !important; }
+    .mobile-text-small { font-size: 10px !important; }
+    .mobile-text-large { font-size: 14px !important; }
+    
+    .mobile-p-1 { padding: 4px !important; }
+    .mobile-p-2 { padding: 8px !important; }
+    .mobile-p-3 { padding: 12px !important; }
+    
+    .mobile-m-1 { margin: 4px !important; }
+    .mobile-m-2 { margin: 8px !important; }
+    .mobile-m-3 { margin: 12px !important; }
+    
+    .mobile-flex-col { flex-direction: column !important; }
+    .mobile-flex-row { flex-direction: row !important; }
+    .mobile-justify-center { justify-content: center !important; }
+    .mobile-items-center { align-items: center !important; }
+    
+    .mobile-gap-1 { gap: 4px !important; }
+    .mobile-gap-2 { gap: 8px !important; }
+    .mobile-gap-3 { gap: 12px !important; }
+}
+
+/* PWA Support */
+@media only screen and (max-width: 768px) {
+    .pwa-status-bar {
+        height: env(safe-area-inset-top);
+        background: linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(255, 0, 255, 0.1) 100%);
+    }
+    
+    .pwa-home-indicator {
+        height: env(safe-area-inset-bottom);
+        background: linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(255, 0, 255, 0.1) 100%);
     }
 }
 
@@ -940,6 +1678,7 @@
     animation: copySuccess 0.6s ease;
 }
 
+/* CSS Animations */
 @keyframes copySuccess {
     0% { 
         background: rgba(0, 255, 127, 0.1);
@@ -960,27 +1699,7 @@
     50% { opacity: 0.5; }
 }
 
-/* Accessibility */
-@media only screen and (max-width: 768px) {
-    .tab-button:focus,
-    .copy-btn:focus,
-    .address-text:focus,
-    input:focus,
-    button:focus {
-        outline: 2px solid #00ffff;
-        outline-offset: 2px;
-    }
-    
-    @media (prefers-reduced-motion: reduce) {
-        .wallet-display.connecting .status-icon,
-        .indicator-dot,
-        .copy-success,
-        .empty-state .icon {
-            animation: none;
-        }
-        
-        * {
-            transition-duration: 0.01ms !important;
-        }
-    }
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
