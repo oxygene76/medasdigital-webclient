@@ -59,7 +59,7 @@
 ```bash
 # Clone repository
 git clone https://github.com/yourusername/medasdigital-webclient.git
-cd medas-digital-webclient
+cd medasdigital-webclient
 
 # Start development server
 python -m http.server 8000
