@@ -203,15 +203,22 @@ class UIManager {
         const blockchainStatus = document.getElementById('blockchain-status');
         const blockchainIndicator = document.getElementById('blockchain-indicator');
         const blockchainStatusText = document.getElementById('blockchain-status-text');
-        const blockHeightElement = document.getElementById('block-height');
+        const blockHeightStatusElement = document.getElementById('block-height-status');
         
         if (online) {
-            blockchainStatus.className = 'connection-status status-connected';
-            blockchainStatus.innerHTML = `
-                <div class="status-dot dot-connected"></div>
-                <span>Block: ${currentBlock.toLocaleString()}</span>
-            `;
+            // HAUPTFIX: blockchain-status Element direkt updaten
+            if (blockchainStatus) {
+                blockchainStatus.className = 'connection-status status-connected';
+                blockchainStatus.innerHTML = `
+                    <div class="status-dot dot-connected"></div>
+                    <span>Block: #${currentBlock.toLocaleString()}</span>
+                `;
+                console.log('✅ Updated blockchain-status with block:', currentBlock);
+            } else {
+                console.error('❌ blockchain-status element not found!');
+            }
             
+            // System Status Panel Updates (falls vorhanden)
             if (blockchainIndicator) {
                 blockchainIndicator.className = 'indicator-dot';
             }
@@ -219,16 +226,20 @@ class UIManager {
                 blockchainStatusText.textContent = 'SYNCED';
                 blockchainStatusText.style.color = '#00ff00';
             }
-            if (blockHeightElement) {
-                blockHeightElement.textContent = currentBlock.toLocaleString();
-                blockHeightElement.style.color = '#00ff00';
+            if (blockHeightStatusElement) {
+                blockHeightStatusElement.textContent = `#${currentBlock.toLocaleString()}`;
+                blockHeightStatusElement.style.color = '#00ff00';
             }
         } else {
-            blockchainStatus.className = 'connection-status status-disconnected';
-            blockchainStatus.innerHTML = `
-                <div class="status-dot dot-disconnected"></div>
-                <span>Block: ---</span>
-            `;
+            // Offline state
+            if (blockchainStatus) {
+                blockchainStatus.className = 'connection-status status-disconnected';
+                blockchainStatus.innerHTML = `
+                    <div class="status-dot dot-disconnected"></div>
+                    <span>Block: ---</span>
+                `;
+                console.log('✅ Updated blockchain-status to offline');
+            }
             
             if (blockchainIndicator) {
                 blockchainIndicator.className = 'indicator-dot indicator-offline';
@@ -237,29 +248,33 @@ class UIManager {
                 blockchainStatusText.textContent = 'OFFLINE';
                 blockchainStatusText.style.color = '#ff3030';
             }
-            if (blockHeightElement) {
-                blockHeightElement.textContent = '---';
-                blockHeightElement.style.color = '#ff3030';
+            if (blockHeightStatusElement) {
+                blockHeightStatusElement.textContent = '---';
+                blockHeightStatusElement.style.color = '#ff3030';
             }
         }
     }
 
-    updateNetworkLatency(latency, online) {
-        const latencyElement = document.getElementById('network-latency');
-        if (online && latency > 0) {
-            latencyElement.textContent = `${latency} ms`;
-            
-            // Color code latency
-            if (latency < 500) {
-                latencyElement.style.color = '#00ff00'; // Green for good
-            } else if (latency < 1000) {
-                latencyElement.style.color = '#ffaa00'; // Orange for okay
+   updateNetworkLatency(latency, online) {
+        // FIX: Nur System Status updaten (kein separates Header Element)
+        const latencyStatusElement = document.getElementById('network-latency-status');
+        
+        if (latencyStatusElement) {
+            if (online && latency > 0) {
+                latencyStatusElement.textContent = `${latency} ms`;
+                
+                // Color code latency
+                if (latency < 500) {
+                    latencyStatusElement.style.color = '#00ff00'; // Green for good
+                } else if (latency < 1000) {
+                    latencyStatusElement.style.color = '#ffaa00'; // Orange for okay
+                } else {
+                    latencyStatusElement.style.color = '#ff3030'; // Red for bad
+                }
             } else {
-                latencyElement.style.color = '#ff3030'; // Red for bad
+                latencyStatusElement.textContent = '--- ms';
+                latencyStatusElement.style.color = '#ff3030';
             }
-        } else {
-            latencyElement.textContent = '--- ms';
-            latencyElement.style.color = '#ff3030';
         }
     }
 
