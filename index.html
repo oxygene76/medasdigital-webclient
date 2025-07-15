@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Medas Digital Research Terminal</title>
     
     <!-- CSS Modules -->
@@ -16,6 +16,7 @@
     
     <div class="container">
         <div class="header">
+            <!-- Solar System LINKS UNTEN positioniert -->
             <div class="solar-system-bg">
                 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
                     <defs>
@@ -119,7 +120,9 @@
                 </svg>
             </div>
             
+            <!-- NEUE GRID-STRUKTUR für Mobile Layout -->
             <div class="terminal-header">
+                <!-- TOP ROW: Logo und Titel zentriert -->
                 <div class="system-info">
                     <div class="logo-section">
                         <div class="logo-icon">
@@ -156,16 +159,30 @@
                     </div>
                 </div>
                 
+                <!-- MIDDLE ROW: Freier Raum (für eventuelle Erweiterungen) -->
+                <div class="header-middle">
+                    <!-- Dieser Bereich ist für zukünftige Features reserviert -->
+                </div>
+                
+                <!-- BOTTOM ROW: Status-Informationen rechts unten -->
                 <div class="status-display">
-                    <div id="connection-status" class="connection-status status-disconnected">
-                        <div class="status-dot dot-disconnected"></div>
-                        <span>Network Offline</span>
+                    <div class="status-row">
+                        <div class="network-info">
+                            <div id="connection-status" class="connection-status status-disconnected">
+                                <div class="status-dot dot-disconnected"></div>
+                                <span>Network Offline</span>
+                            </div>
+                            <div id="blockchain-status" class="connection-status status-disconnected">
+                                <div class="status-dot dot-disconnected"></div>
+                                <span>Block: ---</span>
+                            </div>
+                        </div>
+                        <div class="block-info">
+                            <div id="block-height" class="block-height">---</div>
+                            <div id="network-latency" class="network-latency">--- ms</div>
+                        </div>
                     </div>
-                    <div id="blockchain-status" class="connection-status status-disconnected" style="font-size: 11px; margin-top: 4px;">
-                        <div class="status-dot dot-disconnected"></div>
-                        <span>Block: ---</span>
-                    </div>
-                    <div class="timestamp" id="current-time"></div>
+                    <div class="timestamp" id="current-time">Loading...</div>
                 </div>
             </div>
         </div>
@@ -205,13 +222,13 @@
                     <div class="system-item">
                         <span class="system-name">Block Height</span>
                         <div class="system-indicator">
-                            <span style="color: #00ffff; font-size: 10px; font-family: 'Share Tech Mono', monospace;" id="block-height">---</span>
+                            <span style="color: #00ffff; font-size: 10px; font-family: 'Share Tech Mono', monospace;" id="block-height-status">---</span>
                         </div>
                     </div>
                     <div class="system-item">
                         <span class="system-name">Network Latency</span>
                         <div class="system-indicator">
-                            <span style="color: #00ffff; font-size: 10px; font-family: 'Share Tech Mono', monospace;" id="network-latency">--- ms</span>
+                            <span style="color: #00ffff; font-size: 10px; font-family: 'Share Tech Mono', monospace;" id="network-latency-status">--- ms</span>
                         </div>
                     </div>
                     <div class="system-item">
