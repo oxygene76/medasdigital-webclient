@@ -1,0 +1,327 @@
+/* =================================
+   MOBILE NAVIGATION ENHANCEMENTS
+   Add to existing mobile.css
+   ================================= */
+
+/* Touch Ripple Effects */
+@media only screen and (max-width: 768px) {
+    .tab-button {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .tab-button::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.3s ease, height 0.3s ease;
+    }
+    
+    .tab-button:active::before {
+        width: 100px;
+        height: 100px;
+    }
+    
+    /* Haptic feedback indicator */
+    .tab-button.haptic-feedback {
+        animation: haptic-pulse 0.1s ease;
+    }
+    
+    @keyframes haptic-pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(0.95); }
+        100% { transform: scale(1); }
+    }
+}
+
+/* Bottom Navigation Option */
+@media only screen and (max-width: 768px) {
+    .tab-navigation.bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        background: rgba(26, 26, 46, 0.98);
+        backdrop-filter: blur(20px);
+        border-top: 1px solid var(--border-color);
+        border-radius: 0;
+        padding: 5px;
+        z-index: 1000;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    .bottom-nav .tab-button {
+        flex-direction: column;
+        gap: 2px;
+        padding: 8px 4px;
+        min-width: 50px;
+        border-radius: 8px;
+        font-size: 8px;
+        line-height: 1;
+    }
+    
+    .bottom-nav .tab-icon {
+        font-size: 18px;
+        margin-bottom: 2px;
+    }
+    
+    .bottom-nav .tab-text {
+        font-size: 9px;
+        max-width: 45px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    /* Adjust content when bottom nav is active */
+    .main-content.bottom-nav-active {
+        padding-bottom: 60px;
+    }
+}
+
+/* Navigation Toggle Button */
+@media only screen and (max-width: 768px) {
+    .nav-toggle {
+        position: fixed;
+        top: 60px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        background: rgba(0, 255, 255, 0.1);
+        border: 1px solid #00ffff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: #00ffff;
+        cursor: pointer;
+        z-index: 1001;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-toggle:hover {
+        background: rgba(0, 255, 255, 0.2);
+        transform: scale(1.1);
+    }
+    
+    .nav-toggle.bottom-active::before {
+        content: '⬆️';
+    }
+    
+    .nav-toggle:not(.bottom-active)::before {
+        content: '⬇️';
+    }
+}
+
+/* Swipe Gesture Indicators */
+@media only screen and (max-width: 768px) {
+    .swipe-zone {
+        position: relative;
+        touch-action: pan-y; /* Allow vertical scroll, handle horizontal swipe */
+    }
+    
+    .swipe-indicator {
+        position: fixed;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 32px;
+        color: rgba(0, 255, 255, 0.8);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        pointer-events: none;
+        z-index: 999;
+        text-shadow: 0 0 10px #00ffff;
+    }
+    
+    .swipe-indicator.left {
+        left: 20px;
+        animation: swipe-left 0.5s ease;
+    }
+    
+    .swipe-indicator.right {
+        right: 20px;
+        animation: swipe-right 0.5s ease;
+    }
+    
+    .swipe-indicator.show {
+        opacity: 1;
+    }
+    
+    @keyframes swipe-left {
+        0% { transform: translateY(-50%) translateX(20px); opacity: 0; }
+        50% { opacity: 1; }
+        100% { transform: translateY(-50%) translateX(-20px); opacity: 0; }
+    }
+    
+    @keyframes swipe-right {
+        0% { transform: translateY(-50%) translateX(-20px); opacity: 0; }
+        50% { opacity: 1; }
+        100% { transform: translateY(-50%) translateX(20px); opacity: 0; }
+    }
+}
+
+/* Enhanced Touch Feedback */
+@media only screen and (max-width: 768px) {
+    .terminal-button {
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .terminal-button::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.3s ease, height 0.3s ease;
+    }
+    
+    .terminal-button:active::after {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .terminal-button:active {
+        transform: scale(0.95);
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+    }
+}
+
+/* Long Press Detection Styles */
+@media only screen and (max-width: 768px) {
+    .long-press-indicator {
+        position: absolute;
+        top: -5px;
+        left: -5px;
+        right: -5px;
+        bottom: -5px;
+        border: 2px solid transparent;
+        border-radius: inherit;
+        transition: border-color 0.2s ease;
+    }
+    
+    .long-press-active .long-press-indicator {
+        border-color: rgba(255, 0, 255, 0.7);
+        animation: long-press-pulse 1s ease-in-out;
+    }
+    
+    @keyframes long-press-pulse {
+        0% { border-color: rgba(255, 0, 255, 0.7); }
+        50% { border-color: rgba(255, 0, 255, 1); }
+        100% { border-color: rgba(255, 0, 255, 0.7); }
+    }
+}
+
+/* Tab Content Swipe Transition */
+@media only screen and (max-width: 768px) {
+    .tab-content {
+        transition: transform 0.3s ease, opacity 0.2s ease;
+    }
+    
+    .tab-content.swipe-out-left {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    
+    .tab-content.swipe-out-right {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    
+    .tab-content.swipe-in-left {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    
+    .tab-content.swipe-in-right {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    
+    .tab-content.active {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Mobile Context Menu */
+@media only screen and (max-width: 768px) {
+    .mobile-context-menu {
+        position: fixed;
+        background: rgba(26, 26, 46, 0.98);
+        backdrop-filter: blur(20px);
+        border: 1px solid #00ffff;
+        border-radius: 12px;
+        padding: 8px 0;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        z-index: 2000;
+        opacity: 0;
+        transform: scale(0.8);
+        transition: all 0.2s ease;
+    }
+    
+    .mobile-context-menu.show {
+        opacity: 1;
+        transform: scale(1);
+    }
+    
+    .mobile-context-menu-item {
+        padding: 12px 20px;
+        font-size: 14px;
+        color: #00ffff;
+        cursor: pointer;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .mobile-context-menu-item:hover,
+    .mobile-context-menu-item:active {
+        background: rgba(0, 255, 255, 0.1);
+    }
+    
+    .mobile-context-menu-item .icon {
+        font-size: 16px;
+    }
+}
+
+/* Performance Optimizations for Mobile */
+@media only screen and (max-width: 768px) {
+    /* GPU Acceleration for smooth animations */
+    .tab-button,
+    .terminal-button,
+    .tab-content,
+    .swipe-indicator {
+        will-change: transform;
+        transform: translateZ(0);
+    }
+    
+    /* Reduce motion for better performance on older devices */
+    @media (prefers-reduced-motion: reduce) {
+        .tab-content,
+        .swipe-indicator,
+        .tab-button::before,
+        .terminal-button::after {
+            transition: none !important;
+            animation: none !important;
+        }
+    }
+}
