@@ -3,24 +3,527 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MedasDigital WebClient v0.9</title>
+    <title>MedasDigital WebClient v0.9 - Research Terminal</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
+    <link rel="icon" type="image/png" href="assets/images/favicon.png">
     
     <!-- CSS Modules -->
     <link rel="stylesheet" href="assets/css/main.css">
     <link rel="stylesheet" href="assets/css/animation.css">
     <link rel="stylesheet" href="assets/css/mobile.css">
+    
+    <!-- Meta Tags for PWA -->
+    <meta name="theme-color" content="#00ffff">
+    <meta name="description" content="Advanced blockchain interface for astronomical research collaboration with Planet 9 visualization">
+    <meta name="keywords" content="blockchain, astronomy, research, Planet 9, Keplr, Cosmos, MedasDigital">
+    <meta name="author" content="MedasDigital Foundation">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="MedasDigital WebClient v0.9">
+    <meta property="og:description" content="Advanced blockchain interface for astronomical research collaboration">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://your-domain.com">
+    <meta property="og:image" content="assets/images/og-image.png">
+    
+    <!-- Preload Critical Resources -->
+    <link rel="preload" href="assets/js/config.js" as="script">
+    <link rel="preload" href="assets/js/main.js" as="script">
 </head>
 <body>
-    <!-- HTML Structure bleibt gleich -->
-    <!-- Nur Scripts werden ausgelagert -->
+    <!-- Background Stars -->
+    <div class="stars" id="stars"></div>
     
-    <!-- JavaScript Modules -->
+    <!-- Solar System Background Animation -->
+    <div class="solar-system-container">
+        <div class="solar-system">
+            <!-- Sun -->
+            <div class="sun">
+                <div class="solar-flare"></div>
+            </div>
+            
+            <!-- Orbital Rings and Planets -->
+            <div class="orbit orbit-mercury">
+                <div class="planet planet-mercury">
+                    <div class="planet-label">Mercury</div>
+                </div>
+            </div>
+            
+            <div class="orbit orbit-venus">
+                <div class="planet planet-venus">
+                    <div class="planet-label">Venus</div>
+                </div>
+            </div>
+            
+            <div class="orbit orbit-earth">
+                <div class="planet planet-earth">
+                    <div class="moon"></div>
+                    <div class="planet-label">Earth</div>
+                </div>
+            </div>
+            
+            <div class="orbit orbit-mars">
+                <div class="planet planet-mars">
+                    <div class="planet-label">Mars</div>
+                </div>
+            </div>
+            
+            <!-- Asteroid Belt -->
+            <div class="asteroid-belt">
+                <div class="asteroid"></div>
+                <div class="asteroid"></div>
+                <div class="asteroid"></div>
+                <div class="asteroid"></div>
+                <div class="asteroid"></div>
+                <div class="asteroid"></div>
+                <div class="asteroid"></div>
+                <div class="asteroid"></div>
+                <div class="asteroid"></div>
+                <div class="asteroid"></div>
+            </div>
+            
+            <div class="orbit orbit-jupiter">
+                <div class="planet planet-jupiter">
+                    <div class="planet-label">Jupiter</div>
+                </div>
+            </div>
+            
+            <div class="orbit orbit-saturn">
+                <div class="planet planet-saturn">
+                    <div class="planet-label">Saturn</div>
+                </div>
+            </div>
+            
+            <div class="orbit orbit-uranus">
+                <div class="planet planet-uranus">
+                    <div class="planet-label">Uranus</div>
+                </div>
+            </div>
+            
+            <div class="orbit orbit-neptune">
+                <div class="planet planet-neptune">
+                    <div class="planet-label">Neptune</div>
+                </div>
+            </div>
+            
+            <!-- Planet 9 (Hypothetical) -->
+            <div class="orbit orbit-planet9">
+                <div class="planet planet-planet9">
+                    <div class="planet9-glow"></div>
+                    <div class="planet-label">Planet 9?</div>
+                </div>
+            </div>
+            
+            <!-- TNO Belt -->
+            <div class="tno-belt">
+                <div class="tno"></div>
+                <div class="tno"></div>
+                <div class="tno"></div>
+                <div class="tno"></div>
+                <div class="tno"></div>
+                <div class="tno"></div>
+                <div class="tno"></div>
+                <div class="tno"></div>
+            </div>
+            
+            <!-- Comet -->
+            <div class="comet"></div>
+        </div>
+        
+        <!-- Nebula Effects -->
+        <div class="nebula"></div>
+    </div>
+    
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="solar-system-bg">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="sunGradientBg" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" style="stop-color:#ffff00;stop-opacity:0.8" />
+                            <stop offset="70%" style="stop-color:#ff8800;stop-opacity:0.6" />
+                            <stop offset="100%" style="stop-color:#ff4400;stop-opacity:0.4" />
+                        </radialGradient>
+                        <filter id="bgGlow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+                            <feMerge> 
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    
+                    <circle cx="100" cy="100" r="2.0" fill="url(#sunGradientBg)" filter="url(#bgGlow)">
+                        <animate attributeName="r" values="2.0;2.3;2.0" dur="4s" repeatCount="indefinite"/>
+                    </circle>
+                </svg>
+            </div>
+            
+            <div class="terminal-header">
+                <div class="system-info">
+                    <div class="logo-section">
+                        <div class="logo-icon">
+                            <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#00ffff;stop-opacity:1" />
+                                        <stop offset="50%" style="stop-color:#0099ff;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#00ffff;stop-opacity:1" />
+                                    </linearGradient>
+                                    <filter id="logoGlow" x="-50%" y="-50%" width="200%" height="200%">
+                                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                                        <feMerge> 
+                                            <feMergeNode in="coloredBlur"/>
+                                            <feMergeNode in="SourceGraphic"/>
+                                        </feMerge>
+                                    </filter>
+                                </defs>
+                                
+                                <path d="M 20 50 Q 20 20, 50 20 Q 80 20, 80 50 Q 80 80, 50 80 Q 35 80, 25 70" 
+                                      fill="none" 
+                                      stroke="url(#logoGradient)" 
+                                      stroke-width="4" 
+                                      filter="url(#logoGlow)"/>
+                                
+                                <text x="50" y="55" text-anchor="middle" fill="url(#logoGradient)" 
+                                      font-family="Orbitron" font-size="18" font-weight="bold" filter="url(#logoGlow)">md</text>
+                            </svg>
+                        </div>
+                        <div class="system-title">
+                            <div class="main-title">MedasDigital</div>
+                            <div class="sub-title">Research Terminal v0.9</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="status-display">
+                    <div id="connection-status" class="connection-status status-disconnected">
+                        <div class="status-dot dot-disconnected"></div>
+                        <span>Network Offline</span>
+                    </div>
+                    <div id="blockchain-status" class="connection-status status-disconnected" style="font-size: 11px; margin-top: 4px;">
+                        <div class="status-dot dot-disconnected"></div>
+                        <span>Block: ---</span>
+                    </div>
+                    <div class="timestamp" id="current-time"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Interface -->
+        <div class="main-interface">
+            <!-- Control Panel (Sidebar) -->
+            <div class="control-panel">
+                <div class="section-header">System Control</div>
+                
+                <!-- Wallet Interface -->
+                <div class="auth-module">
+                    <div class="module-title">Quantum Wallet Interface</div>
+                    <div id="wallet-interface">
+                        <p style="color: #999999; margin-bottom: 16px; font-family: 'Share Tech Mono', monospace; font-size: 12px;">
+                            Initialize Keplr quantum authentication protocol
+                        </p>
+                        <button id="connect-wallet" class="terminal-button btn-primary">
+                            Connect Keplr Wallet
+                        </button>
+                    </div>
+                </div>
+
+                <!-- System Status -->
+                <div class="systems-status">
+                    <div class="module-title">System Status</div>
+                    <div class="system-item">
+                        <span class="system-name">Quantum Relay</span>
+                        <div class="system-indicator">
+                            <div class="indicator-dot indicator-offline"></div>
+                            <span style="color: #ff3030; font-size: 10px;">OFFLINE</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Blockchain Sync</span>
+                        <div class="system-indicator">
+                            <div class="indicator-dot indicator-offline" id="blockchain-indicator"></div>
+                            <span style="color: #ff3030; font-size: 10px;" id="blockchain-status-text">OFFLINE</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Block Height</span>
+                        <div class="system-indicator">
+                            <span style="color: #00ffff; font-size: 10px; font-family: 'Share Tech Mono', monospace;" id="block-height">---</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Network Latency</span>
+                        <div class="system-indicator">
+                            <span style="color: #00ffff; font-size: 10px; font-family: 'Share Tech Mono', monospace;" id="network-latency">--- ms</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Encryption Matrix</span>
+                        <div class="system-indicator">
+                            <div class="indicator-dot"></div>
+                            <span style="color: #00ff00; font-size: 10px;">SECURE</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Observatory Link</span>
+                        <div class="system-indicator">
+                            <div class="indicator-dot indicator-offline"></div>
+                            <span style="color: #ff3030; font-size: 10px;">STANDBY</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Daemon Protocol</span>
+                        <div class="system-indicator">
+                            <div class="indicator-dot indicator-offline"></div>
+                            <span style="color: #ff3030; font-size: 10px;">OFFLINE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Communication Display (Main Area) -->
+            <div class="communication-display">
+                <!-- Tab Navigation -->
+                <div class="terminal-tabs">
+                    <button class="tab-button active" data-tab="comm">💬 COMM</button>
+                    <button class="tab-button" data-tab="explorer">🔍 SCAN</button>
+                    <button class="tab-button" data-tab="staking">🥩 STAKE</button>
+                    <button class="tab-button" data-tab="wallet">👛 WALLET</button>
+                </div>
+
+                <!-- Communication Tab -->
+                <div id="comm-tab" class="tab-content active">
+                    <div class="comm-header">
+                        <div class="comm-title">Interstellar Communication Array</div>
+                        <div class="comm-subtitle">Quantum-encrypted research collaboration network</div>
+                    </div>
+                    
+                    <div class="message-display" id="message-display">
+                        <div class="empty-state">
+                            <h3>System Standby</h3>
+                            <div class="icon">◉</div>
+                            <p>Awaiting quantum wallet authentication...</p>
+                            <p style="font-size: 11px; margin-top: 8px;">Initialize Keplr interface to establish secure communication channel</p>
+                        </div>
+                    </div>
+
+                    <div class="input-module">
+                        <textarea 
+                            id="message-input" 
+                            class="terminal-input" 
+                            placeholder="Enter transmission data..."
+                            rows="2"
+                            disabled
+                        ></textarea>
+                    </div>
+                </div>
+
+                <!-- Explorer Tab -->
+                <div id="explorer-tab" class="tab-content">
+                    <div class="comm-header">
+                        <div class="comm-title">Blockchain Scanner</div>
+                        <div class="comm-subtitle">Real-time network analysis & transaction explorer</div>
+                    </div>
+                    
+                    <div class="content-area">
+                        <div class="explorer-section network-overview">
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <div class="stat-value" id="latest-block">2,847,392</div>
+                                    <div class="stat-label">Latest Block</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value" id="validator-count">147</div>
+                                    <div class="stat-label">Validators</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value" id="bonded-ratio">68.4%</div>
+                                    <div class="stat-label">Bonded Ratio</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value" id="block-time">6.2s</div>
+                                    <div class="stat-label">Avg Block Time</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="explorer-section recent-blocks">
+                            <div id="recent-blocks-list">
+                            </div>
+                        </div>
+
+                        <div class="explorer-section search-section">
+                            <input type="text" class="search-input" placeholder="Search transaction hash or address..." id="blockchain-search">
+                            <button class="terminal-button btn-primary" style="width: auto; padding: 8px 16px; margin: 0;">Search Blockchain</button>
+                        </div>
+
+                        <div class="explorer-section wallet-history" style="display: none;" id="wallet-history-section">
+                            <div id="wallet-transactions">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Staking Tab -->
+                <div id="staking-tab" class="tab-content">
+                    <div class="comm-header">
+                        <div class="comm-title">Staking Interface</div>
+                        <div class="comm-subtitle">Delegate tokens & earn rewards</div>
+                    </div>
+                    
+                    <div class="content-area">
+                        <div class="explorer-section" style="display: none;" id="my-delegations-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">MY DELEGATIONS</div>
+                            <div id="current-delegations">
+                            </div>
+                            <div style="text-align: center; margin-top: 12px;">
+                                <span style="color: #00ff00; font-weight: 700;">Total Pending Rewards: </span>
+                                <span id="total-rewards" style="color: #00ff00; font-family: 'Share Tech Mono', monospace;">0.000000 MEDAS</span>
+                                <button class="terminal-button btn-success" style="width: auto; padding: 8px 16px; margin-left: 12px; font-size: 11px;">Claim All Rewards</button>
+                            </div>
+                        </div>
+
+                        <div class="explorer-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">TOP VALIDATORS</div>
+                            <div id="validators-list">
+                            </div>
+                        </div>
+
+                        <div class="explorer-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">QUICK STAKE</div>
+                            <div class="form-group">
+                                <label class="form-label">Select Validator</label>
+                                <select id="validator-select" class="form-input">
+                                    <option>Select a validator...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Amount (MEDAS)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="stake-amount" class="form-input" placeholder="0.000000" step="0.000001" min="0">
+                                    <button class="max-button" onclick="setMaxStakeAmount()">MAX</button>
+                                </div>
+                            </div>
+                            <button class="terminal-button btn-primary" onclick="delegateTokens()" style="margin-top: 8px;">Delegate Tokens</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wallet Tab -->
+                <div id="wallet-tab" class="tab-content">
+                    <div class="comm-header">
+                        <div class="comm-title">Wallet Management</div>
+                        <div class="comm-subtitle">Token transfers & account overview</div>
+                    </div>
+                    
+                    <div class="content-area">
+                        <div class="explorer-section" style="display: none;" id="balance-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">BALANCE OVERVIEW</div>
+                            <div class="balance-overview">
+                                <div class="balance-item">
+                                    <div class="balance-amount" id="available-balance">0.000000</div>
+                                    <div class="balance-label">Available</div>
+                                </div>
+                                <div class="balance-item">
+                                    <div class="balance-amount" id="delegated-balance">0.000000</div>
+                                    <div class="balance-label">Delegated</div>
+                                </div>
+                                <div class="balance-item">
+                                    <div class="balance-amount" id="rewards-balance">0.000000</div>
+                                    <div class="balance-label">Rewards</div>
+                                </div>
+                                <div class="balance-item">
+                                    <div class="balance-amount" id="total-balance">0.000000</div>
+                                    <div class="balance-label">Total</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="explorer-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">SEND TOKENS</div>
+                            <div class="send-form">
+                                <div class="form-group">
+                                    <label class="form-label">Recipient Address</label>
+                                    <input type="text" id="send-address" class="form-input" placeholder="medas1...">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Amount (MEDAS)</label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="send-amount" class="form-input" placeholder="0.000000" step="0.000001" min="0">
+                                        <button class="max-button" onclick="setMaxSendAmount()">MAX</button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Memo (Optional)</label>
+                                    <input type="text" id="send-memo" class="form-input" placeholder="Transaction memo...">
+                                </div>
+                                <button class="terminal-button btn-primary" onclick="sendTokens()">Send Transaction</button>
+                            </div>
+                        </div>
+
+                        <div class="explorer-section" style="display: none;" id="transaction-history-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">TRANSACTION HISTORY</div>
+                            <div class="tx-filter">
+                                <button class="filter-btn active" data-filter="all">All</button>
+                                <button class="filter-btn" data-filter="sent">Sent</button>
+                                <button class="filter-btn" data-filter="received">Received</button>
+                                <button class="filter-btn" data-filter="staking">Staking</button>
+                            </div>
+                            <div id="transaction-list">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Modules (Load Order Important) -->
+    <!-- 1. Configuration and utilities first -->
     <script src="assets/js/config.js"></script>
+    
+    <!-- 2. Mock data for development -->
+    <script src="assets/js/mock-data.js"></script>
+    
+    <!-- 3. Core modules -->
     <script src="assets/js/keplr-manager.js"></script>
-    <script src="assets/js/blockchain-client.js"></script>
-    <script src="assets/js/registration-manager.js"></script>
+    
+    <!-- 4. UI components -->
     <script src="assets/js/ui-manager.js"></script>
-    <script src="assets/js/solar-system.js"></script>
+    
+    <!-- 5. Main application (loads last, depends on all others) -->
     <script src="assets/js/main.js"></script>
+
+    <!-- Global Action Handlers -->
+    <script>
+        // Global functions for onclick handlers
+        function delegateTokens() {
+            if (window.terminal) {
+                window.terminal.delegateTokens();
+            }
+        }
+        
+        function setMaxStakeAmount() {
+            if (window.terminal && window.terminal.ui) {
+                window.terminal.ui.setMaxStakeAmount();
+            }
+        }
+        
+        function setMaxSendAmount() {
+            if (window.terminal && window.terminal.ui) {
+                window.terminal.ui.setMaxSendAmount();
+            }
+        }
+        
+        function sendTokens() {
+            if (window.terminal) {
+                window.terminal.sendTokens();
+            }
+        }
+    </script>
 </body>
 </html>
