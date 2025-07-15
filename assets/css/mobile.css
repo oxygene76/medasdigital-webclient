@@ -1,699 +1,503 @@
-/* MedasDigital WebClient - Complete Mobile Responsive Styles */
+/* =================================
+   MOBILE LAYOUT REDESIGN FIX
+   Löst das "gestaucht" Problem
+   Ersetzt/erweitert mobile.css
+   ================================= */
 
-/* Mobile Viewport Meta Setup */
-/* Required in HTML head: <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> */
-
-/* Mobile Base Styles */
+/* Mobile Layout Restructure */
 @media only screen and (max-width: 768px) {
-    /* Prevent zoom on input focus */
-    input, textarea, select {
-        font-size: 16px !important;
-    }
     
-    /* Body adjustments for mobile */
+    /* STEP 1: Container und Body Fix */
     body {
         overflow-x: hidden;
         -webkit-overflow-scrolling: touch;
-        -webkit-text-size-adjust: none;
-        -webkit-tap-highlight-color: transparent;
+        font-size: 14px; /* Basis-Schriftgröße erhöhen */
     }
     
-    /* Container adjustments */
     .container {
-        height: 100vh;
-        height: 100dvh; /* Dynamic viewport height for mobile browsers */
-        padding: 10px;
+        height: auto; /* WICHTIG: Nicht 100vh! */
+        min-height: 100vh;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
     }
     
-    /* CORRECTED: Header mobile optimization with proper height */
+    /* STEP 2: Header Mobile-optimiert */
     .header {
-        padding: 12px 10px; /* Increased for solar system visibility */
-        min-height: 120px; /* Increased from 50px for solar system */
-        margin-bottom: 16px;
+        padding: 16px 12px;
+        min-height: 140px; /* Mehr Platz */
+        margin-bottom: 0;
         position: relative;
-        overflow: visible; /* Important for solar system animation */
+        flex-shrink: 0; /* Verhindert Stauchung */
     }
     
-    /* Terminal header layout */
     .terminal-header {
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        width: 100%;
-        min-height: 100px;
-        position: relative;
-        z-index: 2; /* Above solar system */
+        gap: 12px;
+        height: auto;
+        min-height: auto;
     }
     
-    /* System info section */
+    /* Logo-Bereich größer und lesbarer */
     .system-info {
         display: flex;
         align-items: center;
         gap: 12px;
         width: 100%;
-        justify-content: space-between;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
     }
     
     .logo-section {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
         flex: 1;
         min-width: 0;
     }
     
     .logo-icon {
-        width: 40px; /* Smaller for mobile */
-        height: 40px;
+        width: 50px; /* Größer für bessere Sichtbarkeit */
+        height: 50px;
         flex-shrink: 0;
     }
     
     .system-title {
         flex: 1;
-        min-width: 0;
     }
     
     .main-title {
-        font-size: 16px; /* Reduced from 28px */
-        line-height: 1.2;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-shadow: 
-            0 0 4px rgba(0, 0, 0, 0.5),
-            0 0 8px rgba(0, 255, 255, 0.3);
+        font-size: 18px; /* Größer und lesbarer */
+        line-height: 1.3;
+        margin-bottom: 4px;
     }
     
     .sub-title {
-        font-size: 10px; /* Reduced from 14px */
-        margin-top: 2px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+        font-size: 12px; /* Besser lesbar */
+        opacity: 0.8;
     }
     
-    /* Status display section */
+    /* Status-Bereich übersichtlicher */
     .status-display {
         display: flex;
         flex-direction: column;
         align-items: flex-end;
-        gap: 4px;
+        gap: 6px;
         flex-shrink: 0;
-        position: relative;
-        z-index: 2;
+        min-width: 120px;
     }
     
-    .connection-status {
-        padding: 4px 8px;
-        font-size: 9px;
-        white-space: nowrap;
-        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
-    }
-    
+    .connection-status,
     #blockchain-status {
-        font-size: 8px;
-        margin-top: 2px;
+        padding: 6px 10px;
+        font-size: 11px;
+        border-radius: 4px;
+        white-space: nowrap;
     }
     
     .timestamp {
-        font-size: 8px;
-        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
-    }
-}
-
-/* CORRECTED: Solar System Background Mobile Optimization */
-@media only screen and (max-width: 768px) {
-    .solar-system-bg {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) rotate(180deg);
-        width: 150px; /* Reduced from 200px */
-        height: 150px;
-        opacity: 0.6; /* Slightly more transparent */
-        z-index: 1; /* Behind text but visible */
-        pointer-events: none;
+        font-size: 10px;
+        padding: 2px 6px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 3px;
     }
     
-    /* Ensure proper layering */
-    .header {
-        position: relative;
-    }
-    
-    .header::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: transparent;
-        z-index: 0;
-    }
-}
-
-/* Main Interface Mobile Layout */
-@media only screen and (max-width: 768px) {
+    /* STEP 3: Main Interface - KOMPLETT NEU */
     .main-interface {
+        flex: 1;
+        display: flex;
         flex-direction: column;
         gap: 16px;
-        height: calc(100vh - 160px); /* Account for larger header */
+        min-height: 0; /* Wichtig für Flexbox */
     }
     
-    .control-panel {
-        order: 2; /* Move to bottom */
-        height: auto;
-        max-height: 200px;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    
+    /* Research Interface wird HAUPTBEREICH */
     .communication-display {
-        order: 1; /* Move to top */
+        order: 1; /* Erste Priorität */
         flex: 1;
-        min-height: 0;
-        height: auto;
-    }
-}
-
-/* Mobile Tab Navigation */
-@media only screen and (max-width: 768px) {
-    .terminal-tabs {
-        padding: 0 5px;
-        min-height: 44px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-        position: sticky;
-        top: 0;
-        z-index: 100;
+        min-height: 500px; /* Mindesthöhe für Lesbarkeit */
         display: flex;
-        border-radius: 0;
+        flex-direction: column;
     }
     
-    .terminal-tabs::-webkit-scrollbar {
-        display: none;
+    /* Control Panel wird SIDEBAR → BOTTOM SHEET */
+    .control-panel {
+        order: 2; /* Nach Interface */
+        height: auto;
+        max-height: none;
+        flex-shrink: 0;
+        margin-bottom: 20px; /* Platz am Ende */
+    }
+    
+    /* STEP 4: Tab Navigation größer */
+    .terminal-tabs {
+        min-height: 50px; /* Größere Touch-Targets */
+        padding: 0 8px;
+        border-radius: 8px 8px 0 0;
+        flex-shrink: 0;
     }
     
     .tab-button {
-        padding: 8px 12px;
-        font-size: 10px;
-        min-width: 80px;
-        flex-shrink: 0;
-        white-space: nowrap;
-        border-radius: 6px 6px 0 0;
-        margin: 0 2px;
-        min-height: 44px; /* Touch target size */
+        padding: 12px 16px; /* Mehr Padding */
+        font-size: 12px; /* Besser lesbar */
+        min-height: 50px;
+        min-width: 90px; /* Mehr Platz */
+        gap: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 4px;
-        transition: all 0.2s ease;
     }
     
-    .tab-button:active {
-        background: rgba(255, 255, 255, 0.1);
-        transform: scale(0.95);
+    /* Tab Icons größer und sichtbarer */
+    .tab-button::before {
+        font-size: 16px;
+        margin-right: 4px;
     }
-}
-
-/* Mobile Tab Content */
-@media only screen and (max-width: 768px) {
+    
+    /* STEP 5: Content Area optimiert */
     .tab-content {
-        padding: 10px;
+        flex: 1;
+        padding: 16px;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        height: calc(100% - 44px); /* Account for tab bar */
+        min-height: 400px; /* Minimum für Inhalt */
     }
     
     .content-area {
-        padding: 12px;
+        padding: 16px;
         overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        height: auto;
+        min-height: 400px;
     }
     
-    .content-area::-webkit-scrollbar {
-        width: 4px;
-    }
-    
-    .content-area::-webkit-scrollbar-track {
-        background: rgba(0, 0, 0, 0.1);
-    }
-    
-    .content-area::-webkit-scrollbar-thumb {
-        background: rgba(0, 204, 102, 0.5);
-        border-radius: 2px;
-    }
-}
-
-/* Mobile Communication Display */
-@media only screen and (max-width: 768px) {
+    /* STEP 6: Communication optimiert */
     .comm-header {
-        padding: 12px 16px;
+        padding: 16px 20px;
+        flex-shrink: 0;
+        border-bottom: 2px solid #00cc66;
     }
     
     .comm-title {
-        font-size: 14px;
+        font-size: 16px; /* Größer */
+        margin-bottom: 4px;
     }
     
     .comm-subtitle {
-        font-size: 10px;
+        font-size: 12px; /* Lesbar */
     }
     
+    /* Message Display größer */
     .message-display {
-        padding: 12px;
-        max-height: calc(100vh - 300px);
+        flex: 1;
+        padding: 20px;
+        min-height: 300px; /* Ausreichend Platz */
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
     }
     
+    /* Input Bereich prominent */
     .input-module {
-        padding: 12px 16px;
-        position: sticky;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.95);
-        backdrop-filter: blur(10px);
+        padding: 16px 20px;
+        border-top: 2px solid #00cc66;
+        background: rgba(0, 0, 0, 0.8);
+        flex-shrink: 0;
     }
     
     .terminal-input {
-        padding: 12px 16px;
-        font-size: 16px; /* Prevents zoom on iOS */
+        padding: 14px 16px; /* Mehr Padding */
+        font-size: 16px;
+        min-height: 50px;
         border-radius: 8px;
-        max-height: 120px;
-        resize: none;
-        width: 100%;
+        line-height: 1.4;
     }
-}
-
-/* Mobile Explorer Sections */
-@media only screen and (max-width: 768px) {
-    .explorer-section {
+    
+    /* STEP 7: Control Panel als Card-System */
+    .control-panel {
+        background: linear-gradient(135deg, rgba(0, 100, 150, 0.1) 0%, rgba(0, 50, 100, 0.1) 100%);
+        border: 2px solid #0099ff;
+        border-radius: 12px;
+        padding: 20px;
+    }
+    
+    .section-header {
+        font-size: 14px;
         margin-bottom: 16px;
-        padding: 12px;
+        text-align: center;
+    }
+    
+    /* Auth Module größer */
+    .auth-module {
+        margin-bottom: 24px;
+    }
+    
+    .module-title {
+        font-size: 13px;
+        margin-bottom: 12px;
+        text-align: center;
+    }
+    
+    .terminal-button {
+        padding: 14px 20px; /* Größere Buttons */
+        font-size: 12px;
+        min-height: 50px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+    }
+    
+    /* Wallet Display lesbarer */
+    .wallet-display {
+        padding: 16px;
+        margin: 16px 0;
+        border-radius: 8px;
+    }
+    
+    .field-label {
+        font-size: 11px;
+        margin-bottom: 6px;
+    }
+    
+    .field-value {
+        font-size: 12px;
+        padding: 8px 10px;
+        border-radius: 4px;
+        line-height: 1.3;
+    }
+    
+    /* System Status übersichtlicher */
+    .systems-status {
+        margin-top: 20px;
+    }
+    
+    .system-item {
+        padding: 10px 0;
+        font-size: 11px;
+        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    }
+    
+    .system-name {
+        font-size: 11px;
+    }
+    
+    .system-indicator span {
+        font-size: 10px;
+    }
+    
+    /* STEP 8: Explorer Sections größer */
+    .explorer-section {
+        margin-bottom: 20px;
+        padding: 16px;
         border-radius: 8px;
     }
     
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 12px;
-        margin-bottom: 12px;
-    }
-    
-    .stat-item {
-        padding: 8px;
-        text-align: center;
-        border-radius: 6px;
-    }
-    
-    .stat-value {
-        font-size: 14px;
-        margin-bottom: 2px;
-    }
-    
-    .stat-label {
-        font-size: 9px;
-    }
-    
-    .block-item {
-        padding: 6px 8px;
-        margin: 2px 0;
-        font-size: 10px;
-        border-radius: 4px;
-    }
-    
-    .search-input {
-        padding: 10px 12px;
-        font-size: 16px;
-        border-radius: 6px;
-        margin-bottom: 6px;
-    }
-}
-
-/* Mobile Forms */
-@media only screen and (max-width: 768px) {
-    .form-group {
-        margin-bottom: 12px;
-    }
-    
-    .form-label {
-        font-size: 11px;
-        margin-bottom: 4px;
-        display: block;
-    }
-    
-    .form-input, .form-select, .form-textarea {
-        padding: 12px;
-        font-size: 16px; /* Prevents zoom */
-        border-radius: 8px;
-        min-height: 44px; /* Touch target */
-        width: 100%;
-        border: 1px solid #00cc66;
-        background: rgba(0, 0, 0, 0.5);
-        color: #00cc66;
-        font-family: 'Share Tech Mono', monospace;
-    }
-    
-    .form-input:focus,
-    .form-select:focus,
-    .form-textarea:focus {
-        border-color: #00ffff;
-        color: #00ffff;
-        outline: none;
-        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
-    }
-    
-    .form-textarea {
-        min-height: 100px;
-        resize: vertical;
-    }
-}
-
-/* Mobile Buttons */
-@media only screen and (max-width: 768px) {
-    .terminal-button {
-        min-height: 44px; /* Touch target */
-        padding: 12px 16px;
-        font-size: 11px;
-        border-radius: 8px;
-        text-align: center;
-        margin-bottom: 6px;
-        transition: all 0.2s ease;
-        width: 100%;
-    }
-    
-    .terminal-button:active {
-        transform: scale(0.95);
-    }
-    
-    .btn-small {
-        padding: 6px 12px;
-        font-size: 9px;
-        min-height: 36px;
-        width: auto;
-    }
-}
-
-/* Mobile Wallet and Balance Display */
-@media only screen and (max-width: 768px) {
-    .balance-overview {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
         margin-bottom: 16px;
     }
     
-    .balance-item {
-        padding: 12px 8px;
-        text-align: center;
-        border-radius: 6px;
-    }
-    
-    .balance-amount {
-        font-size: 13px;
-        margin-bottom: 2px;
-    }
-    
-    .balance-label {
-        font-size: 9px;
-    }
-    
-    .wallet-display {
+    .stat-item {
         padding: 12px;
-        margin: 12px 0;
         border-radius: 6px;
+        text-align: center;
     }
     
-    .data-field {
+    .stat-value {
+        font-size: 16px; /* Größer */
+        margin-bottom: 4px;
+        font-weight: bold;
+    }
+    
+    .stat-label {
+        font-size: 10px;
+        text-transform: uppercase;
+    }
+    
+    /* Block Items lesbarer */
+    .block-item {
+        padding: 10px 12px;
+        margin: 6px 0;
+        font-size: 11px;
+        border-radius: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .block-height {
+        font-weight: bold;
+        font-size: 12px;
+    }
+    
+    /* STEP 9: Forms optimiert */
+    .form-group {
+        margin-bottom: 16px;
+    }
+    
+    .form-label {
+        font-size: 12px;
+        margin-bottom: 6px;
+        display: block;
+        font-weight: 600;
+    }
+    
+    .form-input,
+    .form-select,
+    .form-textarea,
+    .search-input {
+        padding: 14px 16px;
+        font-size: 16px;
+        border-radius: 8px;
+        min-height: 50px;
+        width: 100%;
         margin-bottom: 8px;
     }
     
-    .field-label {
+    /* STEP 10: Balance & Transactions */
+    .balance-overview {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .balance-item {
+        padding: 16px 12px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    
+    .balance-amount {
+        font-size: 15px;
+        margin-bottom: 4px;
+        font-weight: bold;
+    }
+    
+    .balance-label {
         font-size: 10px;
-        margin-bottom: 2px;
+        text-transform: uppercase;
     }
     
-    .field-value {
-        font-size: 11px;
-        padding: 6px 8px;
-        word-break: break-all;
-    }
-}
-
-/* Mobile Staking Interface */
-@media only screen and (max-width: 768px) {
-    .delegation-item {
-        padding: 10px;
-        margin: 6px 0;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-        border-radius: 6px;
-    }
-    
-    .validator-info {
-        width: 100%;
-    }
-    
-    .validator-name {
-        font-size: 12px;
-        margin-bottom: 2px;
-    }
-    
-    .validator-details {
-        font-size: 9px;
-    }
-    
-    .delegation-amount {
-        text-align: left;
-        margin-right: 0;
-        font-size: 11px;
-    }
-    
-    .stake-actions {
-        justify-content: flex-start;
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-}
-
-/* Mobile Transaction History */
-@media only screen and (max-width: 768px) {
-    .tx-filter {
-        gap: 6px;
-        margin-bottom: 12px;
-        flex-wrap: wrap;
-    }
-    
-    .filter-btn {
-        padding: 6px 10px;
-        font-size: 9px;
-        border-radius: 4px;
-        min-height: 32px;
-    }
-    
+    /* Transaction Items größer */
     .tx-item {
-        padding: 8px 10px;
-        margin: 4px 0;
-        font-size: 10px;
-        flex-wrap: wrap;
-        gap: 4px;
-        border-radius: 4px;
+        padding: 12px 14px;
+        margin: 8px 0;
+        border-radius: 6px;
+        font-size: 11px;
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
     
     .tx-type {
-        min-width: 60px;
-        font-size: 9px;
+        font-weight: bold;
+        min-width: 80px;
+        font-size: 11px;
     }
     
     .tx-amount {
-        font-size: 10px;
-        margin: 0 6px;
+        font-size: 12px;
+        font-weight: bold;
     }
     
     .tx-time {
-        font-size: 8px;
-        width: 100%;
-        margin-top: 2px;
-    }
-}
-
-/* Mobile System Status */
-@media only screen and (max-width: 768px) {
-    .systems-status {
-        margin-top: 16px;
+        font-size: 9px;
+        opacity: 0.7;
     }
     
-    .system-item {
-        padding: 6px 0;
-        font-size: 10px;
-    }
-    
-    .system-name {
-        font-size: 10px;
-    }
-    
-    .system-indicator {
-        gap: 4px;
-    }
-    
-    .indicator-dot {
-        width: 4px;
-        height: 4px;
-    }
-    
-    .system-indicator span {
-        font-size: 8px;
-    }
-}
-
-/* Mobile Messages */
-@media only screen and (max-width: 768px) {
+    /* STEP 11: Messages optimiert */
     .message-item {
-        margin-bottom: 12px;
-        padding: 10px 12px;
-        border-radius: 6px;
+        margin-bottom: 16px;
+        padding: 14px 16px;
+        border-radius: 8px;
+        max-width: 90%;
     }
     
     .message-header {
-        gap: 6px;
-        margin-bottom: 4px;
-        flex-wrap: wrap;
-    }
-    
-    .message-sender {
-        font-size: 9px;
-    }
-    
-    .message-time {
-        font-size: 8px;
+        margin-bottom: 6px;
+        font-size: 10px;
     }
     
     .message-content {
-        font-size: 11px;
-        line-height: 1.4;
+        font-size: 13px;
+        line-height: 1.5;
         word-break: break-word;
     }
     
     .message-sent {
-        margin-left: 20px;
-        margin-right: 0;
+        margin-left: 10%;
+        background: rgba(0, 255, 255, 0.1);
     }
     
     .message-received {
-        margin-right: 20px;
-        margin-left: 0;
+        margin-right: 10%;
+        background: rgba(255, 0, 255, 0.1);
+    }
+    
+    /* STEP 12: Solar System angepasst */
+    .solar-system-bg {
+        width: 130px;
+        height: 130px;
+        opacity: 0.7;
+        top: 60%;
+        transform: translate(-50%, -50%) rotate(180deg);
     }
 }
 
-/* Small Mobile Phones (< 480px) */
-@media only screen and (max-width: 480px) {
-    .container {
-        padding: 8px;
-    }
-    
+/* STEP 13: Sehr kleine Phones (< 400px) */
+@media only screen and (max-width: 400px) {
     .header {
-        min-height: 100px; /* Slightly reduced for very small screens */
-        padding: 10px 8px;
-    }
-    
-    .solar-system-bg {
-        width: 120px; /* Even smaller */
-        height: 120px;
-        opacity: 0.5;
+        min-height: 120px;
+        padding: 12px 8px;
     }
     
     .main-title {
-        font-size: 14px;
+        font-size: 16px;
     }
     
     .sub-title {
-        font-size: 9px;
+        font-size: 11px;
     }
     
     .logo-icon {
-        width: 32px;
-        height: 32px;
+        width: 40px;
+        height: 40px;
     }
     
     .tab-button {
-        min-width: 60px;
-        padding: 6px 8px;
-        font-size: 9px;
+        min-width: 70px;
+        padding: 10px 12px;
+        font-size: 11px;
     }
     
-    .terminal-input {
-        font-size: 16px;
-        padding: 10px;
-    }
-    
-    .stats-grid {
+    .stats-grid,
+    .balance-overview {
         grid-template-columns: 1fr;
         gap: 8px;
     }
     
-    .balance-overview {
-        grid-template-columns: 1fr;
-    }
-    
-    .delegation-item {
-        padding: 8px;
-    }
-}
-
-/* Tablet Size (481px - 768px) */
-@media only screen and (min-width: 481px) and (max-width: 768px) {
-    .header {
-        min-height: 140px; /* Larger for tablets */
-        padding: 16px 12px;
+    .control-panel,
+    .tab-content {
+        padding: 12px;
     }
     
     .solar-system-bg {
-        width: 180px; /* Larger for tablets */
-        height: 180px;
-        opacity: 0.7;
-    }
-    
-    .main-title {
-        font-size: 20px;
-    }
-    
-    .sub-title {
-        font-size: 12px;
-    }
-    
-    .logo-icon {
-        width: 48px;
-        height: 48px;
-    }
-    
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .balance-overview {
-        grid-template-columns: repeat(2, 1fr);
+        width: 100px;
+        height: 100px;
     }
 }
 
-/* Landscape Mode Adjustments */
+/* STEP 14: Landscape Mode (Phone horizontal) */
 @media only screen and (max-height: 500px) and (orientation: landscape) {
     .header {
-        min-height: 80px; /* Reduced for landscape */
-        padding: 8px 10px;
-    }
-    
-    .solar-system-bg {
-        width: 100px; /* Smaller in landscape */
-        height: 100px;
-        opacity: 0.4;
+        min-height: 100px;
+        padding: 12px 16px;
     }
     
     .terminal-header {
-        flex-direction: row; /* Horizontal layout in landscape */
+        flex-direction: row;
         align-items: center;
-        min-height: 60px;
+        gap: 20px;
     }
     
     .system-info {
@@ -702,234 +506,52 @@
     
     .status-display {
         flex-direction: row;
-        gap: 8px;
+        gap: 12px;
+        align-items: center;
     }
     
     .main-interface {
-        height: calc(100vh - 100px);
+        flex-direction: row;
+        gap: 16px;
     }
     
-    .tab-button {
-        min-height: 36px;
-        padding: 6px 10px;
+    .communication-display {
+        flex: 2;
+        min-height: 350px;
     }
     
-    .message-display {
-        max-height: calc(100vh - 200px);
-    }
-}
-
-/* iOS Specific Adjustments */
-@supports (-webkit-touch-callout: none) {
-    .container {
-        height: -webkit-fill-available;
-    }
-    
-    .input-module {
-        padding-bottom: calc(12px + env(safe-area-inset-bottom));
-    }
-    
-    .terminal-input {
-        -webkit-appearance: none;
-        border-radius: 8px;
-    }
-    
-    /* Disable iOS zoom on double tap */
-    * {
-        touch-action: manipulation;
-    }
-}
-
-/* Android Specific Adjustments */
-@media screen and (-webkit-min-device-pixel-ratio: 0) and (min-resolution: .001dpcm) {
-    .terminal-input,
-    .form-input,
-    .search-input {
-        font-size: 16px;
-    }
-}
-
-/* High DPI Displays */
-@media only screen and (-webkit-min-device-pixel-ratio: 2), 
-       only screen and (min-resolution: 192dpi),
-       only screen and (min-resolution: 2dppx) {
-    .status-dot, 
-    .indicator-dot,
-    .solar-system-bg svg {
-        transform: translateZ(0); /* Hardware acceleration */
-        backface-visibility: hidden;
-    }
-    
-    .logo-icon svg,
-    .solar-system-bg svg {
-        shape-rendering: geometricPrecision;
-    }
-}
-
-/* Reduced Motion for Mobile */
-@media (prefers-reduced-motion: reduce) and (max-width: 768px) {
-    .solar-system-bg * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-    }
-    
-    .tab-button:active,
-    .terminal-button:active {
-        transform: none;
-    }
-    
-    * {
-        transition-duration: 0.01ms !important;
-    }
-}
-
-/* Dark Mode Mobile Adjustments */
-@media (prefers-color-scheme: dark) and (max-width: 768px) {
-    .header {
-        background: linear-gradient(
-            135deg, 
-            rgba(0, 255, 255, 0.08) 0%, 
-            rgba(255, 0, 255, 0.08) 100%
-        );
-        border-color: rgba(0, 255, 255, 0.3);
+    .control-panel {
+        flex: 1;
+        max-width: 300px;
     }
     
     .solar-system-bg {
-        opacity: 0.5; /* Less prominent in dark mode */
-    }
-    
-    .terminal-tabs {
-        background: rgba(26, 26, 26, 0.98);
-        backdrop-filter: blur(20px);
-    }
-    
-    .input-module {
-        background: rgba(26, 26, 26, 0.98);
-        backdrop-filter: blur(20px);
+        width: 80px;
+        height: 80px;
+        opacity: 0.5;
     }
 }
 
-/* Accessibility Improvements for Mobile */
+/* STEP 15: Empty States lesbarer */
 @media only screen and (max-width: 768px) {
-    /* Focus indicators */
-    .tab-button:focus,
-    .terminal-button:focus,
-    .form-input:focus,
-    .form-select:focus,
-    .form-textarea:focus,
-    .search-input:focus {
-        outline: 2px solid #00ffff;
-        outline-offset: 2px;
-    }
-    
-    /* High contrast mode */
-    @media (prefers-contrast: high) {
-        .terminal-button {
-            border-width: 2px;
-        }
-        
-        .tab-button.active {
-            border-bottom-width: 3px;
-        }
-        
-        .connection-status,
-        .system-indicator {
-            border-width: 2px;
-        }
-    }
-}
-
-/* Animation Performance Optimization */
-@media only screen and (max-width: 768px) {
-    /* Reduce animation complexity on mobile */
-    .solar-system-bg circle[r="2.0"] {
-        animation-duration: 6s; /* Slower for better performance */
-    }
-    
-    .solar-system-bg circle[cx="104"] {
-        animation-duration: 12s;
-    }
-    
-    .solar-system-bg circle[cx="105.5"] {
-        animation-duration: 18s;
-    }
-    
-    /* Hardware acceleration for smooth animations */
-    .tab-button,
-    .terminal-button,
-    .tab-content {
-        will-change: transform;
-        transform: translateZ(0);
-    }
-}
-
-/* Loading States for Mobile */
-@media only screen and (max-width: 768px) {
-    .loading-spinner {
-        width: 20px;
-        height: 20px;
-        border-width: 2px;
-    }
-    
     .empty-state {
-        padding: 40px 20px;
+        padding: 60px 20px;
+        text-align: center;
     }
     
     .empty-state h3 {
-        font-size: 14px;
-        margin-bottom: 8px;
+        font-size: 16px;
+        margin-bottom: 12px;
     }
     
     .empty-state p {
-        font-size: 11px;
+        font-size: 13px;
+        line-height: 1.4;
+        margin-bottom: 8px;
     }
     
     .empty-state .icon {
-        font-size: 32px;
-        margin: 12px 0;
-    }
-}
-
-/* Utility Classes for Mobile */
-@media only screen and (max-width: 768px) {
-    .mobile-only { display: block !important; }
-    .desktop-only { display: none !important; }
-    .mobile-hidden { display: none !important; }
-    
-    .mobile-full-width { width: 100% !important; }
-    .mobile-text-center { text-align: center !important; }
-    .mobile-text-small { font-size: 10px !important; }
-    .mobile-text-large { font-size: 14px !important; }
-    
-    .mobile-p-1 { padding: 4px !important; }
-    .mobile-p-2 { padding: 8px !important; }
-    .mobile-p-3 { padding: 12px !important; }
-    
-    .mobile-m-1 { margin: 4px !important; }
-    .mobile-m-2 { margin: 8px !important; }
-    .mobile-m-3 { margin: 12px !important; }
-    
-    .mobile-flex-col { flex-direction: column !important; }
-    .mobile-flex-row { flex-direction: row !important; }
-    .mobile-justify-center { justify-content: center !important; }
-    .mobile-items-center { align-items: center !important; }
-    
-    .mobile-gap-1 { gap: 4px !important; }
-    .mobile-gap-2 { gap: 8px !important; }
-    .mobile-gap-3 { gap: 12px !important; }
-}
-
-/* Mobile PWA Support */
-@media only screen and (max-width: 768px) {
-    /* PWA status bar handling */
-    .pwa-status-bar {
-        height: env(safe-area-inset-top);
-        background: linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(255, 0, 255, 0.1) 100%);
-    }
-    
-    /* PWA home indicator handling */
-    .pwa-home-indicator {
-        height: env(safe-area-inset-bottom);
-        background: linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(255, 0, 255, 0.1) 100%);
+        font-size: 48px;
+        margin: 20px 0;
     }
 }
