@@ -1,4 +1,4 @@
-/* MedasDigital WebClient - Complete Mobile Responsive Styles - FINAL VERSION + WALLET HEADER RECHTS */
+/* MedasDigital WebClient - Complete Mobile Responsive Styles - FINAL VERSION + FIXES */
 
 /* Mobile Viewport Meta Setup */
 /* Required in HTML head: <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> */
@@ -30,58 +30,57 @@
     }
     
     /* =================================
-       HEADER LAYOUT - NEUGESTALTUNG + WALLET RECHTS
-       Solar System links unten, Status rechts unten, Wallet Header rechts oben
+       HEADER LAYOUT FIX - KOMPAKTER + WALLET LINKS, NETWORK RECHTS
        ================================= */
     
-    /* Header Container */
+    /* Header Container - NIEDRIGER */
     .header {
-        padding: 16px 12px;
-        min-height: 160px; /* Mehr Platz für neue Layout */
+        padding: 12px; /* Weniger Padding: war 16px */
+        min-height: 120px; /* Niedriger: war 160px */
         margin-bottom: 0;
         position: relative;
         overflow: visible;
         display: flex;
         flex-direction: column;
-        flex-shrink: 0; /* Verhindert Stauchung */
+        flex-shrink: 0;
     }
     
-    /* Terminal Header Grid Layout */
+    /* Terminal Header Grid Layout - KOMPAKTER */
     .terminal-header {
         display: grid;
         grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr auto;
+        grid-template-rows: auto auto; /* Nur 2 Reihen statt 3 */
         height: 100%;
-        min-height: 140px;
-        gap: 12px;
+        min-height: 100px; /* Niedriger: war 140px */
+        gap: 8px; /* Weniger Gap: war 12px */
         position: relative;
         z-index: 2;
     }
     
-    /* TOP ROW: Logo und Titel zentriert (OHNE WALLET) */
+    /* TOP ROW: Logo und Titel zentriert */
     .system-info {
         grid-row: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 8px;
-        padding: 8px 0;
+        gap: 6px; /* Weniger Gap: war 8px */
+        padding: 6px 0; /* Weniger Padding: war 8px */
         background: rgba(0, 0, 0, 0.1);
         backdrop-filter: blur(2px);
         border-radius: 8px;
-        margin-bottom: 8px;
+        margin-bottom: 6px; /* Weniger Margin: war 8px */
     }
     
     .logo-section {
         display: flex;
         align-items: center;
-        gap: 12px;
-        margin-bottom: 8px;
+        gap: 10px; /* Weniger Gap: war 12px */
+        margin-bottom: 6px; /* Weniger Margin: war 8px */
     }
     
     .logo-icon {
-        width: 50px;
-        height: 50px;
+        width: 40px; /* Kleiner: war 50px */
+        height: 40px;
         flex-shrink: 0;
     }
     
@@ -90,324 +89,159 @@
     }
     
     .main-title {
-        font-size: 18px;
-        line-height: 1.3;
-        margin-bottom: 4px;
+        font-size: 16px; /* Kleiner: war 18px */
+        line-height: 1.2; /* Kompakter: war 1.3 */
+        margin-bottom: 2px; /* Weniger Margin: war 4px */
         text-shadow: 
             0 0 4px rgba(0, 0, 0, 0.5),
             0 0 8px rgba(0, 255, 255, 0.3);
     }
     
     .sub-title {
-        font-size: 12px;
+        font-size: 10px; /* Kleiner: war 12px */
         opacity: 0.8;
         text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
     }
     
-    /* MIDDLE ROW: Freier Raum für Solar System */
-    .header-middle {
-        grid-row: 2;
-        position: relative;
-        min-height: 60px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    
     /* =================================
-       BOTTOM ROW: STATUS DISPLAY + WALLET RECHTS OBEN
+       BOTTOM ROW: STATUS DISPLAY UMGEDREHT
+       Wallet LINKS, Network RECHTS
        ================================= */
     
-    /* Status Display - NEUE Struktur für Wallet oben */
     .status-display {
-        grid-row: 3;
+        grid-row: 2;
         display: flex;
-        flex-direction: column;
-        align-items: flex-end; /* Alles rechts ausrichten */
-        gap: 8px;
+        flex-direction: row; /* HORIZONTAL statt column */
+        align-items: center;
+        justify-content: space-between; /* Space between für links/rechts */
+        gap: 12px;
         background: rgba(0, 0, 0, 0.1);
         backdrop-filter: blur(2px);
         border-radius: 8px;
-        padding: 8px 12px;
-        margin-top: 8px;
+        padding: 6px 10px; /* Weniger Padding: war 8px 12px */
+        margin-top: 6px; /* Weniger Margin: war 8px */
         position: relative;
         z-index: 3;
     }
     
-    /* =================================
-       WALLET HEADER INTEGRATION - RECHTS OBEN ÜBER NETWORK
-       ================================= */
-    
-   /* =================================
-   WALLET HEADER INTEGRATION - SCHÖNER UND GRÜN
-   Diese Sektion in mobile.css ERSETZEN (ca. Zeilen 110-230)
-   ================================= */
-
-/* Wallet Section - OBEN in status-display */
-.wallet-section {
-    order: -1; /* Wallet-Section ganz oben */
-    width: 100%;
-    display: flex;
-    justify-content: flex-end; /* Rechts ausrichten */
-    margin-bottom: 8px;
-}
-
-.wallet-display {
-    background: rgba(0, 0, 0, 0.2); /* Dezenter Hintergrund */
-    border: 1px solid rgba(0, 255, 127, 0.3); /* Grüner Border */
-    border-radius: 4px; /* Kleiner Radius */
-    padding: 4px 8px; /* Kompakter */
-    display: flex;
-    flex-direction: column;
-    gap: 2px; /* Weniger Gap */
-    min-width: 180px; /* Kleiner */
-    max-width: 250px;
-    font-family: 'Share Tech Mono', monospace; /* Wie Block/Latenz */
-    transition: all 0.3s ease;
-}
-
-.wallet-display:hover {
-    background: rgba(0, 255, 127, 0.1);
-    border-color: rgba(0, 255, 127, 0.5);
-}
-
-.wallet-display.connected {
-    border-color: rgba(0, 255, 127, 0.5);
-    background: rgba(0, 255, 127, 0.05); /* Sehr dezent grün */
-}
-
-.wallet-display.connecting {
-    border-color: rgba(255, 215, 0, 0.5);
-    background: rgba(255, 215, 0, 0.05);
-    animation: pulse 1.5s ease-in-out infinite;
-}
-
-.wallet-status {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 9px; /* Kleiner */
-    color: #00ff7f; /* Grün wie Block/Latenz */
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.status-icon {
-    font-size: 10px; /* Kleiner */
-}
-
-.wallet-address {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-    background: rgba(0, 0, 0, 0.2); /* Dezenter */
-    border-radius: 3px;
-    padding: 2px 6px; /* Kompakter */
-}
-
-/* WICHTIG: Wallet-Adresse wie Block/Latenz stylen */
-.address-text {
-    font-family: 'Share Tech Mono', monospace; /* Wie System Status */
-    font-size: 8px; /* Wie Latenz/Block */
-    color: #00ff00; /* Grün wie Block/Latenz */
-    cursor: pointer;
-    word-break: break-all;
-    flex: 1;
-    line-height: 1.2;
-    transition: color 0.2s ease;
-    letter-spacing: 0.3px; /* Wie monospace */
-}
-
-.address-text:hover {
-    color: #00ffff; /* Helleres Grün beim Hover */
-    text-shadow: 0 0 4px rgba(0, 255, 0, 0.5);
-}
-
-.copy-btn {
-    background: transparent; /* Transparent */
-    border: 1px solid rgba(0, 255, 127, 0.3);
-    border-radius: 2px;
-    padding: 1px 4px; /* Sehr kompakt */
-    font-size: 8px; /* Klein */
-    color: #00ff7f;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: all 0.3s ease;
-}
-
-.copy-btn:hover {
-    background: rgba(0, 255, 127, 0.2);
-    border-color: rgba(0, 255, 127, 0.5);
-    transform: scale(1.05); /* Subtiler */
-}
-
-.copy-btn:active {
-    transform: scale(0.98);
-}
-
-/* Wallet Status States - Grüne Farbpalette */
-.wallet-display.disconnected .wallet-status {
-    color: #ff6b6b;
-}
-
-.wallet-display.disconnected .status-icon {
-    opacity: 0.6;
-}
-
-.wallet-display.connected .wallet-status {
-    color: #00ff7f; /* Grün */
-}
-
-.wallet-display.connecting .wallet-status {
-    color: #ffd700;
-}
-
-.wallet-display.connecting .status-icon {
-    animation: pulse 1.5s infinite;
-}
-
-/* Copy Success Animation - Grün */
-.wallet-display.copy-success {
-    animation: copySuccessGreen 0.6s ease;
-}
-
-@keyframes copySuccessGreen {
-    0% { 
-        background: rgba(0, 255, 127, 0.05);
-        border-color: rgba(0, 255, 127, 0.3);
-        transform: scale(1);
-    }
-    50% { 
-        background: rgba(0, 255, 127, 0.2);
-        border-color: rgba(0, 255, 127, 0.7);
-        transform: scale(1.02);
-        box-shadow: 0 0 8px rgba(0, 255, 127, 0.4);
-    }
-    100% { 
-        background: rgba(0, 255, 127, 0.05);
-        border-color: rgba(0, 255, 127, 0.3);
-        transform: scale(1);
-    }
-}
-
-/* Mobile Optimierung */
-@media (max-width: 768px) {
-    .wallet-display {
-        min-width: 160px;
-        max-width: 220px;
-        padding: 3px 6px;
-    }
-    
-    .wallet-status {
-        font-size: 8px;
-    }
-    
-    .address-text {
-        font-size: 7px;
-    }
-    
-    .copy-btn {
-        padding: 1px 3px;
-        font-size: 7px;
-    }
-}
-
-/* Sehr kleine Bildschirme */
-@media (max-width: 480px) {
-    .wallet-display {
-        min-width: 140px;
-        max-width: 180px;
-        padding: 2px 5px;
-    }
-    
-    .wallet-status {
-        font-size: 7px;
-    }
-    
-    .address-text {
-        font-size: 6px;
-    }
-    
-    .copy-btn {
-        font-size: 6px;
-        padding: 1px 2px;
-    }
-}
-
-/* Tablet Anpassungen */
-@media only screen and (min-width: 481px) and (max-width: 768px) {
-    .wallet-display {
-        padding: 4px 7px;
-    }
-    
-    .wallet-status {
-        font-size: 8px;
-    }
-    
-    .address-text {
-        font-size: 7px;
-    }
-}
-
-/* Landscape Mode */
-@media only screen and (max-height: 500px) and (orientation: landscape) {
-    .wallet-display {
-        padding: 3px 6px;
-        min-width: 140px;
-        max-width: 200px;
-    }
-    
-    .wallet-status {
-        font-size: 7px;
-    }
-    
-    .address-text {
-        font-size: 6px;
-    }
-}
-
-/* Accessibility - Grün */
-.copy-btn:focus,
-.address-text:focus {
-    outline: 2px solid #00ff7f;
-    outline-offset: 2px;
-}
-
-/* High Contrast Mode - Grün */
-@media (prefers-contrast: high) {
-    .wallet-display {
-        border-width: 2px;
-        border-color: #00ff7f;
-    }
-    
-    .copy-btn {
-        border-color: #00ff7f;
-    }
-    
-    .address-text {
-        color: #00ff00;
-        font-weight: bold;
-    }
-}
-    /* =================================
-       FORTSETZUNG STATUS DISPLAY - Network Info DARUNTER
-       ================================= */
-    
-    /* Status Items horizontal anordnen - UNTER der Wallet */
-    .status-row {
+    /* WALLET SECTION - LINKS */
+    .wallet-section {
+        order: 1; /* Links */
         display: flex;
-        gap: 12px;
+        justify-content: flex-start; /* Links ausrichten */
+        flex: 1;
+    }
+    
+    .wallet-display {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(0, 255, 127, 0.3);
+        border-radius: 4px;
+        padding: 4px 8px; /* Kompakter: war 6px 10px */
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 140px; /* Kompakter: war 180px */
+        max-width: 200px; /* Kompakter: war 250px */
+        font-family: 'Share Tech Mono', monospace;
+        transition: all 0.3s ease;
+    }
+    
+    .wallet-display:hover {
+        background: rgba(0, 255, 127, 0.1);
+        border-color: rgba(0, 255, 127, 0.5);
+    }
+    
+    .wallet-display.connected {
+        border-color: rgba(0, 255, 127, 0.5);
+        background: rgba(0, 255, 127, 0.05);
+    }
+    
+    .wallet-display.connecting {
+        border-color: rgba(255, 215, 0, 0.5);
+        background: rgba(255, 215, 0, 0.05);
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    .wallet-status {
+        display: flex;
         align-items: center;
-        width: 100%;
+        gap: 4px;
+        font-size: 8px; /* Kleiner: war 10px */
+        color: #00ff7f;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-icon {
+        font-size: 10px; /* Kleiner: war 14px */
+    }
+    
+    .wallet-address {
+        display: flex;
+        align-items: center;
         justify-content: space-between;
-        flex-wrap: wrap;
+        gap: 6px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+        padding: 2px 6px; /* Kompakter: war 4px 8px */
+    }
+    
+    .address-text {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 7px; /* Kleiner: war 9px */
+        color: #00ff00;
+        cursor: pointer;
+        word-break: break-all;
+        flex: 1;
+        line-height: 1.2;
+        transition: color 0.2s ease;
+        letter-spacing: 0.3px;
+    }
+    
+    .address-text:hover {
+        color: #00ffff;
+        text-shadow: 0 0 4px rgba(0, 255, 0, 0.5);
+    }
+    
+    .copy-btn {
+        background: transparent;
+        border: 1px solid rgba(0, 255, 127, 0.3);
+        border-radius: 2px;
+        padding: 1px 3px; /* Kompakter: war 2px 4px */
+        font-size: 7px; /* Kleiner: war 9px */
+        color: #00ff7f;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: all 0.3s ease;
+    }
+    
+    .copy-btn:hover {
+        background: rgba(0, 255, 127, 0.2);
+        border-color: rgba(0, 255, 127, 0.5);
+        transform: scale(1.05);
+    }
+    
+    /* NETWORK STATUS - RECHTS */
+    .status-row {
+        order: 2; /* Rechts */
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+    
+    .network-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
     }
     
     /* Network Status */
     .connection-status {
-        padding: 4px 8px;
-        font-size: 10px;
+        padding: 3px 6px; /* Kompakter: war 4px 8px */
+        font-size: 8px; /* Kleiner: war 10px */
         border-radius: 4px;
         white-space: nowrap;
         text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
@@ -416,62 +250,71 @@
     
     /* Blockchain Status */
     #blockchain-status {
-        padding: 4px 8px;
-        font-size: 10px;
+        padding: 3px 6px; /* Kompakter: war 4px 8px */
+        font-size: 8px; /* Kleiner: war 10px */
         border-radius: 4px;
         white-space: nowrap;
         text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
         flex-shrink: 0;
     }
     
-    /* Timestamp rechts unten */
+    /* Timestamp unter Network Status */
     .timestamp {
-        font-size: 9px;
-        padding: 3px 6px;
+        font-size: 7px; /* Kleiner: war 9px */
+        padding: 2px 4px; /* Kompakter: war 3px 6px */
         background: rgba(0, 0, 0, 0.2);
         border-radius: 3px;
         text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
-        align-self: flex-end;
-        margin-top: 4px;
+        margin-top: 2px; /* Weniger Margin: war 4px */
     }
     
-    /* Solar System LINKS UNTEN positioniert */
+    /* =================================
+       SOLAR SYSTEM - SICHTBAR MACHEN
+       ================================= */
+    
     .solar-system-bg {
         position: absolute;
-        bottom: 10px; /* Unten statt center */
-        left: 10px;   /* Links statt center */
-        transform: rotate(180deg); /* Keine Zentrierung */
-        width: 100px; /* Kleiner */
-        height: 100px;
-        opacity: 0.7;
+        bottom: 5px; /* Ganz unten */
+        left: 5px;   /* Ganz links */
+        transform: none; /* Kein Rotate mehr */
+        width: 80px; /* Kleiner aber sichtbar: war 100px */
+        height: 80px;
+        opacity: 0.6; /* Sichtbarer: war 0.7 */
         z-index: 1; /* Hinter allem anderen */
         pointer-events: none;
     }
     
-    /* Status-Elemente besser strukturiert */
-    .network-info {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        flex-wrap: wrap;
+    /* Entfernen der header-middle da nicht mehr gebraucht */
+    .header-middle {
+        display: none;
+    }
+}
+
+/* Wallet Status States */
+@media only screen and (max-width: 768px) {
+    .wallet-display.disconnected .wallet-status {
+        color: #ff6b6b;
     }
     
-    .block-info {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 2px;
-        font-size: 9px;
+    .wallet-display.disconnected .status-icon {
+        opacity: 0.6;
     }
     
-    .block-height {
-        color: #00ffff;
-        font-weight: bold;
+    .wallet-display.connected .wallet-status {
+        color: #00ff7f;
     }
     
-    .network-latency {
-        color: #00ff00;
-        font-family: 'Share Tech Mono', monospace;
+    .wallet-display.connecting .wallet-status {
+        color: #ffd700;
+    }
+    
+    .wallet-display.connecting .status-icon {
+        animation: pulse 1.5s infinite;
+    }
+    
+    /* Copy Success Animation */
+    .wallet-display.copy-success {
+        animation: copySuccessGreen 0.6s ease;
     }
 }
 
@@ -1343,68 +1186,46 @@
     }
 }
 
-/* Mobile Optimierung für Wallet Header */
-@media (max-width: 768px) {
-    .wallet-display {
-        min-width: 180px;
-        max-width: 250px;
-        padding: 6px 10px;
-    }
-    
-    .wallet-status {
-        font-size: 10px;
-    }
-    
-    .address-text {
-        font-size: 9px;
-    }
-    
-    .copy-btn {
-        padding: 2px 4px;
-        font-size: 9px;
-    }
-}
-
 /* Tablet Size (481px - 768px) */
 @media only screen and (min-width: 481px) and (max-width: 768px) {
     .header {
-        min-height: 180px;
-        padding: 20px 16px;
+        min-height: 140px; /* Angepasst */
+        padding: 16px;
     }
     
     .terminal-header {
-        min-height: 160px;
-        gap: 16px;
+        min-height: 120px; /* Angepasst */
+        gap: 12px;
     }
     
     .main-title {
-        font-size: 20px;
+        font-size: 18px;
     }
     
     .sub-title {
-        font-size: 13px;
+        font-size: 11px;
     }
     
     .logo-icon {
-        width: 56px;
-        height: 56px;
+        width: 46px;
+        height: 46px;
     }
     
     .solar-system-bg {
-        width: 120px;
-        height: 120px;
-        bottom: 15px;
-        left: 15px;
+        width: 90px;
+        height: 90px;
+        bottom: 8px;
+        left: 8px;
     }
     
     .connection-status,
     #blockchain-status {
-        font-size: 11px;
-        padding: 6px 10px;
+        font-size: 9px;
+        padding: 4px 7px;
     }
     
     .timestamp {
-        font-size: 10px;
+        font-size: 8px;
     }
     
     .stats-grid,
@@ -1412,21 +1233,22 @@
         grid-template-columns: repeat(2, 1fr);
     }
     
-    /* Wallet Header für Tablets */
     .wallet-display {
-        padding: 6px 10px;
+        min-width: 160px;
+        max-width: 220px;
+        padding: 4px 8px;
     }
     
     .wallet-status {
-        font-size: 10px;
+        font-size: 8px;
     }
     
     .address-text {
-        font-size: 9px;
+        font-size: 7px;
     }
     
     .copy-btn {
-        font-size: 10px;
+        font-size: 7px;
         padding: 1px 3px;
     }
 }
@@ -1438,47 +1260,48 @@
     }
     
     .header {
-        min-height: 140px;
-        padding: 12px 8px;
+        min-height: 100px; /* Sehr kompakt */
+        padding: 8px;
     }
     
     .terminal-header {
-        min-height: 120px;
-        gap: 8px;
+        min-height: 80px;
+        gap: 6px;
     }
     
     .main-title {
-        font-size: 16px;
+        font-size: 14px;
     }
     
     .sub-title {
-        font-size: 11px;
+        font-size: 8px;
     }
     
     .logo-icon {
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
     }
     
     .solar-system-bg {
-        width: 80px;
-        height: 80px;
-        bottom: 8px;
-        left: 8px;
+        width: 60px;
+        height: 60px;
+        bottom: 3px;
+        left: 3px;
     }
     
     .status-display {
-        padding: 6px 8px;
+        padding: 4px 6px;
+        gap: 8px;
     }
     
     .connection-status,
     #blockchain-status {
-        font-size: 9px;
-        padding: 3px 6px;
+        font-size: 7px;
+        padding: 2px 4px;
     }
     
     .timestamp {
-        font-size: 8px;
+        font-size: 6px;
     }
     
     .tab-button {
@@ -1498,54 +1321,33 @@
         padding: 12px;
     }
     
-    /* Responsive Status Layout */
-    .status-row {
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 6px;
-    }
-    
-    .network-info {
-        align-self: stretch;
-        justify-content: space-between;
-    }
-    
-    /* Wallet für sehr kleine Phones */
     .logo-section {
         flex-direction: column;
         text-align: center;
-        gap: 5px;
-        margin-bottom: 5px;
-    }
-    
-    .wallet-section {
-        max-width: 100%;
+        gap: 4px;
+        margin-bottom: 4px;
     }
     
     .wallet-display {
-        padding: 5px 8px;
-        min-width: 160px;
-        max-width: 200px;
+        min-width: 120px;
+        max-width: 160px;
+        padding: 3px 6px;
     }
     
     .wallet-status {
-        font-size: 9px;
+        font-size: 6px;
     }
     
     .status-icon {
-        font-size: 11px;
-    }
-    
-    .wallet-address {
         font-size: 8px;
     }
     
     .address-text {
-        font-size: 8px;
+        font-size: 5px;
     }
     
     .copy-btn {
-        font-size: 9px;
+        font-size: 6px;
         padding: 1px 2px;
     }
 }
@@ -1553,14 +1355,14 @@
 /* Landscape Mode (Phone horizontal) */
 @media only screen and (max-height: 500px) and (orientation: landscape) {
     .header {
-        min-height: 120px;
-        padding: 12px 16px;
+        min-height: 80px; /* Sehr kompakt im Landscape */
+        padding: 8px 12px;
     }
     
     .terminal-header {
         grid-template-columns: 1fr auto;
-        grid-template-rows: auto auto;
-        min-height: 100px;
+        grid-template-rows: auto;
+        min-height: 60px;
         gap: 8px;
     }
     
@@ -1570,55 +1372,61 @@
         flex-direction: row;
         justify-content: flex-start;
         margin-bottom: 0;
-        gap: 12px;
+        gap: 8px;
     }
     
     .logo-section {
         flex-direction: row;
-        gap: 10px;
+        gap: 6px;
         margin-bottom: 0;
     }
     
     .status-display {
         grid-column: 2;
-        grid-row: 1 / 3;
+        grid-row: 1;
         margin-top: 0;
         align-self: stretch;
         justify-content: center;
-        min-width: 200px;
+        min-width: 160px;
+        flex-direction: row;
+        gap: 8px;
     }
     
     .wallet-section {
-        max-width: 200px;
-        margin-top: 0;
-    }
-    
-    .wallet-display {
-        padding: 4px 8px;
-    }
-    
-    .solar-system-bg {
-        width: 70px;
-        height: 70px;
-        bottom: 8px;
-        left: 8px;
-        opacity: 0.5;
+        order: 1;
+        max-width: 120px;
     }
     
     .status-row {
+        order: 2;
         flex-direction: column;
         align-items: flex-end;
+        gap: 2px;
+    }
+    
+    .wallet-display {
+        padding: 2px 6px;
+        min-width: 100px;
+        max-width: 140px;
+    }
+    
+    .solar-system-bg {
+        width: 50px;
+        height: 50px;
+        bottom: 3px;
+        left: 3px;
+        opacity: 0.4;
     }
     
     .main-interface {
         flex-direction: row;
         gap: 16px;
-        height: calc(100vh - 140px);
+        height: calc(100vh - 100px);
     }
     
     .communication-display {
         flex: 2;
-        min-height: 350px;
+        min-height: 300px;
     }
     
     .control-panel {
@@ -1627,12 +1435,12 @@
     }
     
     .tab-button {
-        min-height: 36px;
-        padding: 6px 10px;
+        min-height: 32px;
+        padding: 4px 8px;
     }
     
     .message-display {
-        max-height: calc(100vh - 200px);
+        max-height: calc(100vh - 150px);
     }
 }
 
@@ -1861,24 +1669,28 @@
 }
 
 /* CSS Animations */
-@keyframes copySuccess {
+@keyframes copySuccessGreen {
     0% { 
-        background: rgba(0, 255, 127, 0.1);
+        background: rgba(0, 255, 127, 0.05);
+        border-color: rgba(0, 255, 127, 0.3);
         transform: scale(1);
     }
     50% { 
-        background: rgba(0, 255, 127, 0.3);
-        transform: scale(1.05);
+        background: rgba(0, 255, 127, 0.2);
+        border-color: rgba(0, 255, 127, 0.7);
+        transform: scale(1.02);
+        box-shadow: 0 0 8px rgba(0, 255, 127, 0.4);
     }
     100% { 
-        background: rgba(0, 255, 127, 0.1);
+        background: rgba(0, 255, 127, 0.05);
+        border-color: rgba(0, 255, 127, 0.3);
         transform: scale(1);
     }
 }
 
 @keyframes pulse {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    50% { opacity: 0.7; }
 }
 
 @keyframes spin {
