@@ -1644,71 +1644,71 @@
             { type: "undelegate", amount: "+500.000000", time: "5 days ago", hash: "M4N5O6..." }
         ];
 
-class KeplrManager {
-    constructor() {
-        this.keplr = null;
-        this.maxRetries = 50;
-        this.retryDelay = 100;
-    }
-
-    async detectKeplr() {
-        console.log('🔍 Detecting Keplr wallet...');
-        
-        for (let i = 0; i < this.maxRetries; i++) {
-            if (window.keplr && window.getOfflineSigner) {
-                this.keplr = window.keplr;
-                console.log('✅ Keplr detected successfully after', i * this.retryDelay, 'ms');
-                return true;
+        class KeplrManager {
+            constructor() {
+                this.keplr = null;
+                this.maxRetries = 50;
+                this.retryDelay = 100;
             }
-            
-            if (i % 10 === 0) {
-                console.log(`⏳ Waiting for Keplr... (${i}/${this.maxRetries})`);
+        
+            async detectKeplr() {
+                console.log('🔍 Detecting Keplr wallet...');
+                
+                for (let i = 0; i < this.maxRetries; i++) {
+                    if (window.keplr && window.getOfflineSigner) {
+                        this.keplr = window.keplr;
+                        console.log('✅ Keplr detected successfully after', i * this.retryDelay, 'ms');
+                        return true;
+                    }
+                    
+                    if (i % 10 === 0) {
+                        console.log(`⏳ Waiting for Keplr... (${i}/${this.maxRetries})`);
+                    }
+                    
+                    await new Promise(resolve => setTimeout(resolve, this.retryDelay));
+                }
+                
+                console.error('❌ Keplr not detected after', this.maxRetries * this.retryDelay, 'ms');
+                this.showKeplrInstallPrompt();
+                return false;
             }
-            
-            await new Promise(resolve => setTimeout(resolve, this.retryDelay));
-        }
         
-        console.error('❌ Keplr not detected after', this.maxRetries * this.retryDelay, 'ms');
-        this.showKeplrInstallPrompt();
-        return false;
-    }
-
-    async connect() {
-        const detected = await this.detectKeplr();
-        if (!detected) {
-            return false;
-        }
+            async connect() {
+                const detected = await this.detectKeplr();
+                if (!detected) {
+                    return false;
+                }
+                
+                try {
+                    // Test if Keplr is responsive
+                    await this.keplr.getKey("cosmoshub-4"); // Test with known chain
+                    console.log('✅ Keplr is responsive');
+                    return true;
+                } catch (error) {
+                    console.warn('⚠️ Keplr detected but not responsive:', error);
+                    return false;
+                }
+            }
         
-        try {
-            // Test if Keplr is responsive
-            await this.keplr.getKey("cosmoshub-4"); // Test with known chain
-            console.log('✅ Keplr is responsive');
-            return true;
-        } catch (error) {
-            console.warn('⚠️ Keplr detected but not responsive:', error);
-            return false;
-        }
-    }
-
-    showKeplrInstallPrompt() {
-        const installUrl = 'https://www.keplr.app/';
-        const message = `
-🦊 Keplr Wallet Extension Required!
-
-To use MedasDigital WebClient, please:
-
-1. Install Keplr extension from: ${installUrl}
-2. Restart your browser
-3. Refresh this page
-4. Click "Connect Wallet"
-
-Install Keplr now?`;
+            showKeplrInstallPrompt() {
+                const installUrl = 'https://www.keplr.app/';
+                const message = `
+        🦊 Keplr Wallet Extension Required!
         
-        if (confirm(message)) {
-            window.open(installUrl, '_blank');
+        To use MedasDigital WebClient, please:
+        
+        1. Install Keplr extension from: ${installUrl}
+        2. Restart your browser
+        3. Refresh this page
+        4. Click "Connect Wallet"
+        
+        Install Keplr now?`;
+                
+                if (confirm(message)) {
+                    window.open(installUrl, '_blank');
+                }
+            }
         }
-    }
-}
         
         class MedasResearchTerminal {
             constructor() {
