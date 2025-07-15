@@ -18,11 +18,20 @@ class MedasResearchTerminal {
         this.channels = new Map();
         this.blockchainStatusLogged = false;
         
+        // NEW: Wallet Header Elements
+        this.walletDisplayElement = null;
+        this.walletStatusElement = null;
+        this.walletAddressElement = null;
+        this.addressTextElement = null;
+        this.copyButtonElement = null;
+        
         // Initialize UI Manager
         this.ui = new UIManager();
         
         this.initializeTerminal();
         this.initializeEventListeners();
+        // NEW: Initialize Wallet Header
+        this.initializeWalletHeader();
         this.checkKeplrAvailability();
         this.checkDaemonConnection();
         this.startBlockchainMonitoring();
@@ -39,6 +48,159 @@ class MedasResearchTerminal {
         window.setMaxStakeAmount = () => this.ui.setMaxStakeAmount();
         window.setMaxSendAmount = () => this.ui.setMaxSendAmount();
         window.sendTokens = () => this.sendTokens();
+    }
+
+    // NEW: Initialize Wallet Header Display
+    initializeWalletHeader() {
+        try {
+            this.walletDisplayElement = document.getElementById('wallet-display');
+            this.walletStatusElement = document.getElementById('wallet-status');
+            this.walletAddressElement = document.getElementById('wallet-address');
+            this.addressTextElement = document.getElementById('address-text');
+            this.copyButtonElement = document.getElementById('copy-address');
+
+            if (!this.walletDisplayElement) {
+                console.warn('⚠️ Wallet header elements not found - HTML missing wallet-section');
+                return;
+            }
+
+            // Copy address functionality
+            if (this.copyButtonElement) {
+                this.copyButtonElement.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.copyWalletAddress();
+                });
+            }
+
+            // Click address to copy
+            if (this.addressTextElement) {
+                this.addressTextElement.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.copyWalletAddress();
+                });
+            }
+
+            console.log('✅ Wallet header initialized successfully');
+            
+            // Update initial state
+            this.updateWalletHeader();
+            
+        } catch (error) {
+            console.error('❌ Wallet header initialization failed:', error);
+        }
+    }
+
+    // NEW: Update Wallet Header Display
+    updateWalletHeader() {
+        if (!this.walletDisplayElement) {
+            console.warn('⚠️ Wallet display element not found');
+            return;
+        }
+
+        try {
+            if (this.connected && this.account) {
+                // Connected state
+                this.walletDisplayElement.className = 'wallet-display connected';
+                
+                if (this.walletStatusElement) {
+                    this.walletStatusElement.innerHTML = `
+                        <span class="status-icon">💳</span>
+                        <span class="status-text">Connected</span>
+                    `;
+                }
+
+                if (this.walletAddressElement && this.addressTextElement) {
+                    const shortAddress = this.shortenAddress(this.account.address);
+                    this.addressTextElement.textContent = shortAddress;
+                    this.walletAddressElement.style.display = 'flex';
+                }
+
+                console.log('🔄 Wallet header updated: Connected');
+            } else {
+                // Disconnected state
+                this.walletDisplayElement.className = 'wallet-display disconnected';
+                
+                if (this.walletStatusElement) {
+                    this.walletStatusElement.innerHTML = `
+                        <span class="status-icon">💳</span>
+                        <span class="status-text">No Wallet</span>
+                    `;
+                }
+
+                if (this.walletAddressElement) {
+                    this.walletAddressElement.style.display = 'none';
+                }
+
+                console.log('🔄 Wallet header updated: Disconnected');
+            }
+        } catch (error) {
+            console.error('❌ Wallet header update failed:', error);
+        }
+    }
+
+    // NEW: Set Connecting State
+    setWalletConnecting(isConnecting = true) {
+        if (!this.walletDisplayElement) return;
+
+        try {
+            if (isConnecting) {
+                this.walletDisplayElement.className = 'wallet-display connecting';
+                
+                if (this.walletStatusElement) {
+                    this.walletStatusElement.innerHTML = `
+                        <span class="status-icon">💳</span>
+                        <span class="status-text">Connecting...</span>
+                    `;
+                }
+
+                console.log('🔄 Wallet header: Connecting state');
+            }
+        } catch (error) {
+            console.error('❌ Set connecting state failed:', error);
+        }
+    }
+
+    // NEW: Shorten Wallet Address for Display
+    shortenAddress(address) {
+        if (!address || address.length < 10) return address;
+        return `${address.slice(0, 6)}...${address.slice(-4)}`;
+    }
+
+    // NEW: Copy Wallet Address to Clipboard
+    async copyWalletAddress() {
+        if (!this.account || !this.account.address) {
+            console.warn('⚠️ No wallet address to copy');
+            this.ui.showSystemMessage('No wallet connected', 'error');
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(this.account.address);
+            
+            // Visual feedback
+            if (this.walletDisplayElement) {
+                this.walletDisplayElement.classList.add('copy-success');
+                setTimeout(() => {
+                    this.walletDisplayElement.classList.remove('copy-success');
+                }, 600);
+            }
+
+            console.log('📋 Wallet address copied to clipboard:', this.account.address);
+            this.ui.addSystemMessage('Wallet address copied to clipboard');
+            
+        } catch (error) {
+            console.error('❌ Failed to copy address:', error);
+            this.ui.showSystemMessage('Failed to copy address', 'error');
+            
+            // Fallback: Show the address in a prompt
+            try {
+                prompt('Copy wallet address:', this.account.address);
+            } catch (promptError) {
+                console.error('❌ Prompt fallback failed:', promptError);
+            }
+        }
     }
 
     // Daemon Connection Management
@@ -361,10 +523,15 @@ Current mode: Blockchain-only (no chat)`,
     // Wallet Connection
     async connectWallet() {
         try {
+            // NEW: Set connecting state
+            this.setWalletConnecting(true);
+            
             // Use improved Keplr Detection
             const connected = await this.keplrManager.connect();
             if (!connected) {
                 this.ui.showSystemMessage('Keplr not found - Install extension', 'error');
+                // NEW: Reset to disconnected state
+                this.updateWalletHeader();
                 return;
             }
 
@@ -389,6 +556,9 @@ Current mode: Blockchain-only (no chat)`,
                     address: accounts[0].address
                 };
                 this.connected = true;
+                
+                // NEW: Update wallet header
+                this.updateWalletHeader();
                 
                 // Update UI
                 this.ui.addSystemMessage(`Wallet connected: ${this.account.address}`);
@@ -418,6 +588,10 @@ Current mode: Blockchain-only (no chat)`,
         } catch (error) {
             console.error('❌ Wallet connection failed:', error);
             this.ui.showSystemMessage('Connection failed - Check Keplr', 'error');
+            // NEW: Reset to disconnected state
+            this.connected = false;
+            this.account = null;
+            this.updateWalletHeader();
         }
     }
 
@@ -505,6 +679,9 @@ Current mode: Blockchain-only (no chat)`,
     disconnectWallet() {
         this.account = null;
         this.connected = false;
+        
+        // NEW: Update wallet header
+        this.updateWalletHeader();
         
         this.ui.updateConnectionStatus(false);
         this.ui.resetWalletInterface();
