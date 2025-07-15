@@ -112,9 +112,9 @@ class MedasResearchTerminal {
                 }
 
                 if (this.walletAddressElement && this.addressTextElement) {
-                    const shortAddress = this.shortenAddress(this.account.address);
-                    this.addressTextElement.textContent = shortAddress;
-                    this.walletAddressElement.style.display = 'flex';
+                    const fullAddress = this.account.address;
+                    this.addressTextElement.textContent = fullAddress; // Vollständige Adresse
+                    this.addressTextElement.title = fullAddress; // Tooltip
                 }
 
                 console.log('🔄 Wallet header updated: Connected');
@@ -163,9 +163,8 @@ class MedasResearchTerminal {
     }
 
     // NEW: Shorten Wallet Address for Display
-    shortenAddress(address) {
-        if (!address || address.length < 10) return address;
-        return `${address.slice(0, 6)}...${address.slice(-4)}`;
+   shortenAddress(address) {
+    return address || ''; // Keine Verkürzung mehr!
     }
 
     // NEW: Copy Wallet Address to Clipboard
