@@ -50,7 +50,7 @@ class MedasResearchTerminal {
         window.sendTokens = () => this.sendTokens();
     }
 
-    // NEW: Initialize Wallet Header Display
+     // NEW: Initialize Wallet Header Display - DEBUG VERSION
     initializeWalletHeader() {
         try {
             this.walletDisplayElement = document.getElementById('wallet-display');
@@ -58,6 +58,14 @@ class MedasResearchTerminal {
             this.walletAddressElement = document.getElementById('wallet-address');
             this.addressTextElement = document.getElementById('address-text');
             this.copyButtonElement = document.getElementById('copy-address');
+
+            // DEBUG: Log alle gefundenen Elemente
+            console.log('🔍 DEBUG - Wallet Elements Found:');
+            console.log('  walletDisplayElement:', this.walletDisplayElement);
+            console.log('  walletStatusElement:', this.walletStatusElement);
+            console.log('  walletAddressElement:', this.walletAddressElement);
+            console.log('  addressTextElement:', this.addressTextElement);
+            console.log('  copyButtonElement:', this.copyButtonElement);
 
             if (!this.walletDisplayElement) {
                 console.warn('⚠️ Wallet header elements not found - HTML missing wallet-section');
@@ -92,7 +100,8 @@ class MedasResearchTerminal {
         }
     }
 
-    // NEW: Update Wallet Header Display
+    
+
     updateWalletHeader() {
         if (!this.walletDisplayElement) {
             console.warn('⚠️ Wallet display element not found');
@@ -111,13 +120,32 @@ class MedasResearchTerminal {
                     `;
                 }
 
+                // DEBUG: Mehr Logging hinzufügen
+                console.log('🔍 DEBUG - Wallet Address Element:', this.walletAddressElement);
+                console.log('🔍 DEBUG - Address Text Element:', this.addressTextElement);
+                console.log('🔍 DEBUG - Account Address:', this.account.address);
+
                 if (this.walletAddressElement && this.addressTextElement) {
+                    // VOLLSTÄNDIGE Adresse anzeigen
                     const fullAddress = this.account.address;
-                    this.addressTextElement.textContent = fullAddress; // Vollständige Adresse
-                    this.addressTextElement.title = fullAddress; // Tooltip
+                    
+                    // WICHTIG: Zuerst das Element einblenden
+                    this.walletAddressElement.style.display = 'flex';
+                    this.walletAddressElement.style.visibility = 'visible';
+                    
+                    // Dann den Text setzen
+                    this.addressTextElement.textContent = fullAddress;
+                    this.addressTextElement.title = fullAddress;
+                    
+                    console.log('🔍 DEBUG - Set address text to:', fullAddress);
+                    console.log('🔍 DEBUG - Element display style:', this.walletAddressElement.style.display);
+                } else {
+                    console.error('❌ Wallet address elements not found!');
+                    console.error('walletAddressElement:', this.walletAddressElement);
+                    console.error('addressTextElement:', this.addressTextElement);
                 }
 
-                console.log('🔄 Wallet header updated: Connected');
+                console.log('🔄 Wallet header updated: Connected with full address');
             } else {
                 // Disconnected state
                 this.walletDisplayElement.className = 'wallet-display disconnected';
