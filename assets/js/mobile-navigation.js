@@ -1,88 +1,129 @@
 // ====================================
-// MOBILE NAVIGATION MANAGER
-// Add to assets/js/mobile-navigation.js
+// SWIPE NAVIGATION FIX
+// Ersetzt problematische Teile in mobile-navigation.js
 // ====================================
+
+// PROBLEM: Tab-Erkennung und Switching funktioniert nicht richtig
+// LÖSUNG: Verbesserte Tab-Detection und Switch-Logik
 
 class MobileNavigationManager {
     constructor() {
         this.currentTab = 0;
         this.tabs = [];
+        this.tabContents = [];
         this.isBottomNav = false;
         this.touchStartX = 0;
         this.touchStartY = 0;
         this.touchEndX = 0;
         this.touchEndY = 0;
         this.swipeThreshold = 50;
-        this.longPressTimer = null;
-        this.longPressDelay = 800;
-        this.hapticSupported = 'vibrate' in navigator;
+        this.isInitialized = false;
         
         this.init();
     }
 
     init() {
+        // Warten bis DOM ready ist
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.setup());
+        } else {
+            this.setup();
+        }
+    }
+
+    setup() {
         this.setupTabs();
         this.setupSwipeGestures();
         this.setupNavigationToggle();
-        this.setupHapticFeedback();
-        this.setupLongPress();
         this.loadNavigationPreference();
+        this.isInitialized = true;
         
-        console.log('📱 Mobile Navigation Manager initialized');
+        console.log('📱 Mobile Navigation initialized with', this.tabs.length, 'tabs');
+        console.log('📋 Current tab:', this.currentTab, this.tabs[this.currentTab]?.dataset.tab);
     }
 
     setupTabs() {
-        this.tabs = Array.from(document.querySelectorAll('.tab-button'));
+        // VERBESSERTE Tab-Erkennung
+        this.tabs = Array.from(document.querySelectorAll('.tab-button[data-tab]'));
+        this.tabContents = Array.from(document.querySelectorAll('.tab-content[id$="-tab"]'));
+        
+        console.log('🔍 Found tabs:', this.tabs.map(tab => tab.dataset.tab));
+        console.log('🔍 Found tab contents:', this.tabContents.map(content => content.id));
+        
+        // Finde aktiven Tab
         this.currentTab = this.tabs.findIndex(tab => tab.classList.contains('active'));
+        if (this.currentTab === -1) {
+            this.currentTab = 0;
+            // Setze ersten Tab als aktiv falls keiner aktiv ist
+            if (this.tabs.length > 0) {
+                this.tabs[0].classList.add('active');
+                const firstContent = document.querySelector(`#${this.tabs[0].dataset.tab}-tab`);
+                if (firstContent) {
+                    firstContent.classList.add('active');
+                }
+            }
+        }
         
-        if (this.currentTab === -1) this.currentTab = 0;
-        
-        // Add touch event listeners to tabs
+        // Event Listeners für Tabs
         this.tabs.forEach((tab, index) => {
-            tab.addEventListener('touchstart', (e) => this.handleTabTouchStart(e, index));
-            tab.addEventListener('touchend', (e) => this.handleTabTouchEnd(e, index));
-            tab.addEventListener('click', (e) => this.handleTabClick(e, index));
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.switchToTab(index, 'click');
+            });
+            
+            tab.addEventListener('touchstart', (e) => {
+                this.triggerHapticFeedback('light');
+            });
         });
     }
 
     setupSwipeGestures() {
-        const swipeZone = document.querySelector('.tab-content.active') || document.querySelector('.main-content');
+        // Swipe auf dem Haupt-Content-Bereich
+        const swipeTargets = [
+            '.communication-display',
+            '.tab-content.active',
+            '.content-area'
+        ];
         
-        if (!swipeZone) return;
+        let swipeZone = null;
+        for (const selector of swipeTargets) {
+            swipeZone = document.querySelector(selector);
+            if (swipeZone) break;
+        }
+        
+        if (!swipeZone) {
+            console.warn('⚠️ No swipe zone found');
+            return;
+        }
+        
+        console.log('👆 Swipe zone:', swipeZone.className);
         
         swipeZone.classList.add('swipe-zone');
         
-        // Touch events for swipe detection
+        // Touch Events
         swipeZone.addEventListener('touchstart', (e) => this.handleSwipeStart(e), { passive: true });
         swipeZone.addEventListener('touchmove', (e) => this.handleSwipeMove(e), { passive: false });
         swipeZone.addEventListener('touchend', (e) => this.handleSwipeEnd(e), { passive: true });
-        
-        // Prevent default scroll behavior for horizontal swipes
-        swipeZone.addEventListener('touchmove', (e) => {
-            const deltaX = Math.abs(this.touchEndX - this.touchStartX);
-            const deltaY = Math.abs(this.touchEndY - this.touchStartY);
-            
-            // If horizontal swipe is more significant than vertical
-            if (deltaX > deltaY && deltaX > 20) {
-                e.preventDefault();
-            }
-        }, { passive: false });
     }
 
     handleSwipeStart(e) {
         this.touchStartX = e.touches[0].clientX;
         this.touchStartY = e.touches[0].clientY;
+        console.log('👆 Swipe start:', this.touchStartX, this.touchStartY);
     }
 
     handleSwipeMove(e) {
+        if (!e.touches[0]) return;
+        
         this.touchEndX = e.touches[0].clientX;
         this.touchEndY = e.touches[0].clientY;
         
         const deltaX = this.touchEndX - this.touchStartX;
         const deltaY = Math.abs(this.touchEndY - this.touchStartY);
         
-        // Show swipe indicator if horizontal movement is significant
-        if (Math.abs(deltaX) > 20 && deltaY < 50) {
+        // Horizontal swipe detection
+        if (Math.abs(deltaX) > 30 && deltaY < 50) {
+            e.preventDefault(); // Prevent scrolling during horizontal swipe
             this.showSwipeIndicator(deltaX > 0 ? 'right' : 'left');
         }
     }
@@ -91,37 +132,126 @@ class MobileNavigationManager {
         const deltaX = this.touchEndX - this.touchStartX;
         const deltaY = Math.abs(this.touchEndY - this.touchStartY);
         
-        // Clear any existing swipe indicators
+        console.log('👆 Swipe end - deltaX:', deltaX, 'deltaY:', deltaY);
+        
         this.hideSwipeIndicators();
         
         // Check if it's a horizontal swipe
         if (Math.abs(deltaX) > this.swipeThreshold && deltaY < 100) {
             if (deltaX > 0) {
                 // Swipe right - go to previous tab
+                console.log('👉 Swipe right detected');
                 this.goToPreviousTab();
             } else {
                 // Swipe left - go to next tab
+                console.log('👈 Swipe left detected');
                 this.goToNextTab();
             }
         }
     }
 
+    goToPreviousTab() {
+        const newIndex = this.currentTab - 1;
+        if (newIndex >= 0) {
+            console.log('⬅️ Going to previous tab:', newIndex);
+            this.switchToTab(newIndex, 'swipe-right');
+        } else {
+            console.log('⬅️ Already at first tab');
+            this.triggerHapticFeedback('medium'); // Feedback for "can't go further"
+        }
+    }
+
+    goToNextTab() {
+        const newIndex = this.currentTab + 1;
+        if (newIndex < this.tabs.length) {
+            console.log('➡️ Going to next tab:', newIndex);
+            this.switchToTab(newIndex, 'swipe-left');
+        } else {
+            console.log('➡️ Already at last tab');
+            this.triggerHapticFeedback('medium'); // Feedback for "can't go further"
+        }
+    }
+
+    switchToTab(index, source = 'unknown') {
+        if (index < 0 || index >= this.tabs.length || index === this.currentTab) {
+            console.log('❌ Invalid tab switch:', index, 'current:', this.currentTab);
+            return false;
+        }
+        
+        console.log(`🔄 Switching tab: ${this.currentTab} → ${index} (${source})`);
+        
+        const oldTab = this.tabs[this.currentTab];
+        const newTab = this.tabs[index];
+        const oldContent = document.querySelector(`#${oldTab.dataset.tab}-tab`);
+        const newContent = document.querySelector(`#${newTab.dataset.tab}-tab`);
+        
+        if (!newContent) {
+            console.error('❌ Tab content not found:', `#${newTab.dataset.tab}-tab`);
+            return false;
+        }
+        
+        // Update tab buttons
+        oldTab.classList.remove('active');
+        newTab.classList.add('active');
+        
+        // Update tab contents
+        if (oldContent) {
+            oldContent.classList.remove('active');
+        }
+        newContent.classList.add('active');
+        
+        // Update current tab
+        this.currentTab = index;
+        
+        // Haptic feedback
+        this.triggerHapticFeedback('light');
+        
+        // Trigger custom event for other components
+        const event = new CustomEvent('tabChanged', {
+            detail: { 
+                index: this.currentTab, 
+                tabName: newTab.dataset.tab,
+                source: source,
+                oldTab: oldTab.dataset.tab
+            }
+        });
+        window.dispatchEvent(event);
+        
+        console.log('✅ Tab switched successfully to:', newTab.dataset.tab);
+        return true;
+    }
+
     showSwipeIndicator(direction) {
-        // Remove existing indicators
         this.hideSwipeIndicators();
         
         const indicator = document.createElement('div');
         indicator.className = `swipe-indicator ${direction} show`;
-        indicator.textContent = direction === 'left' ? '◀' : '▶';
+        
+        if (direction === 'left') {
+            indicator.textContent = '◀';
+            indicator.style.left = '20px';
+        } else {
+            indicator.textContent = '▶';
+            indicator.style.right = '20px';
+        }
+        
+        indicator.style.position = 'fixed';
+        indicator.style.top = '50%';
+        indicator.style.transform = 'translateY(-50%)';
+        indicator.style.fontSize = '32px';
+        indicator.style.color = 'rgba(0, 255, 255, 0.8)';
+        indicator.style.textShadow = '0 0 10px #00ffff';
+        indicator.style.zIndex = '999';
+        indicator.style.pointerEvents = 'none';
+        indicator.style.transition = 'opacity 0.2s ease';
         
         document.body.appendChild(indicator);
         
-        // Auto-hide after animation
         setTimeout(() => {
             if (indicator.parentNode) {
                 indicator.parentNode.removeChild(indicator);
             }
-        }, 500);
+        }, 300);
     }
 
     hideSwipeIndicators() {
@@ -133,96 +263,77 @@ class MobileNavigationManager {
         });
     }
 
-    goToPreviousTab() {
-        if (this.currentTab > 0) {
-            this.switchToTab(this.currentTab - 1, 'right');
-            this.triggerHapticFeedback('light');
-        }
-    }
-
-    goToNextTab() {
-        if (this.currentTab < this.tabs.length - 1) {
-            this.switchToTab(this.currentTab + 1, 'left');
-            this.triggerHapticFeedback('light');
-        }
-    }
-
-    switchToTab(index, direction = 'none') {
-        if (index < 0 || index >= this.tabs.length || index === this.currentTab) {
-            return;
-        }
+    triggerHapticFeedback(intensity = 'light') {
+        if (!('vibrate' in navigator)) return;
         
-        const currentTabContent = document.querySelector('.tab-content.active');
-        const newTab = this.tabs[index];
-        const newTabContent = document.querySelector(`#${newTab.dataset.tab}-tab`);
-        
-        if (!newTabContent) return;
-        
-        // Add transition classes based on swipe direction
-        if (direction !== 'none' && currentTabContent) {
-            currentTabContent.classList.add(`swipe-out-${direction}`);
-            newTabContent.classList.add(`swipe-in-${direction === 'left' ? 'right' : 'left'}`);
-        }
-        
-        // Update tab states
-        this.tabs[this.currentTab].classList.remove('active');
-        newTab.classList.add('active');
-        
-        if (currentTabContent) {
-            currentTabContent.classList.remove('active');
-        }
-        newTabContent.classList.add('active');
-        
-        // Clean up transition classes after animation
-        setTimeout(() => {
-            if (currentTabContent) {
-                currentTabContent.classList.remove(`swipe-out-${direction}`);
+        try {
+            let duration;
+            switch (intensity) {
+                case 'light': duration = 10; break;
+                case 'medium': duration = 20; break;
+                case 'heavy': duration = 40; break;
+                default: duration = 10;
             }
-            newTabContent.classList.remove(`swipe-in-${direction === 'left' ? 'right' : 'left'}`);
-        }, 300);
-        
-        this.currentTab = index;
-        
-        // Trigger custom event for other components
-        window.dispatchEvent(new CustomEvent('tabChanged', {
-            detail: { 
-                index: this.currentTab, 
-                tabName: newTab.dataset.tab,
-                direction: direction
-            }
-        }));
+            navigator.vibrate(duration);
+        } catch (error) {
+            // Ignore vibration errors
+        }
     }
 
     setupNavigationToggle() {
-        // Create toggle button
+        const existingToggle = document.querySelector('.nav-toggle');
+        if (existingToggle) return;
+        
         const toggleButton = document.createElement('button');
         toggleButton.className = 'nav-toggle';
-        toggleButton.setAttribute('aria-label', 'Toggle Navigation Position');
-        toggleButton.addEventListener('click', () => this.toggleNavigationPosition());
+        toggleButton.innerHTML = '⬇️';
+        toggleButton.style.cssText = `
+            position: fixed;
+            top: 60px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #00ffff;
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.3s ease;
+        `;
         
+        toggleButton.addEventListener('click', () => this.toggleNavigationPosition());
         document.body.appendChild(toggleButton);
     }
 
     toggleNavigationPosition() {
         this.isBottomNav = !this.isBottomNav;
         
-        const tabNavigation = document.querySelector('.tab-navigation');
-        const mainContent = document.querySelector('.main-content');
+        const tabNavigation = document.querySelector('.terminal-tabs');
+        const mainContent = document.querySelector('.communication-display');
         const toggleButton = document.querySelector('.nav-toggle');
         
         if (this.isBottomNav) {
-            tabNavigation.classList.add('bottom-nav');
-            mainContent.classList.add('bottom-nav-active');
-            toggleButton.classList.add('bottom-active');
+            if (tabNavigation) tabNavigation.classList.add('bottom-nav');
+            if (mainContent) mainContent.classList.add('bottom-nav-active');
+            if (toggleButton) {
+                toggleButton.innerHTML = '⬆️';
+                toggleButton.classList.add('bottom-active');
+            }
         } else {
-            tabNavigation.classList.remove('bottom-nav');
-            mainContent.classList.remove('bottom-nav-active');
-            toggleButton.classList.remove('bottom-active');
+            if (tabNavigation) tabNavigation.classList.remove('bottom-nav');
+            if (mainContent) mainContent.classList.remove('bottom-nav-active');
+            if (toggleButton) {
+                toggleButton.innerHTML = '⬇️';
+                toggleButton.classList.remove('bottom-active');
+            }
         }
         
-        // Save preference
         localStorage.setItem('mobile-nav-position', this.isBottomNav ? 'bottom' : 'top');
-        
         this.triggerHapticFeedback('medium');
         
         console.log(`📱 Navigation moved to ${this.isBottomNav ? 'bottom' : 'top'}`);
@@ -235,233 +346,40 @@ class MobileNavigationManager {
         }
     }
 
-    setupHapticFeedback() {
-        // Add haptic feedback to all interactive elements
-        const interactiveElements = document.querySelectorAll('.tab-button, .terminal-button, .form-input, .form-select');
-        
-        interactiveElements.forEach(element => {
-            element.addEventListener('touchstart', () => {
-                this.triggerHapticFeedback('light');
-            }, { passive: true });
-        });
-    }
-
-    triggerHapticFeedback(intensity = 'light') {
-        if (!this.hapticSupported) return;
-        
-        try {
-            let duration;
-            switch (intensity) {
-                case 'light':
-                    duration = 10;
-                    break;
-                case 'medium':
-                    duration = 20;
-                    break;
-                case 'heavy':
-                    duration = 40;
-                    break;
-                default:
-                    duration = 10;
-            }
-            
-            navigator.vibrate(duration);
-        } catch (error) {
-            console.warn('Haptic feedback not supported:', error);
-        }
-    }
-
-    handleTabTouchStart(e, index) {
-        // Start long press timer
-        this.longPressTimer = setTimeout(() => {
-            this.handleTabLongPress(index);
-        }, this.longPressDelay);
-        
-        // Add visual feedback
-        e.target.classList.add('haptic-feedback');
-        setTimeout(() => {
-            e.target.classList.remove('haptic-feedback');
-        }, 100);
-    }
-
-    handleTabTouchEnd(e, index) {
-        // Clear long press timer
-        if (this.longPressTimer) {
-            clearTimeout(this.longPressTimer);
-            this.longPressTimer = null;
-        }
-    }
-
-    handleTabClick(e, index) {
-        e.preventDefault();
-        this.switchToTab(index);
-        this.triggerHapticFeedback('light');
-    }
-
-    handleTabLongPress(index) {
-        this.triggerHapticFeedback('heavy');
-        
-        // Show context menu for tab
-        this.showTabContextMenu(index);
-        
-        console.log(`📱 Long press on tab ${index}`);
-    }
-
-    setupLongPress() {
-        document.addEventListener('contextmenu', (e) => {
-            // Prevent default context menu on mobile
-            if (window.innerWidth <= 768) {
-                e.preventDefault();
-            }
-        });
-    }
-
-    showTabContextMenu(tabIndex) {
-        const tab = this.tabs[tabIndex];
-        const tabRect = tab.getBoundingClientRect();
-        
-        const contextMenu = document.createElement('div');
-        contextMenu.className = 'mobile-context-menu';
-        
-        const menuItems = [
-            { icon: '📌', text: 'Pin Tab', action: () => this.pinTab(tabIndex) },
-            { icon: '🔄', text: 'Refresh', action: () => this.refreshTab(tabIndex) },
-            { icon: '⚙️', text: 'Settings', action: () => this.openTabSettings(tabIndex) }
-        ];
-        
-        menuItems.forEach(item => {
-            const menuItem = document.createElement('button');
-            menuItem.className = 'mobile-context-menu-item';
-            menuItem.innerHTML = `<span class="icon">${item.icon}</span>${item.text}`;
-            menuItem.addEventListener('click', () => {
-                item.action();
-                this.hideContextMenu();
-            });
-            contextMenu.appendChild(menuItem);
-        });
-        
-        // Position menu
-        contextMenu.style.left = `${tabRect.left}px`;
-        contextMenu.style.top = `${tabRect.bottom + 5}px`;
-        
-        document.body.appendChild(contextMenu);
-        
-        // Show with animation
-        requestAnimationFrame(() => {
-            contextMenu.classList.add('show');
-        });
-        
-        // Auto-hide on touch outside
-        const hideOnTouch = (e) => {
-            if (!contextMenu.contains(e.target)) {
-                this.hideContextMenu();
-                document.removeEventListener('touchstart', hideOnTouch);
-            }
+    // Debug methods
+    getCurrentTabInfo() {
+        return {
+            index: this.currentTab,
+            tab: this.tabs[this.currentTab]?.dataset.tab,
+            totalTabs: this.tabs.length,
+            isInitialized: this.isInitialized
         };
-        
-        setTimeout(() => {
-            document.addEventListener('touchstart', hideOnTouch);
-        }, 100);
     }
 
-    hideContextMenu() {
-        const contextMenu = document.querySelector('.mobile-context-menu');
-        if (contextMenu) {
-            contextMenu.classList.remove('show');
-            setTimeout(() => {
-                if (contextMenu.parentNode) {
-                    contextMenu.parentNode.removeChild(contextMenu);
-                }
-            }, 200);
-        }
-    }
-
-    pinTab(index) {
-        console.log(`📌 Pinning tab ${index}`);
-        this.triggerHapticFeedback('medium');
-        // Implement pin functionality
-    }
-
-    refreshTab(index) {
-        console.log(`🔄 Refreshing tab ${index}`);
-        this.triggerHapticFeedback('light');
-        // Implement refresh functionality
-        window.dispatchEvent(new CustomEvent('refreshTab', { detail: { index } }));
-    }
-
-    openTabSettings(index) {
-        console.log(`⚙️ Opening settings for tab ${index}`);
-        this.triggerHapticFeedback('medium');
-        // Implement settings functionality
-    }
-
-    // Keyboard navigation support
-    setupKeyboardNavigation() {
-        document.addEventListener('keydown', (e) => {
-            if (e.target.matches('input, textarea, select')) return;
-            
-            switch (e.key) {
-                case 'ArrowLeft':
-                    e.preventDefault();
-                    this.goToPreviousTab();
-                    break;
-                case 'ArrowRight':
-                    e.preventDefault();
-                    this.goToNextTab();
-                    break;
-                case 'Home':
-                    e.preventDefault();
-                    this.switchToTab(0);
-                    break;
-                case 'End':
-                    e.preventDefault();
-                    this.switchToTab(this.tabs.length - 1);
-                    break;
-            }
-        });
-    }
-
-    // Public API methods
-    getCurrentTab() {
-        return this.currentTab;
-    }
-
-    getTabCount() {
-        return this.tabs.length;
-    }
-
-    isBottomNavigation() {
-        return this.isBottomNav;
-    }
-
-    // Cleanup method
+    // Cleanup
     destroy() {
-        // Remove event listeners and clean up
         const toggleButton = document.querySelector('.nav-toggle');
         if (toggleButton && toggleButton.parentNode) {
             toggleButton.parentNode.removeChild(toggleButton);
         }
-        
         this.hideSwipeIndicators();
-        this.hideContextMenu();
-        
-        if (this.longPressTimer) {
-            clearTimeout(this.longPressTimer);
-        }
-        
-        console.log('📱 Mobile Navigation Manager destroyed');
     }
 }
 
-// Initialize mobile navigation when DOM is ready
+// VERBESSERTE Initialisierung
 document.addEventListener('DOMContentLoaded', () => {
-    // Only initialize on mobile devices
     if (window.innerWidth <= 768) {
-        window.mobileNav = new MobileNavigationManager();
+        setTimeout(() => {
+            window.mobileNav = new MobileNavigationManager();
+            
+            // Debug info
+            console.log('📱 Mobile Navigation Debug Info:');
+            console.log(window.mobileNav.getCurrentTabInfo());
+        }, 100); // Kleine Verzögerung für DOM-Stabilität
     }
 });
 
-// Re-initialize on window resize
+// Resize Handler
 window.addEventListener('resize', () => {
     if (window.innerWidth <= 768 && !window.mobileNav) {
         window.mobileNav = new MobileNavigationManager();
@@ -470,8 +388,3 @@ window.addEventListener('resize', () => {
         window.mobileNav = null;
     }
 });
-
-// Export for module usage
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = MobileNavigationManager;
-}
