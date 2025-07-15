@@ -1576,7 +1576,7 @@
 
         // Medas Digital chain configuration
         const MEDAS_CHAIN_CONFIG = {
-            chainId: "medasdigital-1",
+            chainId: "medasdigital-2",
             chainName: "Medas Digital",
             rpc: "https://rpc.medas-digital.io:26657",
             rest: "https://api.medas-digital.io:1317",
@@ -1644,9 +1644,76 @@
             { type: "undelegate", amount: "+500.000000", time: "5 days ago", hash: "M4N5O6..." }
         ];
 
+class KeplrManager {
+    constructor() {
+        this.keplr = null;
+        this.maxRetries = 50;
+        this.retryDelay = 100;
+    }
+
+    async detectKeplr() {
+        console.log('🔍 Detecting Keplr wallet...');
+        
+        for (let i = 0; i < this.maxRetries; i++) {
+            if (window.keplr && window.getOfflineSigner) {
+                this.keplr = window.keplr;
+                console.log('✅ Keplr detected successfully after', i * this.retryDelay, 'ms');
+                return true;
+            }
+            
+            if (i % 10 === 0) {
+                console.log(`⏳ Waiting for Keplr... (${i}/${this.maxRetries})`);
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, this.retryDelay));
+        }
+        
+        console.error('❌ Keplr not detected after', this.maxRetries * this.retryDelay, 'ms');
+        this.showKeplrInstallPrompt();
+        return false;
+    }
+
+    async connect() {
+        const detected = await this.detectKeplr();
+        if (!detected) {
+            return false;
+        }
+        
+        try {
+            // Test if Keplr is responsive
+            await this.keplr.getKey("cosmoshub-4"); // Test with known chain
+            console.log('✅ Keplr is responsive');
+            return true;
+        } catch (error) {
+            console.warn('⚠️ Keplr detected but not responsive:', error);
+            return false;
+        }
+    }
+
+    showKeplrInstallPrompt() {
+        const installUrl = 'https://www.keplr.app/';
+        const message = `
+🦊 Keplr Wallet Extension Required!
+
+To use MedasDigital WebClient, please:
+
+1. Install Keplr extension from: ${installUrl}
+2. Restart your browser
+3. Refresh this page
+4. Click "Connect Wallet"
+
+Install Keplr now?`;
+        
+        if (confirm(message)) {
+            window.open(installUrl, '_blank');
+        }
+    }
+}
+        
         class MedasResearchTerminal {
             constructor() {
                 this.keplr = null;
+                this.keplrManager = new KeplrManager();
                 this.account = null;
                 this.connected = false;
                 this.daemonUrl = null;
@@ -2142,60 +2209,51 @@ Current mode: Blockchain-only (no chat)`,
                 }
             }
 
-            async connectWallet() {
-                if (!this.keplr) {
-                    this.showSystemMessage('Keplr quantum interface unavailable', 'error');
-                    return;
-                }
-
-                try {
-                    this.updateConnectButton('Initializing...', null, true);
-                    this.addSystemMessage('Initializing quantum authentication protocol...');
-
-                    try {
-                        await this.keplr.experimentalSuggestChain(MEDAS_CHAIN_CONFIG);
-                        this.addSystemMessage('Medas Digital chain configuration uploaded');
-                    } catch (error) {
-                        this.addSystemMessage('Chain configuration verified');
-                    }
-
-                    await this.keplr.enable(MEDAS_CHAIN_CONFIG.chainId);
-                    this.addSystemMessage('Quantum tunnel established');
-
-                    const offlineSigner = await this.keplr.getOfflineSigner(MEDAS_CHAIN_CONFIG.chainId);
-                    const accounts = await offlineSigner.getAccounts();
-
-                    if (accounts.length === 0) {
-                        throw new Error('No quantum keys detected');
-                    }
-
-                    this.account = accounts[0];
-                    this.connected = true;
-
-                    const balance = await this.getBalance();
-
-                    this.updateUIAfterConnection(balance);
-                    this.updateConnectionStatus(true);
-                    this.addSystemMessage('Researcher authentication complete');
-                    this.addSystemMessage(`Quantum address verified: ${this.account.address.substring(0, 20)}...`);
-                    this.showSystemMessage('Quantum link established - Research network active', 'success');
-
-                    document.getElementById('message-input').disabled = false;
-                    
-                    // Enable chat functionality if daemon is connected
-                    if (this.daemonConnected) {
-                        this.updateChatDisplay();
-                    } else {
-                        this.checkDaemonConnection();
-                    }
-
-                } catch (error) {
-                    console.error('Quantum authentication failed:', error);
-                    this.showSystemMessage(`Authentication error: ${error.message}`, 'error');
-                    this.updateConnectButton('Connect Keplr Wallet');
-                    this.addSystemMessage('Authentication protocol failed - Retrying...');
-                }
+           async connectWallet() {
+        try {
+            // Verwende neue Keplr Detection
+            const connected = await this.keplrManager.connect();
+            if (!connected) {
+                this.updateWalletDisplay('Keplr not found', 'error');
+                return;
             }
+
+            // Chain suggestion
+            try {
+                await window.keplr.experimentalSuggestChain(MEDAS_CHAIN_CONFIG);
+                console.log('✅ Chain suggestion successful');
+            } catch (error) {
+                console.log('Chain already exists or user rejected:', error);
+            }
+
+            // Enable chain
+            await window.keplr.enable("medasdigital-2");
+            
+            // Get accounts
+            const offlineSigner = window.getOfflineSigner("medasdigital-2");
+            const accounts = await offlineSigner.getAccounts();
+            
+            if (accounts.length > 0) {
+                this.walletAddress = accounts[0].address;
+                this.walletConnected = true;
+                this.updateWalletDisplay(this.walletAddress, 'connected');
+                this.queryBalance();
+                
+                // Account change listener
+                window.addEventListener('keplr_keystorechange', () => {
+                    console.log('Keplr account changed, reconnecting...');
+                    this.connectWallet();
+                });
+                
+                console.log('✅ Wallet connected:', this.walletAddress);
+            }
+        } catch (error) {
+            console.error('❌ Wallet connection failed:', error);
+            this.updateWalletDisplay('Connection failed', 'error');
+        }
+    }
+}
+
 
             async getBalance() {
                 try {
