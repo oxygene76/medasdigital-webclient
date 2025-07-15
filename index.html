@@ -4,226 +4,458 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Medas Digital Research Terminal</title>
-
+    
     <!-- CSS Modules -->
     <link rel="stylesheet" href="assets/css/main.css">
     <link rel="stylesheet" href="assets/css/animation.css">
     <link rel="stylesheet" href="assets/css/mobile.css">
+    <link rel="stylesheet" href="assets/css/mobile-enhancements.css">
 </head>
 <body>
+    <div class="stars" id="stars"></div>
+    
     <div class="container">
-        <!-- Terminal Header with Wallet Integration -->
-        <div class="terminal-header">
-            <!-- TOP ROW: Logo & Wallet -->
-            <div class="system-info">
-                <div class="logo-section">
-                    <div class="company-logo">🏢</div>
-                    <div class="system-title">
-                        <h1>MedasDigital Research Terminal</h1>
-                        <div class="version">v0.9.1</div>
-                    </div>
-                </div>
-                <!-- NEW: Wallet Display -->
-                <div class="wallet-section">
-                    <div id="wallet-display" class="wallet-display">
-                        <div class="wallet-status" id="wallet-status">
-                            <span class="status-icon">💳</span>
-                            <span class="status-text">No Wallet</span>
-                        </div>
-                        <div class="wallet-address" id="wallet-address" style="display: none;">
-                            <span class="address-text" id="address-text">medas1...</span>
-                            <button class="copy-btn" id="copy-address" title="Copy Address">📋</button>
-                        </div>
-                    </div>
-                </div>
+        <div class="header">
+            <!-- Solar System LINKS UNTEN positioniert -->
+            <div class="solar-system-bg">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="sunGradientBg" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" style="stop-color:#ffff00;stop-opacity:0.8" />
+                            <stop offset="70%" style="stop-color:#ff8800;stop-opacity:0.6" />
+                            <stop offset="100%" style="stop-color:#ff4400;stop-opacity:0.4" />
+                        </radialGradient>
+                        <filter id="bgGlow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+                            <feMerge> 
+                                <feMergeNode in="coloredBlur"/>
+                                <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    
+                    <circle cx="100" cy="100" r="2.0" fill="url(#sunGradientBg)" filter="url(#bgGlow)">
+                        <animate attributeName="r" values="2.0;2.3;2.0" dur="4s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="4" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="0.08"/>
+                    <circle cx="104" cy="100" r="0.15" fill="#8c7853" stroke="rgba(140,120,83,0.8)" stroke-width="0.05">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;360 100 100" dur="8s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="5.5" fill="none" stroke="rgba(255,200,100,0.5)" stroke-width="0.08"/>
+                    <circle cx="105.5" cy="100" r="0.18" fill="#ffc649" stroke="rgba(255,198,73,0.9)" stroke-width="0.05">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;-360 100 100" dur="12s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="7" fill="none" stroke="rgba(100,200,255,0.6)" stroke-width="0.1"/>
+                    <circle cx="107" cy="100" r="0.2" fill="#6B93D6" stroke="rgba(107,147,214,0.9)" stroke-width="0.05">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;360 100 100" dur="16s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="108.2" cy="100" r="0.08" fill="#cccccc" stroke="rgba(204,204,204,0.8)" stroke-width="0.02">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;360 100 100" dur="16s" repeatCount="indefinite"/>
+                        <animateTransform attributeName="transform" type="rotate" values="0 107 100;360 107 100" dur="2s" repeatCount="indefinite" additive="sum"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="8.5" fill="none" stroke="rgba(255,100,100,0.5)" stroke-width="0.08"/>
+                    <circle cx="108.5" cy="100" r="0.15" fill="#cd5c5c" stroke="rgba(205,92,92,0.8)" stroke-width="0.05">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;-360 100 100" dur="24s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="10" fill="none" stroke="rgba(150,150,150,0.4)" stroke-width="0.2" stroke-dasharray="0.1,0.3">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;360 100 100" dur="60s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="12" fill="none" stroke="rgba(255,165,0,0.5)" stroke-width="0.12"/>
+                    <circle cx="112" cy="100" r="0.5" fill="#d8ca9d" stroke="rgba(216,202,157,0.9)" stroke-width="0.08">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;360 100 100" dur="40s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="14" fill="none" stroke="rgba(255,215,0,0.5)" stroke-width="0.12"/>
+                    <g>
+                        <circle cx="114" cy="100" r="0.4" fill="#fab27b" stroke="rgba(250,178,123,0.9)" stroke-width="0.06"/>
+                        <ellipse cx="114" cy="100" rx="0.7" ry="0.12" fill="none" stroke="rgba(255,215,0,0.8)" stroke-width="0.08"/>
+                        <ellipse cx="114" cy="100" rx="0.5" ry="0.08" fill="none" stroke="rgba(255,215,0,0.6)" stroke-width="0.06"/>
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;-360 100 100" dur="55s" repeatCount="indefinite"/>
+                    </g>
+                    
+                    <circle cx="100" cy="100" r="16" fill="none" stroke="rgba(100,255,255,0.5)" stroke-width="0.12"/>
+                    <circle cx="116" cy="100" r="0.25" fill="#4fd0e3" stroke="rgba(79,208,227,0.9)" stroke-width="0.06">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;360 100 100" dur="80s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="18" fill="none" stroke="rgba(0,100,255,0.6)" stroke-width="0.15"/>
+                    <circle cx="118" cy="100" r="0.25" fill="#4b70dd" stroke="rgba(75,112,221,0.9)" stroke-width="0.06">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;-360 100 100" dur="100s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <circle cx="100" cy="100" r="22" fill="none" stroke="rgba(100,100,255,0.5)" stroke-width="0.25" stroke-dasharray="0.15,0.4" opacity="0.7">
+                        <animateTransform attributeName="transform" type="rotate" values="0 100 100;360 100 100" dur="150s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <ellipse cx="145" cy="100" rx="80" ry="30" fill="none" stroke="rgba(255,100,0,0.8)" stroke-width="1.2" opacity="0.9" stroke-dasharray="4,2" transform="rotate(25 100 100)">
+                        <animateTransform attributeName="transform" type="rotate" values="25 100 100;385 100 100" dur="300s" repeatCount="indefinite"/>
+                    </ellipse>
+                    
+                    <circle cx="180" cy="70" r="1.2" fill="#ff4400" opacity="1" stroke="#ff6600" stroke-width="0.4">
+                        <animateTransform attributeName="transform" type="rotate" values="25 100 100;385 100 100" dur="300s" repeatCount="indefinite"/>
+                        <animate attributeName="opacity" values="0.9;1;0.9" dur="4s" repeatCount="indefinite"/>
+                        <animate attributeName="r" values="1.2;1.4;1.2" dur="6s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <ellipse cx="130" cy="100" rx="70" ry="25" fill="none" stroke="rgba(255,0,255,0.7)" stroke-width="1.0" opacity="0.8" stroke-dasharray="3,1" transform="rotate(12 100 100)">
+                        <animateTransform attributeName="transform" type="rotate" values="12 100 100;372 100 100" dur="400s" repeatCount="indefinite"/>
+                    </ellipse>
+                    <circle cx="160" cy="85" r="0.6" fill="#ff4d94" stroke="rgba(255,77,148,0.8)" stroke-width="0.15" opacity="0.9">
+                        <animateTransform attributeName="transform" type="rotate" values="12 100 100;372 100 100" dur="400s" repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <ellipse cx="135" cy="100" rx="75" ry="28" fill="none" stroke="rgba(255,0,255,0.6)" stroke-width="0.8" opacity="0.7" stroke-dasharray="2,2" transform="rotate(22 100 100)">
+                        <animateTransform attributeName="transform" type="rotate" values="22 100 100;382 100 100" dur="450s" repeatCount="indefinite"/>
+                    </ellipse>
+                    <circle cx="165" cy="82" r="0.5" fill="#ff66aa" stroke="rgba(255,102,170,0.8)" stroke-width="0.12" opacity="0.8">
+                        <animateTransform attributeName="transform" type="rotate" values="22 100 100;382 100 100" dur="450s" repeatCount="indefinite"/>
+                    </circle>
+                </svg>
             </div>
             
-            <!-- MIDDLE ROW: Freiraum für eventuelle Zusatzinfos -->
-            <div class="header-middle"></div>
-            
-            <!-- BOTTOM ROW: Status rechts, Solar System links -->
-            <div class="status-display">
-                <div class="status-row">
-                    <div class="network-info">
-                        <div id="connection-status" class="connection-status">
-                            <span class="status-dot offline"></span>
-                            <span>Network: Offline</span>
+            <!-- NEUE GRID-STRUKTUR für Mobile Layout -->
+            <div class="terminal-header">
+                <!-- TOP ROW: Logo und Titel zentriert -->
+                <div class="system-info">
+                    <div class="logo-section">
+                        <div class="logo-icon">
+                            <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#00ffff;stop-opacity:1" />
+                                        <stop offset="50%" style="stop-color:#0099ff;stop-opacity:1" />
+                                        <stop offset="100%" style="stop-color:#00ffff;stop-opacity:1" />
+                                    </linearGradient>
+                                    <filter id="logoGlow" x="-50%" y="-50%" width="200%" height="200%">
+                                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                                        <feMerge> 
+                                            <feMergeNode in="coloredBlur"/>
+                                            <feMergeNode in="SourceGraphic"/>
+                                        </feMerge>
+                                    </filter>
+                                </defs>
+                                
+                                <path d="M 20 50 Q 20 20, 50 20 Q 80 20, 80 50 Q 80 80, 50 80 Q 35 80, 25 70" 
+                                      fill="none" 
+                                      stroke="url(#logoGradient)" 
+                                      stroke-width="4" 
+                                      filter="url(#logoGlow)"/>
+                                
+                                <text x="50" y="55" text-anchor="middle" fill="url(#logoGradient)" 
+                                      font-family="Orbitron" font-size="18" font-weight="bold" filter="url(#logoGlow)">md</text>
+                            </svg>
                         </div>
-                        <div id="blockchain-status" class="blockchain-status">
-                            <span class="status-dot"></span>
-                            <span>Chain: Disconnected</span>
+                        <div class="system-title">
+                            <div class="main-title">Medas Digital</div>
+                            <div class="sub-title">Research Terminal v0.9</div>
                         </div>
                     </div>
-                    <div class="block-info">
-                        <div id="block-height">Block: #0</div>
-                        <div id="network-latency">Latency: --ms</div>
+                    
+                    <!-- NEW: Wallet Display Section -->
+                    <div class="wallet-section">
+                        <div id="wallet-display" class="wallet-display">
+                            <div class="wallet-status" id="wallet-status">
+                                <span class="status-icon">💳</span>
+                                <span class="status-text">No Wallet</span>
+                            </div>
+                            <div class="wallet-address" id="wallet-address" style="display: none;">
+                                <span class="address-text" id="address-text">medas1...</span>
+                                <button class="copy-btn" id="copy-address" title="Copy Address">📋</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="timestamp" id="current-time">--:--:-- UTC</div>
+                
+                <!-- MIDDLE ROW: Freier Raum (für eventuelle Erweiterungen) -->
+                <div class="header-middle">
+                    <!-- Dieser Bereich ist für zukünftige Features reserviert -->
+                </div>
+                
+                <!-- BOTTOM ROW: Status-Informationen rechts unten -->
+                <div class="status-display">
+                    <div class="status-row">
+                        <div class="network-info">
+                            <div id="connection-status" class="connection-status status-disconnected">
+                                <div class="status-dot dot-disconnected"></div>
+                                <span>Network Offline</span>
+                            </div>
+                            <div id="blockchain-status" class="connection-status status-disconnected">
+                                <div class="status-dot dot-disconnected"></div>
+                                <span>Block: ---</span>
+                            </div>
+                        </div>
+                        <div class="block-info">
+                            <div id="block-height" class="block-height">---</div>
+                            <div id="network-latency" class="network-latency">--- ms</div>
+                        </div>
+                    </div>
+                    <div class="timestamp" id="current-time">Loading...</div>
+                </div>
             </div>
         </div>
 
-        <!-- Main Interface -->
         <div class="main-interface">
-            <!-- Tab Navigation -->
-            <div class="tab-navigation">
-                <button class="tab-button active" data-tab="communication">
-                    <span class="tab-icon">💬</span>
-                    <span class="tab-text">COMM</span>
-                </button>
-                <button class="tab-button" data-tab="explorer">
-                    <span class="tab-icon">🔍</span>
-                    <span class="tab-text">SCAN</span>
-                </button>
-                <button class="tab-button" data-tab="staking">
-                    <span class="tab-icon">🥇</span>
-                    <span class="tab-text">STAKE</span>
-                </button>
-                <button class="tab-button" data-tab="wallet">
-                    <span class="tab-icon">💳</span>
-                    <span class="tab-text">WALLET</span>
-                </button>
-            </div>
-
-            <!-- Tab Content -->
-            <div class="content-area">
-                <!-- Communication Tab -->
-                <div id="communication-tab" class="tab-content active">
-                    <div class="research-interface">
-                        <div class="terminal-output" id="terminal-output">
-                            <div class="system-message">
-                                <span class="timestamp">[SYSTEM]</span>
-                                MedasDigital Research Terminal initialized...
-                            </div>
-                            <div class="system-message">
-                                <span class="timestamp">[NETWORK]</span>
-                                Connecting to Medas blockchain network...
-                            </div>
-                        </div>
-                        <div class="input-area">
-                            <input type="text" id="user-input" placeholder="Enter your research query or blockchain command..." autocomplete="off">
-                            <button id="send-button">Send</button>
-                        </div>
+            <div class="control-panel">
+                <div class="section-header">System Control</div>
+                
+                <div class="auth-module">
+                    <div class="module-title">Quantum Wallet Interface</div>
+                    <div id="wallet-interface">
+                        <p style="color: #999999; margin-bottom: 16px; font-family: 'Share Tech Mono', monospace; font-size: 12px;">
+                            Initialize Keplr quantum authentication protocol
+                        </p>
+                        <button id="connect-wallet" class="terminal-button btn-primary">
+                            Connect Keplr Wallet
+                        </button>
                     </div>
                 </div>
 
-                <!-- Explorer Tab -->
+                <div class="systems-status">
+                    <div class="module-title">System Status</div>
+                    <div class="system-item">
+                        <span class="system-name">Quantum Relay</span>
+                        <div class="system-indicator">
+                            <div class="indicator-dot indicator-offline"></div>
+                            <span style="color: #ff3030; font-size: 10px;">OFFLINE</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Blockchain Sync</span>
+                        <div class="system-indicator">
+                            <div class="indicator-dot indicator-offline" id="blockchain-indicator"></div>
+                            <span style="color: #ff3030; font-size: 10px;" id="blockchain-status-text">OFFLINE</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Block Height</span>
+                        <div class="system-indicator">
+                            <span style="color: #00ffff; font-size: 10px; font-family: 'Share Tech Mono', monospace;" id="block-height-status">---</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Network Latency</span>
+                        <div class="system-indicator">
+                            <span style="color: #00ffff; font-size: 10px; font-family: 'Share Tech Mono', monospace;" id="network-latency-status">--- ms</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Encryption Matrix</span>
+                        <div class="system-indicator">
+                            <div class="indicator-dot"></div>
+                            <span style="color: #00ff00; font-size: 10px;">SECURE</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Observatory Link</span>
+                        <div class="system-indicator">
+                            <div class="indicator-dot indicator-offline"></div>
+                            <span style="color: #ff3030; font-size: 10px;">STANDBY</span>
+                        </div>
+                    </div>
+                    <div class="system-item">
+                        <span class="system-name">Daemon Protocol</span>
+                        <div class="system-indicator">
+                            <div class="indicator-dot indicator-offline"></div>
+                            <span style="color: #ff3030; font-size: 10px;">OFFLINE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="communication-display">
+                <div class="terminal-tabs">
+                    <button class="tab-button active" data-tab="comm">💬 COMM</button>
+                    <button class="tab-button" data-tab="explorer">🔍 SCAN</button>
+                    <button class="tab-button" data-tab="staking">🥩 STAKE</button>
+                    <button class="tab-button" data-tab="wallet">👛 WALLET</button>
+                </div>
+
+                <div id="comm-tab" class="tab-content active">
+                    <div class="comm-header">
+                        <div class="comm-title">Interstellar Communication Array</div>
+                        <div class="comm-subtitle">Quantum-encrypted research collaboration network</div>
+                    </div>
+                    
+                    <div class="message-display" id="message-display">
+                        <div class="empty-state">
+                            <h3>System Standby</h3>
+                            <div class="icon">◉</div>
+                            <p>Awaiting quantum wallet authentication...</p>
+                            <p style="font-size: 11px; margin-top: 8px;">Initialize Keplr interface to establish secure communication channel</p>
+                        </div>
+                    </div>
+
+                    <div class="input-module">
+                        <textarea 
+                            id="message-input" 
+                            class="terminal-input" 
+                            placeholder="Enter transmission data..."
+                            rows="2"
+                            disabled
+                        ></textarea>
+                    </div>
+                </div>
+
                 <div id="explorer-tab" class="tab-content">
-                    <div class="explorer-interface">
-                        <div class="scan-controls">
-                            <input type="text" id="hash-input" placeholder="Enter transaction hash, block number, or address...">
-                            <button id="scan-button">Scan</button>
+                    <div class="comm-header">
+                        <div class="comm-title">Blockchain Scanner</div>
+                        <div class="comm-subtitle">Real-time network analysis & transaction explorer</div>
+                    </div>
+                    
+                    <div class="content-area">
+                        <div class="explorer-section network-overview">
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <div class="stat-value" id="latest-block">2,847,392</div>
+                                    <div class="stat-label">Latest Block</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value" id="validator-count">147</div>
+                                    <div class="stat-label">Validators</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value" id="bonded-ratio">68.4%</div>
+                                    <div class="stat-label">Bonded Ratio</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-value" id="block-time">6.2s</div>
+                                    <div class="stat-label">Avg Block Time</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="scan-results" id="scan-results">
-                            <div class="placeholder-message">Enter a hash or address to begin scanning...</div>
+
+                        <div class="explorer-section recent-blocks">
+                            <div id="recent-blocks-list">
+                            </div>
+                        </div>
+
+                        <div class="explorer-section search-section">
+                            <input type="text" class="search-input" placeholder="Search transaction hash or address..." id="blockchain-search">
+                            <button class="terminal-button btn-primary" style="width: auto; padding: 8px 16px; margin: 0;">Search Blockchain</button>
+                        </div>
+
+                        <div class="explorer-section wallet-history" style="display: none;" id="wallet-history-section">
+                            <div id="wallet-transactions">
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Staking Tab -->
                 <div id="staking-tab" class="tab-content">
-                    <div class="staking-interface">
-                        <div class="staking-overview">
-                            <div class="stake-card">
-                                <h3>Your Stake</h3>
-                                <div class="stake-amount" id="stake-amount">0 MEDAS</div>
-                                <div class="stake-rewards" id="stake-rewards">Rewards: 0 MEDAS</div>
+                    <div class="comm-header">
+                        <div class="comm-title">Staking Interface</div>
+                        <div class="comm-subtitle">Delegate tokens & earn rewards</div>
+                    </div>
+                    
+                    <div class="content-area">
+                        <div class="explorer-section" style="display: none;" id="my-delegations-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">MY DELEGATIONS</div>
+                            <div id="current-delegations">
                             </div>
-                            <div class="validator-list">
-                                <h3>Validators</h3>
-                                <div id="validators">Loading validators...</div>
+                            <div style="text-align: center; margin-top: 12px;">
+                                <span style="color: #00ff00; font-weight: 700;">Total Pending Rewards: </span>
+                                <span id="total-rewards" style="color: #00ff00; font-family: 'Share Tech Mono', monospace;">0.000000 MEDAS</span>
+                                <button class="terminal-button btn-success" style="width: auto; padding: 8px 16px; margin-left: 12px; font-size: 11px;">Claim All Rewards</button>
                             </div>
                         </div>
-                        <div class="staking-actions">
-                            <input type="number" id="stake-input" placeholder="Amount to stake" min="0" step="0.000001">
-                            <button id="stake-button" disabled>Stake</button>
-                            <button id="unstake-button" disabled>Unstake</button>
+
+                        <div class="explorer-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">TOP VALIDATORS</div>
+                            <div id="validators-list">
+                            </div>
+                        </div>
+
+                        <div class="explorer-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">QUICK STAKE</div>
+                            <div class="form-group">
+                                <label class="form-label">Select Validator</label>
+                                <select id="validator-select" class="form-input">
+                                    <option>Select a validator...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Amount (MEDAS)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="stake-amount" class="form-input" placeholder="0.000000" step="0.000001" min="0">
+                                    <button class="max-button" onclick="setMaxStakeAmount()">MAX</button>
+                                </div>
+                            </div>
+                            <button class="terminal-button btn-primary" onclick="delegateTokens()" style="margin-top: 8px;">Delegate Tokens</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Wallet Tab -->
                 <div id="wallet-tab" class="tab-content">
-                    <div class="wallet-interface">
-                        <div class="wallet-overview">
-                            <div class="balance-card">
-                                <h3>Account Balance</h3>
-                                <div class="balance-amount" id="balance-amount">0 MEDAS</div>
-                                <div class="balance-usd" id="balance-usd">$0.00 USD</div>
-                            </div>
-                            <div class="wallet-actions">
-                                <button id="connect-wallet" class="primary-button">Connect Keplr Wallet</button>
-                                <button id="disconnect-wallet" class="secondary-button" style="display: none;">Disconnect</button>
+                    <div class="comm-header">
+                        <div class="comm-title">Wallet Management</div>
+                        <div class="comm-subtitle">Token transfers & account overview</div>
+                    </div>
+                    
+                    <div class="content-area">
+                        <div class="explorer-section" style="display: none;" id="balance-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">BALANCE OVERVIEW</div>
+                            <div class="balance-overview">
+                                <div class="balance-item">
+                                    <div class="balance-amount" id="available-balance">0.000000</div>
+                                    <div class="balance-label">Available</div>
+                                </div>
+                                <div class="balance-item">
+                                    <div class="balance-amount" id="delegated-balance">0.000000</div>
+                                    <div class="balance-label">Delegated</div>
+                                </div>
+                                <div class="balance-item">
+                                    <div class="balance-amount" id="rewards-balance">0.000000</div>
+                                    <div class="balance-label">Rewards</div>
+                                </div>
+                                <div class="balance-item">
+                                    <div class="balance-amount" id="total-balance">0.000000</div>
+                                    <div class="balance-label">Total</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="transaction-history">
-                            <h3>Recent Transactions</h3>
-                            <div id="transaction-list">No transactions found.</div>
+
+                        <div class="explorer-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">SEND TOKENS</div>
+                            <div class="send-form">
+                                <div class="form-group">
+                                    <label class="form-label">Recipient Address</label>
+                                    <input type="text" id="send-address" class="form-input" placeholder="medas1...">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Amount (MEDAS)</label>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="send-amount" class="form-input" placeholder="0.000000" step="0.000001" min="0">
+                                        <button class="max-button" onclick="setMaxSendAmount()">MAX</button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Memo (Optional)</label>
+                                    <input type="text" id="send-memo" class="form-input" placeholder="Transaction memo...">
+                                </div>
+                                <button class="terminal-button btn-primary" onclick="sendTokens()">Send Transaction</button>
+                            </div>
+                        </div>
+
+                        <div class="explorer-section" style="display: none;" id="transaction-history-section">
+                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">TRANSACTION HISTORY</div>
+                            <div class="tx-filter">
+                                <button class="filter-btn active" data-filter="all">All</button>
+                                <button class="filter-btn" data-filter="sent">Sent</button>
+                                <button class="filter-btn" data-filter="received">Received</button>
+                                <button class="filter-btn" data-filter="staking">Staking</button>
+                            </div>
+                            <div id="transaction-list">
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- System Control Panel -->
-        <div class="system-control">
-            <div class="control-section">
-                <h3>System Status</h3>
-                <div class="status-grid">
-                    <div class="status-item">
-                        <span class="status-label">Block Height</span>
-                        <span class="status-value" id="block-height-status">0</span>
-                    </div>
-                    <div class="status-item">
-                        <span class="status-label">Network</span>
-                        <span class="status-value" id="network-latency-status">Offline</span>
-                    </div>
-                    <div class="status-item">
-                        <span class="status-label">Peers</span>
-                        <span class="status-value" id="peer-count">0</span>
-                    </div>
-                    <div class="status-item">
-                        <span class="status-label">Sync</span>
-                        <span class="status-value" id="sync-status">Idle</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="control-section">
-                <h3>Node Control</h3>
-                <div class="control-buttons">
-                    <button id="start-node" class="control-btn">Start Node</button>
-                    <button id="stop-node" class="control-btn">Stop Node</button>
-                    <button id="restart-node" class="control-btn">Restart</button>
-                    <button id="sync-blockchain" class="control-btn">Force Sync</button>
-                </div>
-            </div>
-
-            <div class="control-section">
-                <h3>Research Tools</h3>
-                <div class="tool-buttons">
-                    <button id="generate-report" class="tool-btn">Generate Report</button>
-                    <button id="export-data" class="tool-btn">Export Data</button>
-                    <button id="clear-logs" class="tool-btn">Clear Logs</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Solar System Animation -->
-        <div class="solar-system">
-            <div class="sun">
-                <div class="planet mercury"></div>
-                <div class="planet venus"></div>
-                <div class="planet earth">
-                    <div class="moon"></div>
-                </div>
-                <div class="planet mars"></div>
-                <div class="planet jupiter"></div>
-                <div class="planet saturn">
-                    <div class="ring"></div>
-                </div>
-                <div class="planet uranus"></div>
-                <div class="planet neptune"></div>
             </div>
         </div>
     </div>
