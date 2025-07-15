@@ -1,19 +1,25 @@
-/* =================================
-   MOBILE LAYOUT REDESIGN FIX
-   Löst das "gestaucht" Problem
-   Ersetzt/erweitert mobile.css
-   ================================= */
+/* MedasDigital WebClient - Complete Mobile Responsive Styles - FINAL VERSION */
 
-/* Mobile Layout Restructure */
+/* Mobile Viewport Meta Setup */
+/* Required in HTML head: <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> */
+
+/* Mobile Base Styles */
 @media only screen and (max-width: 768px) {
+    /* Prevent zoom on input focus */
+    input, textarea, select {
+        font-size: 16px !important;
+    }
     
-    /* STEP 1: Container und Body Fix */
+    /* Body adjustments for mobile */
     body {
         overflow-x: hidden;
         -webkit-overflow-scrolling: touch;
+        -webkit-text-size-adjust: none;
+        -webkit-tap-highlight-color: transparent;
         font-size: 14px; /* Basis-Schriftgröße erhöhen */
     }
     
+    /* Container adjustments - ANTI-STAUCHUNG FIX */
     .container {
         height: auto; /* WICHTIG: Nicht 100vh! */
         min-height: 100vh;
@@ -23,87 +29,189 @@
         gap: 12px;
     }
     
-    /* STEP 2: Header Mobile-optimiert */
+    /* =================================
+       HEADER LAYOUT - NEUGESTALTUNG
+       Solar System links unten, Status rechts unten
+       ================================= */
+    
+    /* Header Container */
     .header {
         padding: 16px 12px;
-        min-height: 140px; /* Mehr Platz */
+        min-height: 160px; /* Mehr Platz für neue Layout */
         margin-bottom: 0;
         position: relative;
+        overflow: visible;
+        display: flex;
+        flex-direction: column;
         flex-shrink: 0; /* Verhindert Stauchung */
     }
     
+    /* Terminal Header Grid Layout */
     .terminal-header {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr auto;
+        height: 100%;
+        min-height: 140px;
         gap: 12px;
-        height: auto;
-        min-height: auto;
+        position: relative;
+        z-index: 2;
     }
     
-    /* Logo-Bereich größer und lesbarer */
+    /* TOP ROW: Logo und Titel zentriert */
     .system-info {
+        grid-row: 1;
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 12px;
-        width: 100%;
-        flex-wrap: nowrap;
+        padding: 8px 0;
+        background: rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(2px);
+        border-radius: 8px;
+        margin-bottom: 8px;
     }
     
     .logo-section {
         display: flex;
         align-items: center;
         gap: 12px;
-        flex: 1;
-        min-width: 0;
     }
     
     .logo-icon {
-        width: 50px; /* Größer für bessere Sichtbarkeit */
+        width: 50px;
         height: 50px;
         flex-shrink: 0;
     }
     
     .system-title {
-        flex: 1;
+        text-align: center;
     }
     
     .main-title {
-        font-size: 18px; /* Größer und lesbarer */
+        font-size: 18px;
         line-height: 1.3;
         margin-bottom: 4px;
+        text-shadow: 
+            0 0 4px rgba(0, 0, 0, 0.5),
+            0 0 8px rgba(0, 255, 255, 0.3);
     }
     
     .sub-title {
-        font-size: 12px; /* Besser lesbar */
+        font-size: 12px;
         opacity: 0.8;
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
     }
     
-    /* Status-Bereich übersichtlicher */
+    /* MIDDLE ROW: Freier Raum für Solar System */
+    .header-middle {
+        grid-row: 2;
+        position: relative;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    /* BOTTOM ROW: Status-Informationen rechts */
     .status-display {
+        grid-row: 3;
         display: flex;
         flex-direction: column;
         align-items: flex-end;
         gap: 6px;
-        flex-shrink: 0;
-        min-width: 120px;
+        background: rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(2px);
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-top: 8px;
+        position: relative;
+        z-index: 3;
     }
     
-    .connection-status,
-    #blockchain-status {
-        padding: 6px 10px;
-        font-size: 11px;
+    /* Status Items horizontal anordnen */
+    .status-row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+    
+    /* Network Status */
+    .connection-status {
+        padding: 4px 8px;
+        font-size: 10px;
         border-radius: 4px;
         white-space: nowrap;
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+        flex-shrink: 0;
     }
     
-    .timestamp {
+    /* Blockchain Status */
+    #blockchain-status {
+        padding: 4px 8px;
         font-size: 10px;
-        padding: 2px 6px;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 3px;
+        border-radius: 4px;
+        white-space: nowrap;
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+        flex-shrink: 0;
     }
     
-    /* STEP 3: Main Interface - KOMPLETT NEU */
+    /* Timestamp rechts unten */
+    .timestamp {
+        font-size: 9px;
+        padding: 3px 6px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+        align-self: flex-end;
+        margin-top: 4px;
+    }
+    
+    /* Solar System LINKS UNTEN positioniert */
+    .solar-system-bg {
+        position: absolute;
+        bottom: 10px; /* Unten statt center */
+        left: 10px;   /* Links statt center */
+        transform: rotate(180deg); /* Keine Zentrierung */
+        width: 100px; /* Kleiner */
+        height: 100px;
+        opacity: 0.7;
+        z-index: 1; /* Hinter allem anderen */
+        pointer-events: none;
+    }
+    
+    /* Status-Elemente besser strukturiert */
+    .network-info {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .block-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+        font-size: 9px;
+    }
+    
+    .block-height {
+        color: #00ffff;
+        font-weight: bold;
+    }
+    
+    .network-latency {
+        color: #00ff00;
+        font-family: 'Share Tech Mono', monospace;
+    }
+}
+
+/* Main Interface Mobile Layout - ANTI-STAUCHUNG */
+@media only screen and (max-width: 768px) {
     .main-interface {
         flex: 1;
         display: flex;
@@ -128,14 +236,32 @@
         max-height: none;
         flex-shrink: 0;
         margin-bottom: 20px; /* Platz am Ende */
+        background: linear-gradient(135deg, rgba(0, 100, 150, 0.1) 0%, rgba(0, 50, 100, 0.1) 100%);
+        border: 2px solid #0099ff;
+        border-radius: 12px;
+        padding: 20px;
     }
-    
-    /* STEP 4: Tab Navigation größer */
+}
+
+/* Mobile Tab Navigation - ERWEITERT */
+@media only screen and (max-width: 768px) {
     .terminal-tabs {
         min-height: 50px; /* Größere Touch-Targets */
         padding: 0 8px;
         border-radius: 8px 8px 0 0;
         flex-shrink: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+    }
+    
+    .terminal-tabs::-webkit-scrollbar {
+        display: none;
     }
     
     .tab-button {
@@ -144,9 +270,21 @@
         min-height: 50px;
         min-width: 90px; /* Mehr Platz */
         gap: 6px;
+        flex-shrink: 0;
+        white-space: nowrap;
+        border-radius: 6px 6px 0 0;
+        margin: 0 2px;
         display: flex;
         align-items: center;
         justify-content: center;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .tab-button:active {
+        background: rgba(255, 255, 255, 0.1);
+        transform: scale(0.95);
     }
     
     /* Tab Icons größer und sichtbarer */
@@ -154,14 +292,22 @@
         font-size: 16px;
         margin-right: 4px;
     }
-    
-    /* STEP 5: Content Area optimiert */
+}
+
+/* Mobile Tab Content - OPTIMIERT */
+@media only screen and (max-width: 768px) {
     .tab-content {
         flex: 1;
         padding: 16px;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         min-height: 400px; /* Minimum für Inhalt */
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: flex;
+        flex-direction: column;
     }
     
     .content-area {
@@ -169,9 +315,25 @@
         overflow-y: auto;
         height: auto;
         min-height: 400px;
+        -webkit-overflow-scrolling: touch;
     }
     
-    /* STEP 6: Communication optimiert */
+    .content-area::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    .content-area::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+    }
+    
+    .content-area::-webkit-scrollbar-thumb {
+        background: rgba(0, 204, 102, 0.5);
+        border-radius: 2px;
+    }
+}
+
+/* Mobile Communication Display - ERWEITERT */
+@media only screen and (max-width: 768px) {
     .comm-header {
         padding: 16px 20px;
         flex-shrink: 0;
@@ -196,12 +358,28 @@
         -webkit-overflow-scrolling: touch;
     }
     
+    .message-display::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    .message-display::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+    }
+    
+    .message-display::-webkit-scrollbar-thumb {
+        background: rgba(0, 204, 102, 0.5);
+        border-radius: 2px;
+    }
+    
     /* Input Bereich prominent */
     .input-module {
         padding: 16px 20px;
         border-top: 2px solid #00cc66;
         background: rgba(0, 0, 0, 0.8);
         flex-shrink: 0;
+        position: sticky;
+        bottom: 0;
+        backdrop-filter: blur(10px);
     }
     
     .terminal-input {
@@ -210,107 +388,78 @@
         min-height: 50px;
         border-radius: 8px;
         line-height: 1.4;
+        max-height: 120px;
+        resize: none;
+        width: 100%;
+        border: 1px solid #00cc66;
+        background: rgba(0, 0, 0, 0.5);
+        color: #00cc66;
+        font-family: 'Share Tech Mono', monospace;
     }
     
-    /* STEP 7: Control Panel als Card-System */
-    .control-panel {
-        background: linear-gradient(135deg, rgba(0, 100, 150, 0.1) 0%, rgba(0, 50, 100, 0.1) 100%);
-        border: 2px solid #0099ff;
-        border-radius: 12px;
-        padding: 20px;
+    .terminal-input:focus {
+        border-color: #00ffff;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        color: #00ffff;
+        outline: none;
     }
-    
-    .section-header {
-        font-size: 14px;
-        margin-bottom: 16px;
-        text-align: center;
-    }
-    
-    /* Auth Module größer */
-    .auth-module {
-        margin-bottom: 24px;
-    }
-    
-    .module-title {
-        font-size: 13px;
-        margin-bottom: 12px;
-        text-align: center;
-    }
-    
-    .terminal-button {
-        padding: 14px 20px; /* Größere Buttons */
-        font-size: 12px;
-        min-height: 50px;
-        margin-bottom: 8px;
-        border-radius: 8px;
-    }
-    
-    /* Wallet Display lesbarer */
-    .wallet-display {
-        padding: 16px;
-        margin: 16px 0;
-        border-radius: 8px;
-    }
-    
-    .field-label {
-        font-size: 11px;
-        margin-bottom: 6px;
-    }
-    
-    .field-value {
-        font-size: 12px;
-        padding: 8px 10px;
-        border-radius: 4px;
-        line-height: 1.3;
-    }
-    
-    /* System Status übersichtlicher */
-    .systems-status {
-        margin-top: 20px;
-    }
-    
-    .system-item {
-        padding: 10px 0;
-        font-size: 11px;
-        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
-    }
-    
-    .system-name {
-        font-size: 11px;
-    }
-    
-    .system-indicator span {
-        font-size: 10px;
-    }
-    
-    /* STEP 8: Explorer Sections größer */
+}
+
+/* Mobile Explorer Sections - ERWEITERT */
+@media only screen and (max-width: 768px) {
     .explorer-section {
         margin-bottom: 20px;
         padding: 16px;
         border-radius: 8px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid #00cc66;
+        position: relative;
     }
+    
+    .explorer-section::before {
+        position: absolute;
+        top: -8px;
+        left: 12px;
+        background: #0a0a0a;
+        padding: 0 8px;
+        font-size: 10px;
+        color: #00cc66;
+        letter-spacing: 1px;
+    }
+    
+    .network-overview::before { content: 'NETWORK OVERVIEW'; }
+    .recent-blocks::before { content: 'RECENT BLOCKS'; }
+    .search-section::before { content: 'BLOCKCHAIN SEARCH'; }
+    .wallet-history::before { content: 'WALLET HISTORY'; }
     
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 12px;
         margin-bottom: 16px;
+        display: grid;
     }
     
     .stat-item {
         padding: 12px;
         border-radius: 6px;
         text-align: center;
+        background: rgba(0, 255, 255, 0.05);
+        border: 1px solid rgba(0, 255, 255, 0.2);
     }
     
     .stat-value {
         font-size: 16px; /* Größer */
         margin-bottom: 4px;
         font-weight: bold;
+        color: #00ffff;
+        font-family: 'Share Tech Mono', monospace;
     }
     
     .stat-label {
         font-size: 10px;
         text-transform: uppercase;
+        color: #999999;
+        letter-spacing: 1px;
     }
     
     /* Block Items lesbarer */
@@ -322,14 +471,47 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        background: rgba(0, 0, 0, 0.3);
+        border-left: 3px solid #00cc66;
+        font-family: 'Share Tech Mono', monospace;
     }
     
     .block-height {
         font-weight: bold;
         font-size: 12px;
+        color: #00ffff;
     }
     
-    /* STEP 9: Forms optimiert */
+    .block-time {
+        color: #999999;
+    }
+    
+    .block-txs {
+        color: #ff00ff;
+    }
+    
+    .search-input {
+        padding: 10px 12px;
+        font-size: 16px;
+        border-radius: 6px;
+        margin-bottom: 6px;
+        width: 100%;
+        border: 1px solid #00cc66;
+        background: rgba(0, 0, 0, 0.5);
+        color: #00cc66;
+        font-family: 'Share Tech Mono', monospace;
+    }
+    
+    .search-input:focus {
+        border-color: #00ffff;
+        color: #00ffff;
+        outline: none;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    }
+}
+
+/* Mobile Forms - ERWEITERT */
+@media only screen and (max-width: 768px) {
     .form-group {
         margin-bottom: 16px;
     }
@@ -339,45 +521,306 @@
         margin-bottom: 6px;
         display: block;
         font-weight: 600;
+        color: #999999;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
     
-    .form-input,
-    .form-select,
-    .form-textarea,
-    .search-input {
+    .form-input, .form-select, .form-textarea {
         padding: 14px 16px;
         font-size: 16px;
         border-radius: 8px;
         min-height: 50px;
         width: 100%;
         margin-bottom: 8px;
+        border: 1px solid #00cc66;
+        background: rgba(0, 0, 0, 0.5);
+        color: #00cc66;
+        font-family: 'Share Tech Mono', monospace;
     }
     
-    /* STEP 10: Balance & Transactions */
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+        border-color: #00ffff;
+        color: #00ffff;
+        outline: none;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    }
+    
+    .form-textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+}
+
+/* Mobile Buttons - ERWEITERT */
+@media only screen and (max-width: 768px) {
+    .terminal-button {
+        min-height: 50px; /* Größere Buttons */
+        padding: 14px 20px;
+        font-size: 12px;
+        border-radius: 8px;
+        text-align: center;
+        margin-bottom: 8px;
+        transition: all 0.2s ease;
+        width: 100%;
+        border: 2px solid;
+        background: transparent;
+        font-family: 'Share Tech Mono', monospace;
+        font-weight: 400;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .terminal-button:active {
+        transform: scale(0.95);
+    }
+    
+    .btn-primary {
+        border-color: #00ffff;
+        color: #00ffff;
+    }
+    
+    .btn-primary:hover {
+        background: rgba(0, 255, 255, 0.1);
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+    }
+    
+    .btn-danger {
+        border-color: #ff3030;
+        color: #ff3030;
+    }
+    
+    .btn-danger:hover {
+        background: rgba(255, 48, 48, 0.1);
+        box-shadow: 0 0 15px rgba(255, 48, 48, 0.4);
+    }
+    
+    .btn-success {
+        border-color: #00ff00;
+        color: #00ff00;
+    }
+    
+    .btn-success:hover {
+        background: rgba(0, 255, 0, 0.1);
+        box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+    }
+    
+    .btn-small {
+        padding: 8px 14px;
+        font-size: 10px;
+        min-height: 36px;
+        width: auto;
+    }
+}
+
+/* Mobile Wallet and Balance Display - ERWEITERT */
+@media only screen and (max-width: 768px) {
+    .wallet-display {
+        padding: 16px;
+        margin: 16px 0;
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid #00ffff;
+        position: relative;
+    }
+    
+    .wallet-display::before {
+        content: 'WALLET DATA';
+        position: absolute;
+        top: -8px;
+        left: 12px;
+        background: #0a0a0a;
+        padding: 0 8px;
+        font-size: 10px;
+        color: #00ffff;
+        letter-spacing: 1px;
+    }
+    
+    .data-field {
+        margin-bottom: 12px;
+    }
+    
+    .field-label {
+        font-size: 11px;
+        margin-bottom: 4px;
+        color: #999999;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .field-value {
+        font-size: 12px;
+        padding: 8px 10px;
+        border-radius: 4px;
+        line-height: 1.3;
+        font-family: 'Share Tech Mono', monospace;
+        color: #00ffff;
+        word-break: break-all;
+        background: rgba(0, 255, 255, 0.1);
+        border-left: 2px solid #00ffff;
+    }
+    
+    .balance-display {
+        color: #00ff00;
+        font-size: 14px;
+        font-weight: 700;
+        text-shadow: 0 0 10px #00ff00;
+    }
+    
     .balance-overview {
         grid-template-columns: repeat(2, 1fr);
         gap: 12px;
         margin-bottom: 20px;
+        display: grid;
     }
     
     .balance-item {
         padding: 16px 12px;
         border-radius: 8px;
         text-align: center;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid #00ffff;
     }
     
     .balance-amount {
         font-size: 15px;
         margin-bottom: 4px;
         font-weight: bold;
+        color: #00ff00;
+        font-family: 'Share Tech Mono', monospace;
     }
     
     .balance-label {
         font-size: 10px;
         text-transform: uppercase;
+        color: #999999;
     }
     
-    /* Transaction Items größer */
+    .send-form {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid #00cc66;
+        padding: 16px;
+        margin: 16px 0;
+        border-radius: 8px;
+    }
+    
+    .input-wrapper {
+        position: relative;
+    }
+    
+    .max-button {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #ff00ff;
+        color: #000;
+        border: none;
+        padding: 2px 6px;
+        font-size: 8px;
+        cursor: pointer;
+        font-weight: 700;
+        border-radius: 3px;
+    }
+}
+
+/* Mobile Staking Interface - ERWEITERT */
+@media only screen and (max-width: 768px) {
+    .delegation-item {
+        padding: 12px;
+        margin: 8px 0;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid #00cc66;
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .validator-info {
+        width: 100%;
+        flex: 1;
+    }
+    
+    .validator-name {
+        font-size: 12px;
+        margin-bottom: 4px;
+        color: #00ffff;
+        font-weight: 700;
+    }
+    
+    .validator-details {
+        font-size: 10px;
+        color: #999999;
+        font-family: 'Share Tech Mono', monospace;
+    }
+    
+    .delegation-amount {
+        text-align: left;
+        margin-right: 0;
+        font-size: 11px;
+        color: #00ff00;
+        font-weight: 700;
+    }
+    
+    .stake-actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 6px;
+        display: flex;
+    }
+    
+    .amount-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #00cc66;
+        background: rgba(0, 0, 0, 0.5);
+        color: #00cc66;
+        font-family: 'Share Tech Mono', monospace;
+        margin: 8px 0;
+        border-radius: 6px;
+        font-size: 16px;
+    }
+    
+    .amount-input:focus {
+        border-color: #00ffff;
+        color: #00ffff;
+        outline: none;
+    }
+}
+
+/* Mobile Transaction History - ERWEITERT */
+@media only screen and (max-width: 768px) {
+    .tx-filter {
+        gap: 6px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+        display: flex;
+    }
+    
+    .filter-btn {
+        padding: 6px 10px;
+        font-size: 9px;
+        border-radius: 4px;
+        min-height: 32px;
+        border: 1px solid #666;
+        background: transparent;
+        color: #666;
+        cursor: pointer;
+        text-transform: uppercase;
+    }
+    
+    .filter-btn.active {
+        border-color: #00ffff;
+        color: #00ffff;
+    }
+    
     .tx-item {
         padding: 12px 14px;
         margin: 8px 0;
@@ -387,68 +830,316 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 4px;
+        background: rgba(0, 0, 0, 0.3);
+        border-left: 3px solid;
+        font-family: 'Share Tech Mono', monospace;
     }
+    
+    .tx-sent { border-left-color: #ff3030; }
+    .tx-received { border-left-color: #00ff00; }
+    .tx-delegate { border-left-color: #ff00ff; }
+    .tx-undelegate { border-left-color: #ffaa00; }
     
     .tx-type {
         font-weight: bold;
         min-width: 80px;
         font-size: 11px;
+        color: #00ffff;
     }
     
     .tx-amount {
         font-size: 12px;
         font-weight: bold;
+        color: #00ff00;
+        margin: 0 12px;
     }
     
     .tx-time {
         font-size: 9px;
         opacity: 0.7;
+        color: #999999;
+        width: 100%;
+        margin-top: 2px;
+    }
+}
+
+/* Mobile System Status - ERWEITERT */
+@media only screen and (max-width: 768px) {
+    .section-header {
+        font-size: 14px;
+        margin-bottom: 16px;
+        text-align: center;
+        font-weight: 700;
+        color: #00ffff;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        border-bottom: 1px solid #00ffff;
+        padding-bottom: 8px;
     }
     
-    /* STEP 11: Messages optimiert */
+    .auth-module {
+        margin-bottom: 24px;
+    }
+    
+    .module-title {
+        font-size: 13px;
+        margin-bottom: 12px;
+        text-align: center;
+        font-weight: 700;
+        color: #ff00ff;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .module-title::before {
+        content: '▶';
+        color: #ff00ff;
+        font-size: 12px;
+    }
+    
+    .systems-status {
+        margin-top: 20px;
+    }
+    
+    .system-item {
+        padding: 10px 0;
+        font-size: 11px;
+        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-family: 'Share Tech Mono', monospace;
+    }
+    
+    .system-name {
+        font-size: 11px;
+        color: #cccccc;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .system-indicator {
+        gap: 6px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .indicator-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #00ff00;
+        box-shadow: 0 0 8px #00ff00;
+        animation: pulse 2s infinite;
+    }
+    
+    .indicator-offline {
+        background: #ff3030;
+        box-shadow: 0 0 8px #ff3030;
+    }
+    
+    .system-indicator span {
+        font-size: 10px;
+    }
+}
+
+/* Mobile Messages - ERWEITERT */
+@media only screen and (max-width: 768px) {
     .message-item {
         margin-bottom: 16px;
         padding: 14px 16px;
         border-radius: 8px;
         max-width: 90%;
+        border-left: 3px solid;
+        background: rgba(0, 0, 0, 0.3);
+        position: relative;
+    }
+    
+    .message-sent {
+        margin-left: 10%;
+        margin-right: 0;
+        background: rgba(0, 255, 255, 0.05);
+        border-left-color: #00ffff;
+    }
+    
+    .message-received {
+        margin-right: 10%;
+        margin-left: 0;
+        background: rgba(255, 0, 255, 0.05);
+        border-left-color: #ff00ff;
+    }
+    
+    .message-system {
+        border-left-color: #ffaa00;
+        background: rgba(255, 170, 0, 0.05);
     }
     
     .message-header {
         margin-bottom: 6px;
+        font-size: 11px;
+        flex-wrap: wrap;
+        gap: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-family: 'Share Tech Mono', monospace;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .message-sender {
         font-size: 10px;
+        color: #cccccc;
+    }
+    
+    .message-time {
+        font-size: 9px;
+        color: #666666;
     }
     
     .message-content {
         font-size: 13px;
         line-height: 1.5;
         word-break: break-word;
+        color: #ffffff;
+        font-family: 'Share Tech Mono', monospace;
+        white-space: pre-wrap;
     }
     
-    .message-sent {
-        margin-left: 10%;
-        background: rgba(0, 255, 255, 0.1);
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+        color: #666666;
+        font-family: 'Share Tech Mono', monospace;
     }
     
-    .message-received {
-        margin-right: 10%;
-        background: rgba(255, 0, 255, 0.1);
+    .empty-state h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+        color: #00cc66;
+        text-transform: uppercase;
+        letter-spacing: 2px;
     }
     
-    /* STEP 12: Solar System angepasst */
-    .solar-system-bg {
-        width: 130px;
-        height: 130px;
-        opacity: 0.7;
-        top: 60%;
-        transform: translate(-50%, -50%) rotate(180deg);
+    .empty-state p {
+        font-size: 13px;
+        line-height: 1.4;
+        margin-bottom: 8px;
+    }
+    
+    .empty-state .icon {
+        font-size: 48px;
+        margin: 20px 0;
+        color: #00cc66;
+        animation: pulse 3s infinite;
     }
 }
 
-/* STEP 13: Sehr kleine Phones (< 400px) */
-@media only screen and (max-width: 400px) {
+/* Error and Success States */
+@media only screen and (max-width: 768px) {
+    .error-display {
+        background: rgba(255, 48, 48, 0.1);
+        border: 1px solid #ff3030;
+        color: #ff3030;
+        padding: 12px 16px;
+        margin: 8px 0;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 12px;
+        border-left: 4px solid #ff3030;
+        border-radius: 6px;
+    }
+    
+    .success-display {
+        background: rgba(0, 255, 0, 0.1);
+        border: 1px solid #00ff00;
+        color: #00ff00;
+        padding: 12px 16px;
+        margin: 8px 0;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 12px;
+        border-left: 4px solid #00ff00;
+        border-radius: 6px;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        border-top: 2px solid #00ffff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+}
+
+/* Tablet Size (481px - 768px) */
+@media only screen and (min-width: 481px) and (max-width: 768px) {
     .header {
-        min-height: 120px;
+        min-height: 180px;
+        padding: 20px 16px;
+    }
+    
+    .terminal-header {
+        min-height: 160px;
+        gap: 16px;
+    }
+    
+    .main-title {
+        font-size: 20px;
+    }
+    
+    .sub-title {
+        font-size: 13px;
+    }
+    
+    .logo-icon {
+        width: 56px;
+        height: 56px;
+    }
+    
+    .solar-system-bg {
+        width: 120px;
+        height: 120px;
+        bottom: 15px;
+        left: 15px;
+    }
+    
+    .connection-status,
+    #blockchain-status {
+        font-size: 11px;
+        padding: 6px 10px;
+    }
+    
+    .timestamp {
+        font-size: 10px;
+    }
+    
+    .stats-grid,
+    .balance-overview {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Very Small Phones (< 400px) */
+@media only screen and (max-width: 400px) {
+    .container {
+        padding: 6px;
+    }
+    
+    .header {
+        min-height: 140px;
         padding: 12px 8px;
+    }
+    
+    .terminal-header {
+        min-height: 120px;
+        gap: 8px;
     }
     
     .main-title {
@@ -462,6 +1153,27 @@
     .logo-icon {
         width: 40px;
         height: 40px;
+    }
+    
+    .solar-system-bg {
+        width: 80px;
+        height: 80px;
+        bottom: 8px;
+        left: 8px;
+    }
+    
+    .status-display {
+        padding: 6px 8px;
+    }
+    
+    .connection-status,
+    #blockchain-status {
+        font-size: 9px;
+        padding: 3px 6px;
+    }
+    
+    .timestamp {
+        font-size: 8px;
     }
     
     .tab-button {
@@ -481,38 +1193,66 @@
         padding: 12px;
     }
     
-    .solar-system-bg {
-        width: 100px;
-        height: 100px;
+    /* Responsive Status Layout */
+    .status-row {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+    }
+    
+    .network-info {
+        align-self: stretch;
+        justify-content: space-between;
     }
 }
 
-/* STEP 14: Landscape Mode (Phone horizontal) */
+/* Landscape Mode (Phone horizontal) */
 @media only screen and (max-height: 500px) and (orientation: landscape) {
     .header {
-        min-height: 100px;
+        min-height: 120px;
         padding: 12px 16px;
     }
     
     .terminal-header {
-        flex-direction: row;
-        align-items: center;
-        gap: 20px;
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto;
+        min-height: 100px;
+        gap: 8px;
     }
     
     .system-info {
-        flex: 1;
+        grid-column: 1;
+        grid-row: 1;
+        justify-content: flex-start;
+        margin-bottom: 0;
     }
     
     .status-display {
-        flex-direction: row;
-        gap: 12px;
-        align-items: center;
+        grid-column: 2;
+        grid-row: 1 / 3;
+        margin-top: 0;
+        align-self: stretch;
+        justify-content: center;
+        min-width: 200px;
+    }
+    
+    .solar-system-bg {
+        width: 70px;
+        height: 70px;
+        bottom: 8px;
+        left: 8px;
+        opacity: 0.5;
+    }
+    
+    .status-row {
+        flex-direction: column;
+        align-items: flex-end;
     }
     
     .main-interface {
         flex-direction: row;
         gap: 16px;
+        height: calc(100vh - 140px);
     }
     
     .communication-display {
@@ -525,33 +1265,226 @@
         max-width: 300px;
     }
     
-    .solar-system-bg {
-        width: 80px;
-        height: 80px;
-        opacity: 0.5;
+    .tab-button {
+        min-height: 36px;
+        padding: 6px 10px;
+    }
+    
+    .message-display {
+        max-height: calc(100vh - 200px);
     }
 }
 
-/* STEP 15: Empty States lesbarer */
-@media only screen and (max-width: 768px) {
-    .empty-state {
-        padding: 60px 20px;
-        text-align: center;
+/* iOS Specific Adjustments */
+@supports (-webkit-touch-callout: none) {
+    .container {
+        height: -webkit-fill-available;
     }
     
-    .empty-state h3 {
+    .input-module {
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    }
+    
+    .terminal-input,
+    .form-input,
+    .search-input {
+        -webkit-appearance: none;
+        border-radius: 8px;
+    }
+    
+    /* Disable iOS zoom on double tap */
+    * {
+        touch-action: manipulation;
+    }
+}
+
+/* Android Specific Adjustments */
+@media screen and (-webkit-min-device-pixel-ratio: 0) and (min-resolution: .001dpcm) {
+    .terminal-input,
+    .form-input,
+    .search-input {
         font-size: 16px;
-        margin-bottom: 12px;
+    }
+}
+
+/* High DPI Displays */
+@media only screen and (-webkit-min-device-pixel-ratio: 2), 
+       only screen and (min-resolution: 192dpi),
+       only screen and (min-resolution: 2dppx) {
+    .indicator-dot,
+    .solar-system-bg svg {
+        transform: translateZ(0);
+        backface-visibility: hidden;
     }
     
-    .empty-state p {
-        font-size: 13px;
-        line-height: 1.4;
-        margin-bottom: 8px;
+    .logo-icon svg,
+    .solar-system-bg svg {
+        shape-rendering: geometricPrecision;
+    }
+}
+
+/* Dark Mode Mobile Adjustments */
+@media (prefers-color-scheme: dark) and (max-width: 768px) {
+    .system-info,
+    .status-display {
+        background: rgba(26, 26, 46, 0.15);
+        border: 1px solid rgba(0, 255, 255, 0.1);
     }
     
-    .empty-state .icon {
-        font-size: 48px;
-        margin: 20px 0;
+    .solar-system-bg {
+        opacity: 0.5;
     }
+    
+    .terminal-tabs {
+        background: rgba(26, 26, 26, 0.98);
+        backdrop-filter: blur(20px);
+    }
+    
+    .input-module {
+        background: rgba(26, 26, 26, 0.98);
+        backdrop-filter: blur(20px);
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) and (max-width: 768px) {
+    .system-info,
+    .status-display {
+        border: 2px solid #00ffff;
+        background: rgba(0, 0, 0, 0.3);
+    }
+    
+    .connection-status,
+    #blockchain-status {
+        border-width: 2px;
+    }
+    
+    .terminal-button {
+        border-width: 2px;
+    }
+    
+    .tab-button.active {
+        border-bottom-width: 3px;
+    }
+    
+    .main-title,
+    .sub-title {
+        text-shadow: 
+            0 0 2px rgba(0, 0, 0, 1),
+            0 0 4px rgba(0, 255, 255, 0.8);
+    }
+}
+
+/* Accessibility Improvements for Mobile */
+@media only screen and (max-width: 768px) {
+    /* Focus indicators */
+    .tab-button:focus,
+    .terminal-button:focus,
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus,
+    .search-input:focus {
+        outline: 2px solid #00ffff;
+        outline-offset: 2px;
+    }
+}
+
+/* Animation Performance Optimization */
+@media only screen and (max-width: 768px) {
+    /* Reduce animation complexity on mobile */
+    .solar-system-bg circle[r="2.0"] {
+        animation-duration: 8s;
+    }
+    
+    .solar-system-bg circle[cx="104"] {
+        animation-duration: 16s;
+    }
+    
+    .solar-system-bg circle[cx="105.5"] {
+        animation-duration: 24s;
+    }
+    
+    /* Hardware acceleration for smooth animations */
+    .tab-button,
+    .terminal-button,
+    .tab-content,
+    .solar-system-bg * {
+        will-change: transform;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+    }
+}
+
+/* Reduced Motion for Mobile */
+@media (prefers-reduced-motion: reduce) and (max-width: 768px) {
+    .solar-system-bg * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+    
+    .tab-button:active,
+    .terminal-button:active {
+        transform: none;
+    }
+    
+    * {
+        transition-duration: 0.01ms !important;
+    }
+    
+    .indicator-dot {
+        animation: none;
+    }
+}
+
+/* Utility Classes for Mobile */
+@media only screen and (max-width: 768px) {
+    .mobile-only { display: block !important; }
+    .desktop-only { display: none !important; }
+    .mobile-hidden { display: none !important; }
+    
+    .mobile-full-width { width: 100% !important; }
+    .mobile-text-center { text-align: center !important; }
+    .mobile-text-small { font-size: 10px !important; }
+    .mobile-text-large { font-size: 14px !important; }
+    
+    .mobile-p-1 { padding: 4px !important; }
+    .mobile-p-2 { padding: 8px !important; }
+    .mobile-p-3 { padding: 12px !important; }
+    
+    .mobile-m-1 { margin: 4px !important; }
+    .mobile-m-2 { margin: 8px !important; }
+    .mobile-m-3 { margin: 12px !important; }
+    
+    .mobile-flex-col { flex-direction: column !important; }
+    .mobile-flex-row { flex-direction: row !important; }
+    .mobile-justify-center { justify-content: center !important; }
+    .mobile-items-center { align-items: center !important; }
+    
+    .mobile-gap-1 { gap: 4px !important; }
+    .mobile-gap-2 { gap: 8px !important; }
+    .mobile-gap-3 { gap: 12px !important; }
+}
+
+/* PWA Support */
+@media only screen and (max-width: 768px) {
+    .pwa-status-bar {
+        height: env(safe-area-inset-top);
+        background: linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(255, 0, 255, 0.1) 100%);
+    }
+    
+    .pwa-home-indicator {
+        height: env(safe-area-inset-bottom);
+        background: linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(255, 0, 255, 0.1) 100%);
+    }
+}
+
+/* CSS Animations */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
