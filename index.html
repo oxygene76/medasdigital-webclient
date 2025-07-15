@@ -2208,53 +2208,60 @@ Current mode: Blockchain-only (no chat)`,
                     latencyElement.style.color = '#ff3030';
                 }
             } 
-
-           async connectWallet() {
-        try {
-            // Verwende neue Keplr Detection
-            const connected = await this.keplrManager.connect();
-            if (!connected) {
-                this.updateWalletDisplay('Keplr not found', 'error');
-                return;
-            }
-
-            // Chain suggestion
-            try {
-                await window.keplr.experimentalSuggestChain(MEDAS_CHAIN_CONFIG);
-                console.log('✅ Chain suggestion successful');
-            } catch (error) {
-                console.log('Chain already exists or user rejected:', error);
-            }
-
-            // Enable chain
-            await window.keplr.enable("medasdigital-2");
             
-            // Get accounts
-            const offlineSigner = window.getOfflineSigner("medasdigital-2");
-            const accounts = await offlineSigner.getAccounts();
+            async connectWallet() {
+                try {
+                    // Verwende neue Keplr Detection
+                    const connected = await this.keplrManager.connect();
+                    if (!connected) {
+                        this.showSystemMessage('Keplr not found - Install extension', 'error');
+                        return;
+                    }
             
-            if (accounts.length > 0) {
-                this.walletAddress = accounts[0].address;
-                this.walletConnected = true;
-                this.updateWalletDisplay(this.walletAddress, 'connected');
-                this.queryBalance();
-                
-                // Account change listener
-                window.addEventListener('keplr_keystorechange', () => {
-                    console.log('Keplr account changed, reconnecting...');
-                    this.connectWallet();
-                });
-                
-                console.log('✅ Wallet connected:', this.walletAddress);
-            }
-        } catch (error) {
-            console.error('❌ Wallet connection failed:', error);
-            this.updateWalletDisplay('Connection failed', 'error');
-        }
-    }
-}
-
-
+                    // Chain suggestion
+                    try {
+                        await window.keplr.experimentalSuggestChain(MEDAS_CHAIN_CONFIG);
+                        console.log('✅ Chain suggestion successful');
+                    } catch (error) {
+                        console.log('Chain already exists or user rejected:', error);
+                    }
+            
+                    // Enable chain
+                    await window.keplr.enable("medasdigital-2");
+                    
+                    // Get accounts
+                    const offlineSigner = window.getOfflineSigner("medasdigital-2");
+                    const accounts = await offlineSigner.getAccounts();
+                    
+                    if (accounts.length > 0) {
+                        this.account = {
+                            address: accounts[0].address
+                        };
+                        this.connected = true;
+                        
+                        // Update UI
+                        this.addSystemMessage(`Wallet connected: ${this.account.address}`);
+                        this.updateConnectionStatus(true);
+                        
+                        // Get balance
+                        const balance = await this.getBalance();
+                        if (balance !== 'ERROR') {
+                            this.updateUIAfterConnection(balance);
+                        }
+                        
+                        // Account change listener
+                        window.addEventListener('keplr_keystorechange', () => {
+                            console.log('Keplr account changed, reconnecting...');
+                            this.connectWallet();
+                        });
+                        
+                        console.log('✅ Wallet connected:', this.account.address);
+                    }
+                } catch (error) {
+                    console.error('❌ Wallet connection failed:', error);
+                    this.showSystemMessage('Connection failed - Check Keplr', 'error');
+                }
+            } 
             async getBalance() {
                 try {
                     const response = await fetch(`${MEDAS_CHAIN_CONFIG.rest}/cosmos/bank/v1beta1/balances/${this.account.address}`);
