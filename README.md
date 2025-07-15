@@ -52,13 +52,13 @@
 
 1. Fork this repository
 1. Enable GitHub Pages in Settings
-1. Visit `https://yourusername.github.io/medas-digital-webclient`
+1. Visit `https://yourserver/medasdigital-webclient`
 
 ### Option 2: Local Development
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/medas-digital-webclient.git
+git clone https://github.com/yourusername/medasdigital-webclient.git
 cd medas-digital-webclient
 
 # Start development server
