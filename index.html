@@ -122,7 +122,7 @@
             
             <!-- NEUE GRID-STRUKTUR für Mobile Layout -->
             <div class="terminal-header">
-                <!-- TOP ROW: Logo und Titel zentriert -->
+                <!-- TOP ROW: Logo und Titel zentriert (OHNE WALLET) -->
                 <div class="system-info">
                     <div class="logo-section">
                         <div class="logo-icon">
@@ -157,7 +157,6 @@
                             <div class="sub-title">Research Terminal v0.9</div>
                         </div>
                     </div>
-                    
                 </div>
                 
                 <!-- MIDDLE ROW: Freier Raum (für eventuelle Erweiterungen) -->
@@ -165,9 +164,9 @@
                     <!-- Dieser Bereich ist für zukünftige Features reserviert -->
                 </div>
                 
-                <!-- BOTTOM ROW: Status-Informationen rechts unten -->
+                <!-- BOTTOM ROW: Status-Informationen rechts unten + WALLET RECHTS OBEN -->
                 <div class="status-display">  
-                    <!-- NEW: Wallet Display Section -->
+                    <!-- NEW: Wallet Display Section - GANZ OBEN -->
                     <div class="wallet-section">
                         <div id="wallet-display" class="wallet-display">
                             <div class="wallet-status" id="wallet-status">
@@ -180,6 +179,8 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Network Status - DARUNTER -->
                     <div class="status-row">
                         <div class="network-info">
                             <div id="connection-status" class="connection-status status-disconnected">
@@ -196,6 +197,8 @@
                             <div id="network-latency" class="network-latency">--- ms</div>
                         </div>
                     </div>
+                    
+                    <!-- Timestamp - GANZ UNTEN -->
                     <div class="timestamp" id="current-time">Loading...</div>
                 </div>
             </div>
