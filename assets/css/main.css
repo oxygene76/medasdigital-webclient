@@ -1134,11 +1134,6 @@ body::before {
         grid-template-columns: repeat(2, 1fr);
     }
 }
-/* =================================
-   DESKTOP WALLET HEADER INTEGRATION
-   Fügen Sie das ans Ende Ihrer main.css hinzu
-   ================================= */
-
 /* Desktop Wallet Section */
 .wallet-section {
     display: flex;
@@ -1154,8 +1149,8 @@ body::before {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    min-width: 220px;
-    max-width: 320px;
+    min-width: 350px; /* BREITER: war 220px */
+    max-width: 450px; /* BREITER: war 320px */
     font-family: 'Share Tech Mono', monospace;
     transition: all 0.3s ease;
 }
@@ -1201,17 +1196,19 @@ body::before {
     padding: 4px 8px;
 }
 
-/* Desktop Wallet-Adresse - grün wie System Status */
+/* Desktop Wallet-Adresse - OHNE Umbruch */
 .address-text {
     font-family: 'Share Tech Mono', monospace;
     font-size: 10px;
-    color: #00ff00; /* Grün wie Block/Latenz */
+    color: #00ff00;
     cursor: pointer;
-    word-break: break-all;
     flex: 1;
     line-height: 1.3;
     transition: all 0.2s ease;
     letter-spacing: 0.3px;
+    white-space: nowrap; /* WICHTIG: Verhindert Umbruch */
+    overflow: hidden; /* Falls trotzdem zu lang */
+    text-overflow: ellipsis; /* ... am Ende falls nötig */
 }
 
 .address-text:hover {
@@ -1243,7 +1240,7 @@ body::before {
     transform: scale(0.98);
 }
 
-/* Desktop Status States - passend zu Ihrem Design */
+/* Desktop Status States */
 .wallet-display.disconnected .wallet-status {
     color: #ff6b6b;
 }
@@ -1264,7 +1261,7 @@ body::before {
     animation: pulse 1.5s infinite;
 }
 
-/* Desktop Copy Success Animation - grün */
+/* Desktop Copy Success Animation */
 .wallet-display.copy-success {
     animation: copySuccessGreenDesktop 0.6s ease;
 }
@@ -1288,14 +1285,14 @@ body::before {
     }
 }
 
-/* Desktop Accessibility - passend zu Ihrem Stil */
+/* Desktop Accessibility */
 .copy-btn:focus,
 .address-text:focus {
     outline: 2px solid #00ff7f;
     outline-offset: 2px;
 }
 
-/* Desktop High Contrast - grün */
+/* Desktop High Contrast */
 @media (prefers-contrast: high) {
     .wallet-display {
         border-width: 2px;
@@ -1312,11 +1309,11 @@ body::before {
     }
 }
 
-/* Desktop Responsive - passt zu Ihrem @media (max-width: 1024px) */
+/* Desktop Responsive - angepasste Breiten */
 @media (max-width: 1024px) {
     .wallet-display {
-        min-width: 200px;
-        max-width: 280px;
+        min-width: 300px; /* Auch hier breiter */
+        max-width: 400px;
         padding: 5px 10px;
     }
     
@@ -1331,5 +1328,18 @@ body::before {
     .copy-btn {
         font-size: 8px;
         padding: 1px 5px;
+    }
+}
+
+/* Sehr große Bildschirme - noch breiter */
+@media (min-width: 1400px) {
+    .wallet-display {
+        min-width: 400px;
+        max-width: 500px;
+        font-size: 11px;
+    }
+    
+    .address-text {
+        font-size: 11px;
     }
 }
