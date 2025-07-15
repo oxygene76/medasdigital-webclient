@@ -138,131 +138,258 @@
        WALLET HEADER INTEGRATION - RECHTS OBEN ÜBER NETWORK
        ================================= */
     
-    /* Wallet Section - OBEN in status-display */
-    .wallet-section {
-        order: -1; /* Wallet-Section ganz oben */
-        width: 100%;
-        display: flex;
-        justify-content: flex-end; /* Rechts ausrichten */
-        margin-bottom: 8px;
+   /* =================================
+   WALLET HEADER INTEGRATION - SCHÖNER UND GRÜN
+   Diese Sektion in mobile.css ERSETZEN (ca. Zeilen 110-230)
+   ================================= */
+
+/* Wallet Section - OBEN in status-display */
+.wallet-section {
+    order: -1; /* Wallet-Section ganz oben */
+    width: 100%;
+    display: flex;
+    justify-content: flex-end; /* Rechts ausrichten */
+    margin-bottom: 8px;
+}
+
+.wallet-display {
+    background: rgba(0, 0, 0, 0.2); /* Dezenter Hintergrund */
+    border: 1px solid rgba(0, 255, 127, 0.3); /* Grüner Border */
+    border-radius: 4px; /* Kleiner Radius */
+    padding: 4px 8px; /* Kompakter */
+    display: flex;
+    flex-direction: column;
+    gap: 2px; /* Weniger Gap */
+    min-width: 180px; /* Kleiner */
+    max-width: 250px;
+    font-family: 'Share Tech Mono', monospace; /* Wie Block/Latenz */
+    transition: all 0.3s ease;
+}
+
+.wallet-display:hover {
+    background: rgba(0, 255, 127, 0.1);
+    border-color: rgba(0, 255, 127, 0.5);
+}
+
+.wallet-display.connected {
+    border-color: rgba(0, 255, 127, 0.5);
+    background: rgba(0, 255, 127, 0.05); /* Sehr dezent grün */
+}
+
+.wallet-display.connecting {
+    border-color: rgba(255, 215, 0, 0.5);
+    background: rgba(255, 215, 0, 0.05);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.wallet-status {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 9px; /* Kleiner */
+    color: #00ff7f; /* Grün wie Block/Latenz */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-icon {
+    font-size: 10px; /* Kleiner */
+}
+
+.wallet-address {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.2); /* Dezenter */
+    border-radius: 3px;
+    padding: 2px 6px; /* Kompakter */
+}
+
+/* WICHTIG: Wallet-Adresse wie Block/Latenz stylen */
+.address-text {
+    font-family: 'Share Tech Mono', monospace; /* Wie System Status */
+    font-size: 8px; /* Wie Latenz/Block */
+    color: #00ff00; /* Grün wie Block/Latenz */
+    cursor: pointer;
+    word-break: break-all;
+    flex: 1;
+    line-height: 1.2;
+    transition: color 0.2s ease;
+    letter-spacing: 0.3px; /* Wie monospace */
+}
+
+.address-text:hover {
+    color: #00ffff; /* Helleres Grün beim Hover */
+    text-shadow: 0 0 4px rgba(0, 255, 0, 0.5);
+}
+
+.copy-btn {
+    background: transparent; /* Transparent */
+    border: 1px solid rgba(0, 255, 127, 0.3);
+    border-radius: 2px;
+    padding: 1px 4px; /* Sehr kompakt */
+    font-size: 8px; /* Klein */
+    color: #00ff7f;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.copy-btn:hover {
+    background: rgba(0, 255, 127, 0.2);
+    border-color: rgba(0, 255, 127, 0.5);
+    transform: scale(1.05); /* Subtiler */
+}
+
+.copy-btn:active {
+    transform: scale(0.98);
+}
+
+/* Wallet Status States - Grüne Farbpalette */
+.wallet-display.disconnected .wallet-status {
+    color: #ff6b6b;
+}
+
+.wallet-display.disconnected .status-icon {
+    opacity: 0.6;
+}
+
+.wallet-display.connected .wallet-status {
+    color: #00ff7f; /* Grün */
+}
+
+.wallet-display.connecting .wallet-status {
+    color: #ffd700;
+}
+
+.wallet-display.connecting .status-icon {
+    animation: pulse 1.5s infinite;
+}
+
+/* Copy Success Animation - Grün */
+.wallet-display.copy-success {
+    animation: copySuccessGreen 0.6s ease;
+}
+
+@keyframes copySuccessGreen {
+    0% { 
+        background: rgba(0, 255, 127, 0.05);
+        border-color: rgba(0, 255, 127, 0.3);
+        transform: scale(1);
     }
-    
+    50% { 
+        background: rgba(0, 255, 127, 0.2);
+        border-color: rgba(0, 255, 127, 0.7);
+        transform: scale(1.02);
+        box-shadow: 0 0 8px rgba(0, 255, 127, 0.4);
+    }
+    100% { 
+        background: rgba(0, 255, 127, 0.05);
+        border-color: rgba(0, 255, 127, 0.3);
+        transform: scale(1);
+    }
+}
+
+/* Mobile Optimierung */
+@media (max-width: 768px) {
     .wallet-display {
-        background: rgba(0, 255, 255, 0.1);
-        border: 1px solid rgba(0, 255, 255, 0.3);
-        border-radius: 6px;
-        padding: 8px 12px;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        min-width: 200px; /* Mindestbreite für vollständige Adresse */
-        max-width: 300px; /* Maximale Breite */
-        font-family: 'Orbitron', monospace;
-        transition: all 0.3s ease;
-    }
-    
-    .wallet-display:hover {
-        background: rgba(0, 255, 255, 0.15);
-        border-color: rgba(0, 255, 255, 0.5);
-    }
-    
-    .wallet-display.connected {
-        border-color: rgba(0, 255, 127, 0.5);
-        background: rgba(0, 255, 127, 0.1);
-    }
-    
-    .wallet-display.connecting {
-        border-color: rgba(255, 215, 0, 0.5);
-        background: rgba(255, 215, 0, 0.1);
-        animation: pulse 1.5s ease-in-out infinite;
+        min-width: 160px;
+        max-width: 220px;
+        padding: 3px 6px;
     }
     
     .wallet-status {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 11px;
-        color: rgba(255, 255, 255, 0.8);
+        font-size: 8px;
     }
     
-    .status-icon {
-        font-size: 14px;
-    }
-    
-    .wallet-address {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 4px;
-        padding: 4px 8px;
-    }
-    
-    /* WICHTIG: Vollständige Adresse anzeigen */
     .address-text {
-        font-family: 'Share Tech Mono', monospace;
-        font-size: 10px;
-        color: #00ffff;
-        cursor: pointer;
-        word-break: break-all; /* Umbrechen bei langen Adressen */
-        flex: 1;
-        line-height: 1.2;
-        transition: color 0.2s ease;
-    }
-    
-    .address-text:hover {
-        color: #00ff7f;
+        font-size: 7px;
     }
     
     .copy-btn {
-        background: rgba(0, 255, 255, 0.2);
-        border: 1px solid rgba(0, 255, 255, 0.3);
-        border-radius: 3px;
-        padding: 2px 6px;
-        font-size: 10px;
-        color: #00ffff;
-        cursor: pointer;
-        flex-shrink: 0; /* Button behält feste Größe */
-        transition: all 0.3s ease;
+        padding: 1px 3px;
+        font-size: 7px;
+    }
+}
+
+/* Sehr kleine Bildschirme */
+@media (max-width: 480px) {
+    .wallet-display {
+        min-width: 140px;
+        max-width: 180px;
+        padding: 2px 5px;
     }
     
-    .copy-btn:hover {
-        background: rgba(0, 255, 255, 0.3);
-        border-color: rgba(0, 255, 255, 0.5);
-        transform: scale(1.1);
+    .wallet-status {
+        font-size: 7px;
     }
     
-    .copy-btn:active {
-        transform: scale(0.95);
+    .address-text {
+        font-size: 6px;
     }
     
-    /* Wallet Status States */
-    .wallet-display.disconnected .wallet-status {
-        color: #ff6b6b;
+    .copy-btn {
+        font-size: 6px;
+        padding: 1px 2px;
+    }
+}
+
+/* Tablet Anpassungen */
+@media only screen and (min-width: 481px) and (max-width: 768px) {
+    .wallet-display {
+        padding: 4px 7px;
     }
     
-    .wallet-display.disconnected .status-icon {
-        opacity: 0.6;
+    .wallet-status {
+        font-size: 8px;
     }
     
-    .wallet-display.connected .wallet-status {
-        color: #00ff7f;
+    .address-text {
+        font-size: 7px;
+    }
+}
+
+/* Landscape Mode */
+@media only screen and (max-height: 500px) and (orientation: landscape) {
+    .wallet-display {
+        padding: 3px 6px;
+        min-width: 140px;
+        max-width: 200px;
     }
     
-    .wallet-display.connecting .wallet-status {
-        color: #ffd700;
+    .wallet-status {
+        font-size: 7px;
     }
     
-    .wallet-display.connecting .status-icon {
-        animation: pulse 1.5s infinite;
+    .address-text {
+        font-size: 6px;
+    }
+}
+
+/* Accessibility - Grün */
+.copy-btn:focus,
+.address-text:focus {
+    outline: 2px solid #00ff7f;
+    outline-offset: 2px;
+}
+
+/* High Contrast Mode - Grün */
+@media (prefers-contrast: high) {
+    .wallet-display {
+        border-width: 2px;
+        border-color: #00ff7f;
     }
     
-    /* Copy Success Animation */
-    .wallet-display.copy-success {
-        animation: copySuccess 0.6s ease;
+    .copy-btn {
+        border-color: #00ff7f;
     }
     
+    .address-text {
+        color: #00ff00;
+        font-weight: bold;
+    }
+}
     /* =================================
        FORTSETZUNG STATUS DISPLAY - Network Info DARUNTER
        ================================= */
