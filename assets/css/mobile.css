@@ -89,70 +89,72 @@
         background: rgba(0, 0, 255, 0.1) !important; /* DEBUG: Blauer Hintergrund */
     }
     
-    /* SOLAR SYSTEM ANIMATION - DEBUG RAHMEN WEITER NACH RECHTS */
+    /* SOLAR SYSTEM ANIMATION - DEBUG ENTFERNT + ANIMATIONEN AKTIVIERT */
     .solar-system-bg {
         position: fixed !important;
         top: 20% !important;
-        left: 60px !important; /* Weiter nach rechts (war 10px) */
+        left: 60px !important;
         transform: rotate(180deg) !important;
         width: 300px !important;
         height: 300px !important;
         opacity: 0.9 !important;
-        z-index: 999 !important;
+        z-index: 0 !important; /* Zurück nach hinten */
         pointer-events: none !important;
         display: block !important;
         visibility: visible !important;
-        border: 2px solid red !important;
-        background: rgba(255, 0, 0, 0.1) !important;
+        /* DEBUG ENTFERNT */
     }
     
     /* Falls es der komplette Solar System Container ist */
     .solar-system-container {
         position: fixed !important;
         top: 10% !important;
-        left: 40px !important; /* Weiter nach rechts (war -50px) */
+        left: 40px !important;
         transform: scale(1.0) !important;
         width: 500px !important;
         height: 500px !important;
         opacity: 0.9 !important;
-        z-index: 999 !important;
+        z-index: 0 !important; /* Zurück nach hinten */
         pointer-events: none !important;
         overflow: visible !important;
-        border: 2px solid blue !important;
-        background: rgba(0, 0, 255, 0.1) !important;
+        /* DEBUG ENTFERNT */
     }
     
-    /* NUR die Animation INNERHALB des Containers nach LINKS verschieben */
+    /* Animation INNERHALB des Containers - ANIMATIONEN ERHALTEN */
     .solar-system-container > * {
-        transform: translateX(-25px) !important; /* Weniger nach rechts (war -50px) */
+        /* REMOVE: transform override */
+        /* Lasse die ursprünglichen Animationen laufen */
     }
     
     .solar-system-bg > * {
-        transform: translateX(-25px) !important; /* Weniger nach rechts (war -50px) */
+        /* REMOVE: transform override */
+        /* Lasse die ursprünglichen Animationen laufen */
     }
     
-    /* Spezifisch für Solar System Elemente innerhalb der Container */
+    /* NUR Positionierung, KEINE Animation-Überschreibung */
     .solar-system-container .solar-system {
-        margin-left: -20px !important; /* Weniger nach rechts (war -40px) */
-        border: 2px solid green !important;
-        background: rgba(0, 255, 0, 0.1) !important;
+        margin-left: -20px !important;
+        /* KEINE transform/animation Überschreibungen */
     }
     
+    /* Lasse Sonne animieren */
     .solar-system-container .sun {
-        margin-left: -20px !important; /* Weniger nach rechts (war -40px) */
-        border: 2px solid yellow !important;
+        margin-left: -20px !important;
+        /* KEINE transform/animation Überschreibungen */
     }
     
-    /* Alternative: Direkte Positionierung - nach links */
-    .solar-system-container .solar-system {
-        position: relative !important;
-        left: 50px !important; /* Weniger nach rechts (war 75px) */
-    }
-    
-    /* Alle Orbits weniger nach rechts */
+    /* Lasse Orbits animieren */
     .solar-system-container .orbit {
-        margin-left: 50px !important; /* Weniger nach rechts (war 75px) */
-        border: 1px solid white !important;
+        margin-left: 50px !important;
+        /* KEINE transform/animation Überschreibungen */
+    }
+    
+    /* WICHTIG: Animationen aus animation.css NICHT überschreiben */
+    .solar-system-container .planet,
+    .solar-system-container .comet,
+    .solar-system-container .nebula {
+        /* Lasse alle Animationen aus animation.css laufen */
+        animation: unset !important; /* Falls überschrieben */
     }
     
     /* Solar System selbst anpassen */
