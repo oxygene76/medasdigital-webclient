@@ -57,84 +57,64 @@
         box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - ZURÜCK ZUM URSPRUNG + NUR SICHTBARKEIT */
+    /* SOLAR SYSTEM ANIMATION - SEHR GROß UND DEUTLICH NACH LINKS */
     .solar-system-container {
-        /* Keine Überschreibungen - lasse animation.css unverändert */
-        z-index: 1 !important; /* Nur z-index ändern für Sichtbarkeit */
-        opacity: 0.8 !important; /* Nur opacity für bessere Sichtbarkeit */
+        position: absolute !important; /* Relativ zum Header */
+        top: 50% !important; /* Vertikal zentriert */
+        left: 35% !important; /* Deutlich nach links (war 45%) */
+        transform: translate(-50%, -50%) !important; /* Perfekt zentriert */
+        width: 400px !important; /* Noch viel größer */
+        height: 400px !important;
+        z-index: 1 !important; /* Hinter den Boxen aber über dem Header-Hintergrund */
+        pointer-events: none !important;
+        opacity: 0.8 !important; /* Gut sichtbar */
     }
     
     .solar-system-bg {
-        /* Keine Überschreibungen - lasse main.css unverändert */
-        z-index: 1 !important; /* Nur z-index ändern für Sichtbarkeit */
-        opacity: 0.8 !important; /* Nur opacity für bessere Sichtbarkeit */
+        position: absolute !important; /* Relativ zum Header */
+        top: 50% !important; /* Vertikal zentriert */
+        left: 35% !important; /* Deutlich nach links (war 45%) */
+        transform: translate(-50%, -50%) !important; /* Perfekt zentriert */
+        width: 380px !important; /* Noch viel größer */
+        height: 380px !important;
+        z-index: 1 !important; /* Hinter den Boxen */
+        pointer-events: none !important;
+        opacity: 0.8 !important; /* Gut sichtbar */
     }
     
-    /* =================================
-       SOLAR SYSTEM ANIMATION AUSNAHMEN
-       Verhindert Blockierung durch mobile-enhancements.css
-       ================================= */
-    
-    /* Ausnahmen für Performance Optimizations */
-    .solar-system-container,
-    .solar-system-container *,
-    .solar-system-bg,
-    .solar-system-bg *,
-    .solar-system,
-    .solar-system *,
-    .sun,
-    .planet,
-    .orbit,
-    .comet,
-    .asteroid,
-    .tno,
-    .moon,
-    .nebula,
-    .stars,
-    .star {
-        will-change: auto !important; /* Überschreibt will-change: transform */
-        transform: none; /* Wird von animation.css überschrieben - nur Reset */
-        animation-play-state: running !important; /* Stellt sicher dass Animationen laufen */
+    /* ALLE MÖGLICHEN SOLAR SYSTEM SELEKTOREN MIT HOHER SPEZIFITÄT */
+    .header .solar-system-container,
+    .header .solar-system-bg,
+    .header .solar-system,
+    .header [class*="solar-system"],
+    .header [id*="solar-system"],
+    .header svg[class*="solar"],
+    .header canvas[class*="solar"] {
+        width: 400px !important;
+        height: 400px !important;
+        min-width: 400px !important;
+        min-height: 400px !important;
+        max-width: 400px !important;
+        max-height: 400px !important;
     }
     
-    /* Ausnahmen für Reduced Motion - Solar System soll immer animieren */
-    @media (prefers-reduced-motion: reduce) {
-        .solar-system-container,
-        .solar-system-container *,
-        .solar-system-bg,
-        .solar-system-bg *,
-        .solar-system,
-        .solar-system *,
-        .sun,
-        .planet,
-        .orbit,
-        .comet,
-        .asteroid,
-        .tno,
-        .moon,
-        .nebula,
-        .stars,
-        .star {
-            animation: inherit !important; /* Überschreibt animation: none !important */
-            transition: inherit !important; /* Überschreibt transition: none !important */
-        }
+    /* FALLS ES SVG ELEMENTE SIND */
+    .header .solar-system-container svg,
+    .header .solar-system-bg svg,
+    .header .solar-system svg {
+        width: 100% !important;
+        height: 100% !important;
+        min-width: 100% !important;
+        min-height: 100% !important;
+        viewBox: 0 0 400 400 !important;
     }
     
-    /* Z-Index Sicherstellung - Solar System über allem anderen außer UI */
-    .solar-system-container {
-        z-index: 5 !important; /* Über Header (1) aber unter Navigation (1000) */
-    }
-    
-    .solar-system-bg {
-        z-index: 5 !important; /* Über Header (1) aber unter Navigation (1000) */
-    }
-    
-    /* Touch Action Ausnahmen */
-    .solar-system-container,
-    .solar-system-bg,
-    .solar-system {
-        touch-action: none !important; /* Verhindert Touch-Interferenz mit Animationen */
-        pointer-events: none !important; /* Solar System soll nicht klickbar sein */
+    /* FALLS ES CANVAS ELEMENTE SIND */
+    .header .solar-system-container canvas,
+    .header .solar-system-bg canvas,
+    .header .solar-system canvas {
+        width: 400px !important;
+        height: 400px !important;
     }
     
     /* Terminal Header - Z-INDEX ÜBER ANIMATION */
