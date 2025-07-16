@@ -57,82 +57,42 @@
         box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - ALLES WEITER NACH RECHTS + DEBUG RAHMEN */
-    .solar-system-bg {
-        position: fixed !important;
-        top: 20% !important;
-        left: 100px !important; /* Weiter nach rechts (war 60px) */
-        transform: rotate(180deg) translate(80px, 0) !important; /* Noch weiter nach rechts (war 50px) */
-        width: 240px !important;
-        height: 240px !important;
-        opacity: 0.9 !important;
-        z-index: 999 !important; /* Debug: Nach vorne */
-        pointer-events: none !important;
-        display: block !important;
-        visibility: visible !important;
-        border: 2px solid red !important; /* DEBUG: Rote Umrandung */
-        background: rgba(255, 0, 0, 0.1) !important; /* DEBUG: Roter Hintergrund */
-    }
-    
-    /* Falls es der komplette Solar System Container ist */
+    /* SOLAR SYSTEM ANIMATION - WEITER NACH OBEN */
     .solar-system-container {
         position: fixed !important;
-        top: 10% !important;
-        left: 80px !important; /* Weiter nach rechts (war 40px) */
-        transform: scale(0.9) !important;
-        width: 450px !important;
-        height: 450px !important;
-        opacity: 0.9 !important;
-        z-index: 999 !important; /* Debug: Nach vorne */
-        pointer-events: none !important;
-        overflow: visible !important;
-        border: 2px solid blue !important; /* DEBUG: Blaue Umrandung */
-        background: rgba(0, 0, 255, 0.1) !important; /* DEBUG: Blauer Hintergrund */
-    }
-    
-    /* SOLAR SYSTEM ANIMATION - WEITER RECHTS + KEIN DEBUG */
-    .solar-system-container {
-        position: fixed !important;
-        top: 10% !important;
-        left: 120px !important; /* Noch weiter nach rechts (war 80px) */
+        top: 5% !important; /* Weiter nach oben (war 10%) */
+        left: 120px !important;
         z-index: 0 !important;
         pointer-events: none !important;
-        border: none !important; /* Explizit kein roter Rahmen */
-        background: none !important; /* Explizit kein Hintergrund */
     }
     
     .solar-system-bg {
         position: fixed !important;
-        top: 20% !important;
-        left: 140px !important; /* Noch weiter nach rechts (war 100px) */
+        top: 8% !important; /* Weiter nach oben (war 20%) */
+        left: 140px !important;
         z-index: 0 !important;
         pointer-events: none !important;
-        border: none !important; /* Explizit kein roter Rahmen */
-        background: none !important; /* Explizit kein Hintergrund */
     }
     
-    /* Alle möglichen Debug-Rahmen explizit entfernen */
-    .solar-system-container *,
-    .solar-system-bg *,
-    .solar-system,
-    .sun,
-    .orbit,
-    .planet {
-        border: none !important;
-        outline: none !important;
-    }
-    
-    /* Solar System selbst anpassen */
-    .solar-system {
-        position: relative !important;
-        top: 0 !important;
-        left: 0 !important;
-        transform: none !important;
+    /* Terminal Header - VOLLE BREITE */
+    .terminal-header {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important; /* Stretch für volle Breite */
+        justify-content: space-between !important;
+        height: 100%;
+        min-height: 160px;
+        gap: 8px;
+        position: relative;
+        z-index: 2;
+        padding: 0 !important; /* Kein Padding */
         width: 100% !important;
-        height: 100% !important;
-        overflow: visible !important;
+        box-sizing: border-box !important;
     }
     
+    /* =================================
+       TOP: LOGO UND TITEL - HORIZONTAL
+       ================================= */
     
     /* LOGO SEKTION - HORIZONTAL ERZWINGEN */
     .terminal-header .system-info {
@@ -183,72 +143,35 @@
         margin: 0 !important;
         flex: 1 !important;
     }
-    /* =================================
-       TOP: LOGO UND TITEL - VERTICAL
-       ================================= */
-    
-    /* LOGO SEKTION - NOCH TRANSPARENTER */
-    .system-info {
-        order: 1;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        gap: 10px;
-        padding: 16px;
-        background: rgba(0, 0, 0, 0.02) !important; /* Extrem transparent */
-        backdrop-filter: blur(0.5px) !important; /* Minimal Blur */
-        border-radius: 12px !important;
-        border: 1px solid rgba(0, 255, 127, 0.15) !important; /* Sehr dünner Border */
-        width: calc(100% - 16px) !important;
-        max-width: calc(100% - 16px) !important;
-        margin: 4px 8px !important;
-        box-sizing: border-box !important;
-    }
-    
-    .logo-section {
-        display: flex;
-        flex-direction: column !important;
-        align-items: center;
-        gap: 10px; /* Mehr Abstand */
-        margin-bottom: 0;
-    }
-    
-    .logo-icon {
-        width: 48px; /* Noch größer */
-        height: 48px;
-        flex-shrink: 0;
-    }
-    
-    .system-title {
-        text-align: center;
-    }
     
     .main-title {
-        font-size: 24px; /* VIEL größer */
+        font-size: 18px !important; /* Angepasst für horizontal */
         line-height: 1.1;
-        margin-bottom: 6px;
+        margin-bottom: 2px !important; /* Weniger Margin */
         color: #00ff7f;
-        text-shadow: 0 0 15px rgba(0, 255, 127, 1); /* Stärkerer Glow */
+        text-shadow: 0 0 12px rgba(0, 255, 127, 0.8);
         font-family: 'Orbitron', sans-serif;
         font-weight: 700;
-        letter-spacing: 3px; /* Noch mehr Spacing */
+        letter-spacing: 2px;
         text-transform: uppercase;
+        white-space: nowrap !important; /* Verhindert Umbruch */
     }
     
     .sub-title {
-        font-size: 14px; /* Viel größer */
+        font-size: 12px !important; /* Angepasst für horizontal */
         opacity: 0.9;
         color: #00ff7f;
         text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
-        letter-spacing: 2px;
+        letter-spacing: 1px;
         text-transform: uppercase;
+        white-space: nowrap !important; /* Verhindert Umbruch */
     }
     
     /* =================================
        MIDDLE: WALLET SECTION
        ================================= */
     
-    /* WALLET SEKTION - VOLLE BREITE */
+    /* WALLET SEKTION - TRANSPARENTE BOX */
     .wallet-section {
         order: 2;
         width: 100% !important;
@@ -260,18 +183,18 @@
     }
     
     .wallet-display {
-        background: rgba(0, 0, 0, 0.3);
-        border: none !important; /* Keine seitlichen Borders */
-        border-top: 1px solid rgba(0, 255, 127, 0.3) !important;
-        border-bottom: 1px solid rgba(0, 255, 127, 0.3) !important;
-        border-radius: 0 !important; /* Keine Rundung für volle Breite */
-        padding: 10px 8px; /* Minimales seitliches Padding */
+        background: rgba(0, 0, 0, 0.02) !important; /* Extrem transparent wie andere Boxen */
+        border: 1px solid rgba(0, 255, 127, 0.15) !important; /* Kompletter Border wie andere Boxen */
+        border-radius: 12px !important; /* Rundungen wie andere Boxen */
+        backdrop-filter: blur(0.5px) !important; /* Minimal Blur wie andere Boxen */
+        padding: 12px 16px !important; /* Mehr Padding wie andere Boxen */
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 6px;
-        width: 100% !important;
-        max-width: none !important;
+        width: calc(100% - 16px) !important; /* Gleiche Breite wie andere Boxen */
+        max-width: calc(100% - 16px) !important;
+        margin: 4px 8px !important; /* Gleiche Margins wie andere Boxen */
         font-family: 'Share Tech Mono', monospace;
         transition: all 0.3s ease;
         box-sizing: border-box !important;
@@ -863,15 +786,20 @@
     }
 }
 
-/* Mobile Wallet and Balance Display - ERWEITERT */
+/* Mobile Wallet and Balance Display - KONSISTENTE BOXEN MIT RÄNDERN */
 @media only screen and (max-width: 768px) {
+    /* Wallet Data Box - GLEICHE EIGENSCHAFTEN WIE HEADER-BOXEN */
     .wallet-display {
-        padding: 16px;
-        margin: 16px 0;
-        border-radius: 8px;
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid #00ffff;
+        padding: 16px !important;
+        margin: 4px 8px !important; /* Gleiche Margins wie Header-Boxen */
+        border-radius: 12px !important; /* Gleiche Rundungen wie Header-Boxen */
+        background: rgba(0, 0, 0, 0.02) !important; /* Gleiche Transparenz wie Header-Boxen */
+        border: 1px solid rgba(0, 255, 127, 0.15) !important; /* Gleicher Border wie Header-Boxen */
+        backdrop-filter: blur(0.5px) !important; /* Gleicher Blur wie Header-Boxen */
         position: relative;
+        width: calc(100% - 16px) !important; /* Gleiche Breite wie Header-Boxen */
+        max-width: calc(100% - 16px) !important;
+        box-sizing: border-box !important;
     }
     
     .wallet-display::before {
@@ -882,7 +810,7 @@
         background: #0a0a0a;
         padding: 0 8px;
         font-size: 10px;
-        color: #00ffff;
+        color: #00ff7f; /* Gleiche Farbe wie Header */
         letter-spacing: 1px;
     }
     
@@ -1170,53 +1098,69 @@
     }
 }
 
-/* Landscape Orientation */
+/* Landscape Orientation - VERTIKAL WIE PORTRAIT */
 @media only screen and (max-height: 500px) and (orientation: landscape) {
     .header {
-        min-height: 120px;
+        min-height: 160px; /* Höher für vertikal gestapelte Boxen */
         padding: 8px 12px;
     }
     
     .terminal-header {
-        flex-direction: row !important;
+        flex-direction: column !important; /* VERTIKAL wie Portrait */
         justify-content: space-between !important;
-        align-items: center !important;
-        min-height: 100px;
+        align-items: stretch !important; /* Stretch für volle Breite */
+        min-height: 140px;
+        gap: 8px; /* Kleinere Gaps für Landscape */
     }
     
     .system-info {
         order: 1;
-        max-width: 200px;
+        max-width: none; /* Volle Breite */
+        width: calc(100% - 16px) !important; /* Wie Portrait */
+        margin: 2px 8px !important; /* Kleinere Margins */
     }
     
     .wallet-section {
         order: 2;
-        max-width: 180px;
+        max-width: none; /* Volle Breite */
+        width: calc(100% - 16px) !important; /* Wie Portrait */
+        margin: 2px 8px !important; /* Kleinere Margins */
     }
     
     .status-display {
         order: 3;
-        max-width: 160px;
+        max-width: none; /* Volle Breite */
+        width: calc(100% - 16px) !important; /* Wie Portrait */
+        margin: 2px 8px !important; /* Kleinere Margins */
     }
     
     .solar-system-bg {
-        width: 100px !important;
-        height: 100px !important;
+        width: 80px !important; /* Kleiner für Landscape */
+        height: 80px !important;
+        top: 3% !important; /* Ganz nach oben */
+    }
+    
+    .solar-system-container {
+        top: 2% !important; /* Ganz nach oben */
     }
     
     .logo-section {
-        flex-direction: row !important;
+        flex-direction: row !important; /* Logo bleibt horizontal */
         gap: 8px;
     }
     
     .main-title {
-        font-size: 12px;
+        font-size: 14px; /* Kleiner für Landscape */
+    }
+    
+    .sub-title {
+        font-size: 10px; /* Kleiner für Landscape */
     }
     
     .main-interface {
         flex-direction: row;
         gap: 16px;
-        height: calc(100vh - 140px);
+        height: calc(100vh - 180px); /* Angepasst für höheren Header */
     }
     
     .communication-display {
@@ -1446,31 +1390,6 @@
 }
 
 /* CSS Animations */
-@keyframes copySuccessGreen {
-    0% { 
-        background: rgba(0, 255, 127, 0.05);
-        border-color: rgba(0, 255, 127, 0.3);
-        transform: scale(1);
-    }
-    50% { 
-        background: rgba(0, 255, 127, 0.2);
-        border-color: rgba(0, 255, 127, 0.7);
-        transform: scale(1.02);
-        box-shadow: 0 0 8px rgba(0, 255, 127, 0.4);
-    }
-    100% { 
-        background: rgba(0, 255, 127, 0.05);
-        border-color: rgba(0, 255, 127, 0.3);
-        transform: scale(1);
-    }
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
-
-/* CSS Animation für Solar System - ohne Emoji Fallback */
 @keyframes copySuccessGreen {
     0% { 
         background: rgba(0, 255, 127, 0.05);
