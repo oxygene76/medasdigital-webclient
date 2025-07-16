@@ -35,8 +35,8 @@
     
     /* Header Container - HÖHER FÜR VERTIKALES LAYOUT */
     .header {
-        padding: 16px 12px;
-        min-height: 200px; /* Höher für vertikales Layout */
+        padding: 12px 0; /* Kein seitliches Padding für volle Breite */
+        min-height: 180px; /* Etwas niedriger */
         margin-bottom: 0;
         position: relative;
         overflow: hidden;
@@ -45,19 +45,21 @@
         flex-shrink: 0;
         background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(0, 50, 0, 0.3));
         border-bottom: 2px solid rgba(0, 255, 127, 0.3);
+        width: 100%;
     }
     
-    /* SOLAR SYSTEM ANIMATION - GROSSER HINTERGRUND */
+    /* SOLAR SYSTEM ANIMATION - GROSSER HINTERGRUND - SICHTBAR */
     .solar-system-bg {
         position: absolute !important;
         top: 50% !important;
         left: 50% !important;
         transform: translate(-50%, -50%) !important;
-        width: 180px !important;  /* Groß im Hintergrund */
-        height: 180px !important;
-        opacity: 0.3 !important;  /* Transparent aber sichtbar */
-        z-index: 0 !important;    /* Ganz hinten */
-        pointer-events: none;
+        width: 160px !important;  /* Groß im Hintergrund */
+        height: 160px !important;
+        opacity: 0.4 !important;  /* Sichtbarer */
+        z-index: 1 !important;    /* Über Hintergrund, unter Content */
+        pointer-events: none !important;
+        display: block !important; /* Sicherstellen dass sichtbar */
     }
     
     /* Terminal Header - VERTICAL STACK */
@@ -67,10 +69,12 @@
         align-items: center !important;
         justify-content: space-between !important;
         height: 100%;
-        min-height: 180px;
-        gap: 12px;
+        min-height: 160px; /* Reduziert */
+        gap: 8px; /* Weniger Gap */
         position: relative;
         z-index: 2; /* Über Solar System */
+        padding: 0 8px; /* Minimales seitliches Padding */
+        width: 100%;
     }
     
     /* =================================
@@ -83,26 +87,26 @@
         flex-direction: column !important;
         align-items: center !important;
         gap: 8px;
-        padding: 8px 0;
+        padding: 12px 16px; /* Mehr Padding für Präsenz */
         background: rgba(0, 0, 0, 0.2);
         backdrop-filter: blur(3px);
         border-radius: 8px;
         border: 1px solid rgba(0, 255, 127, 0.2);
-        width: 100%;
-        max-width: 300px;
+        width: 100%; /* Volle Breite */
+        max-width: none; /* Keine Begrenzung */
     }
     
     .logo-section {
         display: flex;
         flex-direction: column !important;
         align-items: center;
-        gap: 6px;
+        gap: 8px; /* Mehr Abstand */
         margin-bottom: 0;
     }
     
     .logo-icon {
-        width: 36px;
-        height: 36px;
+        width: 42px; /* Größer für mehr Präsenz */
+        height: 42px;
         flex-shrink: 0;
     }
     
@@ -111,21 +115,22 @@
     }
     
     .main-title {
-        font-size: 16px;
+        font-size: 20px; /* Größer für mehr Präsenz */
         line-height: 1.1;
         margin-bottom: 4px;
         color: #00ff7f;
-        text-shadow: 0 0 8px rgba(0, 255, 127, 0.6);
+        text-shadow: 0 0 12px rgba(0, 255, 127, 0.8); /* Stärkerer Glow */
         font-family: 'Orbitron', sans-serif;
         font-weight: 700;
-        letter-spacing: 1px;
+        letter-spacing: 2px; /* Mehr Spacing für Präsenz */
     }
     
     .sub-title {
-        font-size: 10px;
-        opacity: 0.8;
+        font-size: 12px; /* Größer */
+        opacity: 0.9; /* Sichtbarer */
         color: #00ff7f;
-        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+        text-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+        letter-spacing: 1px;
     }
     
     /* =================================
@@ -134,23 +139,24 @@
     
     .wallet-section {
         order: 2;
-        width: 100%;
-        max-width: 280px;
+        width: 100%; /* Volle Breite */
+        max-width: none; /* Keine Begrenzung */
         display: flex;
         justify-content: center;
+        margin: 4px 0; /* Weniger Margin */
     }
     
     .wallet-display {
         background: rgba(0, 0, 0, 0.3);
         border: 1px solid rgba(0, 255, 127, 0.3);
         border-radius: 8px;
-        padding: 8px 12px;
+        padding: 10px 16px; /* Mehr Padding */
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 6px;
-        width: 100%;
-        max-width: 260px;
+        width: 100%; /* Volle Breite */
+        max-width: none; /* Keine Begrenzung */
         font-family: 'Share Tech Mono', monospace;
         transition: all 0.3s ease;
     }
@@ -175,7 +181,7 @@
         display: flex;
         align-items: center;
         gap: 6px;
-        font-size: 11px;
+        font-size: 13px; /* Größer */
         color: #00ff7f;
         text-transform: uppercase;
         letter-spacing: 1px;
@@ -183,7 +189,7 @@
     }
     
     .status-icon {
-        font-size: 14px;
+        font-size: 16px; /* Größer */
     }
     
     .wallet-address {
@@ -194,13 +200,13 @@
         width: 100%;
         background: rgba(0, 0, 0, 0.4);
         border-radius: 6px;
-        padding: 6px 10px;
+        padding: 8px 12px; /* Mehr Padding */
         border: 1px solid rgba(0, 255, 0, 0.3);
     }
     
     .address-text {
         font-family: 'Share Tech Mono', monospace;
-        font-size: 9px;
+        font-size: 11px; /* Größer */
         color: #00ff00;
         cursor: pointer;
         word-break: break-all;
@@ -243,16 +249,17 @@
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        gap: 8px;
-        width: 100%;
-        max-width: 280px;
+        gap: 6px; /* Weniger Gap */
+        width: 100%; /* Volle Breite */
+        max-width: none; /* Keine Begrenzung */
         background: rgba(0, 0, 0, 0.2);
         backdrop-filter: blur(3px);
         border-radius: 8px;
         border: 1px solid rgba(0, 255, 127, 0.2);
-        padding: 10px;
+        padding: 8px 16px; /* Weniger Padding oben/unten */
         position: relative;
         z-index: 2;
+        margin: 2px 0; /* Weniger Margin */
     }
     
     /* Network Status */
@@ -260,7 +267,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 6px;
+        gap: 4px; /* Weniger Gap */
         width: 100%;
     }
     
@@ -268,7 +275,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 4px;
+        gap: 3px; /* Weniger Gap */
         width: 100%;
     }
     
@@ -279,13 +286,13 @@
         justify-content: center;
         gap: 6px;
         font-family: 'Share Tech Mono', monospace;
-        font-size: 11px;
+        font-size: 12px; /* Größer */
         color: #00ff7f;
         background: rgba(0, 0, 0, 0.3);
         border: 1px solid rgba(0, 255, 127, 0.3);
         border-radius: 6px;
-        padding: 6px 12px;
-        min-width: 160px;
+        padding: 6px 12px; /* Kompakter */
+        min-width: 180px; /* Breiter */
         text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
         white-space: nowrap;
     }
@@ -312,7 +319,7 @@
     /* Timestamp */
     .timestamp {
         font-family: 'Share Tech Mono', monospace;
-        font-size: 10px;
+        font-size: 11px; /* Größer */
         color: #00ff7f;
         text-align: center;
         opacity: 0.8;
@@ -320,7 +327,7 @@
         border: 1px solid rgba(0, 255, 127, 0.2);
         border-radius: 4px;
         padding: 4px 8px;
-        margin-top: 4px;
+        margin-top: 2px; /* Weniger Margin */
     }
 }
 
