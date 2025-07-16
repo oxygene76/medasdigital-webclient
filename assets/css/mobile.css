@@ -89,11 +89,11 @@
         background: rgba(0, 0, 255, 0.1) !important; /* DEBUG: Blauer Hintergrund */
     }
     
-    /* Solar System selbst noch weiter nach rechts verschieben */
+    /* Solar System selbst NOCH WEITER nach rechts innerhalb des Containers */
     .solar-system {
         position: relative !important;
         top: 0 !important;
-        left: 120px !important; /* Noch weiter nach rechts (war 80px) */
+        left: 180px !important; /* VIEL weiter nach rechts (war 120px) */
         transform: none !important;
         width: 100% !important;
         height: 100% !important;
@@ -102,16 +102,31 @@
         background: rgba(0, 255, 0, 0.1) !important; /* DEBUG: Grüner Hintergrund */
     }
     
-    /* Sonne noch weiter nach rechts verschieben */
+    /* Sonne NOCH WEITER nach rechts verschieben */
     .sun {
-        left: calc(50% + 80px) !important; /* Noch weiter nach rechts (war +40px) */
+        left: calc(50% + 150px) !important; /* VIEL weiter nach rechts (war +80px) */
         border: 2px solid yellow !important; /* DEBUG: Gelbe Umrandung für Sonne */
     }
     
-    /* Alle Orbits noch weiter nach rechts verschieben */
+    /* Alle Orbits NOCH WEITER nach rechts verschieben */
     .orbit {
-        left: calc(50% + 80px) !important; /* Noch weiter nach rechts (war +40px) */
-        border-color: rgba(255, 255, 255, 0.5) !important; /* DEBUG: Sichtbarere Orbits */
+        left: calc(50% + 150px) !important; /* VIEL weiter nach rechts (war +80px) */
+        border-color: rgba(255, 255, 255, 0.8) !important; /* DEBUG: Noch sichtbarere Orbits */
+    }
+    
+    /* Alle Planeten auch nach rechts verschieben */
+    .planet {
+        transform: translateX(calc(-50% + 150px)) !important; /* Planeten auch nach rechts */
+    }
+    
+    /* Asteroid Belt nach rechts */
+    .asteroid-belt {
+        left: calc(50% + 150px) !important;
+    }
+    
+    /* TNO Belt nach rechts */
+    .tno-belt {
+        left: calc(50% + 150px) !important;
     }
     
     /* Solar System selbst anpassen */
