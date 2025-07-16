@@ -61,8 +61,8 @@
         top: 50% !important;
         left: 60px !important; /* Zurück nach links (war 100px) */
         transform: translateY(-50%) rotate(180deg) !important;
-        width: 200px !important; /* Noch größer (war 180px) */
-        height: 200px !important;
+        width: 240px !important; /* Noch größer (war 180px) */
+        height: 240px !important;
         opacity: 0.9 !important;
         z-index: 0 !important;
         pointer-events: none !important;
