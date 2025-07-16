@@ -38,7 +38,7 @@
        HEADER LAYOUT - VERTICAL STACK + LARGE SOLAR SYSTEM
        ================================= */
     
-    /* Header Container - HORIZONTAL LAYOUT FÜR SOLAR SYSTEM */
+    /* Header Container - TRANSPARENTER HINTERGRUND */
     .header {
         padding: 12px 8px;
         min-height: 180px;
@@ -48,7 +48,7 @@
         display: flex;
         flex-direction: column;
         flex-shrink: 0;
-        background: linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(0, 50, 0, 0.2)); /* Transparenter */
+        background: rgba(0, 0, 0, 0.3) !important; /* Sehr transparent */
         border-bottom: 2px solid rgba(0, 255, 127, 0.3);
         width: 100%;
         max-width: 100%;
@@ -92,7 +92,7 @@
        TOP: LOGO UND TITEL - VERTICAL
        ================================= */
     
-    /* LOGO SEKTION - VIEL SCHMALER FÜR SICHTBARE RÄNDER */
+    /* LOGO SEKTION - TRANSPARENTER + BREITER WIE RESEARCH INTERFACE */
     .system-info {
         order: 1;
         display: flex !important;
@@ -100,13 +100,13 @@
         align-items: center !important;
         gap: 10px;
         padding: 16px;
-        background: rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(2px);
+        background: rgba(0, 0, 0, 0.05) !important; /* Sehr transparent */
+        backdrop-filter: blur(1px) !important; /* Weniger Blur */
         border-radius: 12px !important;
-        border: 2px solid rgba(0, 255, 127, 0.4) !important;
-        width: calc(100% - 60px) !important; /* VIEL schmaler */
-        max-width: calc(100% - 60px) !important;
-        margin: 4px 30px !important; /* VIEL mehr seitlicher Abstand */
+        border: 1px solid rgba(0, 255, 127, 0.2) !important; /* Dünner Border */
+        width: calc(100% - 16px) !important; /* Breiter - wie Research Interface */
+        max-width: calc(100% - 16px) !important;
+        margin: 4px 8px !important; /* Weniger seitlicher Abstand */
         box-sizing: border-box !important;
     }
     
@@ -265,23 +265,23 @@
        BOTTOM: STATUS DISPLAY - VERTICAL
        ================================= */
     
-    /* STATUS DISPLAY - VIEL SCHMALER FÜR SICHTBARE RÄNDER */
+    /* STATUS DISPLAY - TRANSPARENTER + BREITER WIE RESEARCH INTERFACE */
     .status-display {
         order: 3;
         display: flex !important;
         flex-direction: column !important;
         align-items: flex-end !important;
         gap: 8px;
-        width: calc(100% - 60px) !important; /* VIEL schmaler */
-        max-width: calc(100% - 60px) !important;
-        background: rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(2px);
+        width: calc(100% - 16px) !important; /* Breiter - wie Research Interface */
+        max-width: calc(100% - 16px) !important;
+        background: rgba(0, 0, 0, 0.05) !important; /* Sehr transparent */
+        backdrop-filter: blur(1px) !important; /* Weniger Blur */
         border-radius: 12px !important;
-        border: 2px solid rgba(0, 255, 127, 0.4) !important;
+        border: 1px solid rgba(0, 255, 127, 0.2) !important; /* Dünner Border */
         padding: 12px 16px !important;
         position: relative;
         z-index: 2;
-        margin: 4px 30px !important; /* VIEL mehr seitlicher Abstand */
+        margin: 4px 8px !important; /* Weniger seitlicher Abstand */
         box-sizing: border-box !important;
     }
     
