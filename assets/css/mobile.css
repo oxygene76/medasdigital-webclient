@@ -1,4 +1,4 @@
-/* MedasDigital WebClient - Complete Mobile Responsive Styles - FINAL VERSION + FIXES */
+/* MedasDigital WebClient - Complete Mobile Responsive Styles - VERTICAL LAYOUT + LARGE SOLAR SYSTEM */
 
 /* Mobile Viewport Meta Setup */
 /* Required in HTML head: <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> */
@@ -16,12 +16,12 @@
         -webkit-overflow-scrolling: touch;
         -webkit-text-size-adjust: none;
         -webkit-tap-highlight-color: transparent;
-        font-size: 14px; /* Basis-Schriftgröße erhöhen */
+        font-size: 14px;
     }
     
     /* Container adjustments - ANTI-STAUCHUNG FIX */
     .container {
-        height: auto; /* WICHTIG: Nicht 100vh! */
+        height: auto;
         min-height: 100vh;
         padding: 8px;
         display: flex;
@@ -30,57 +30,79 @@
     }
     
     /* =================================
-       HEADER LAYOUT FIX - KOMPAKTER + WALLET LINKS, NETWORK RECHTS
+       HEADER LAYOUT - VERTICAL STACK + LARGE SOLAR SYSTEM
        ================================= */
     
-    /* Header Container - NIEDRIGER */
+    /* Header Container - HÖHER FÜR VERTIKALES LAYOUT */
     .header {
-        padding: 12px; /* Weniger Padding: war 16px */
-        min-height: 120px; /* Niedriger: war 160px */
+        padding: 16px 12px;
+        min-height: 200px; /* Höher für vertikales Layout */
         margin-bottom: 0;
         position: relative;
-        overflow: visible;
+        overflow: hidden;
         display: flex;
         flex-direction: column;
         flex-shrink: 0;
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(0, 50, 0, 0.3));
+        border-bottom: 2px solid rgba(0, 255, 127, 0.3);
     }
     
-    /* Terminal Header Grid Layout - KOMPAKTER */
+    /* SOLAR SYSTEM ANIMATION - GROSSER HINTERGRUND */
+    .solar-system-bg {
+        position: absolute !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 180px !important;  /* Groß im Hintergrund */
+        height: 180px !important;
+        opacity: 0.3 !important;  /* Transparent aber sichtbar */
+        z-index: 0 !important;    /* Ganz hinten */
+        pointer-events: none;
+    }
+    
+    /* Terminal Header - VERTICAL STACK */
     .terminal-header {
-        display: grid;
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto; /* Nur 2 Reihen statt 3 */
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: space-between !important;
         height: 100%;
-        min-height: 100px; /* Niedriger: war 140px */
-        gap: 8px; /* Weniger Gap: war 12px */
+        min-height: 180px;
+        gap: 12px;
         position: relative;
-        z-index: 2;
+        z-index: 2; /* Über Solar System */
     }
     
-    /* TOP ROW: Logo und Titel zentriert */
+    /* =================================
+       TOP: LOGO UND TITEL - VERTICAL
+       ================================= */
+    
     .system-info {
-        grid-row: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px; /* Weniger Gap: war 8px */
-        padding: 6px 0; /* Weniger Padding: war 8px */
-        background: rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(2px);
+        order: 1;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 8px;
+        padding: 8px 0;
+        background: rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(3px);
         border-radius: 8px;
-        margin-bottom: 6px; /* Weniger Margin: war 8px */
+        border: 1px solid rgba(0, 255, 127, 0.2);
+        width: 100%;
+        max-width: 300px;
     }
     
     .logo-section {
         display: flex;
+        flex-direction: column !important;
         align-items: center;
-        gap: 10px; /* Weniger Gap: war 12px */
-        margin-bottom: 6px; /* Weniger Margin: war 8px */
+        gap: 6px;
+        margin-bottom: 0;
     }
     
     .logo-icon {
-        width: 40px; /* Kleiner: war 50px */
-        height: 40px;
+        width: 36px;
+        height: 36px;
         flex-shrink: 0;
     }
     
@@ -89,59 +111,46 @@
     }
     
     .main-title {
-        font-size: 16px; /* Kleiner: war 18px */
-        line-height: 1.2; /* Kompakter: war 1.3 */
-        margin-bottom: 2px; /* Weniger Margin: war 4px */
-        text-shadow: 
-            0 0 4px rgba(0, 0, 0, 0.5),
-            0 0 8px rgba(0, 255, 255, 0.3);
+        font-size: 16px;
+        line-height: 1.1;
+        margin-bottom: 4px;
+        color: #00ff7f;
+        text-shadow: 0 0 8px rgba(0, 255, 127, 0.6);
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        letter-spacing: 1px;
     }
     
     .sub-title {
-        font-size: 10px; /* Kleiner: war 12px */
+        font-size: 10px;
         opacity: 0.8;
+        color: #00ff7f;
         text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
     }
     
     /* =================================
-       BOTTOM ROW: STATUS DISPLAY UMGEDREHT
-       Wallet LINKS, Network RECHTS
+       MIDDLE: WALLET SECTION
        ================================= */
     
-    .status-display {
-        grid-row: 2;
-        display: flex;
-        flex-direction: row; /* HORIZONTAL statt column */
-        align-items: center;
-        justify-content: space-between; /* Space between für links/rechts */
-        gap: 12px;
-        background: rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(2px);
-        border-radius: 8px;
-        padding: 6px 10px; /* Weniger Padding: war 8px 12px */
-        margin-top: 6px; /* Weniger Margin: war 8px */
-        position: relative;
-        z-index: 3;
-    }
-    
-    /* WALLET SECTION - LINKS */
     .wallet-section {
-        order: 1; /* Links */
+        order: 2;
+        width: 100%;
+        max-width: 280px;
         display: flex;
-        justify-content: flex-start; /* Links ausrichten */
-        flex: 1;
+        justify-content: center;
     }
     
     .wallet-display {
-        background: rgba(0, 0, 0, 0.2);
+        background: rgba(0, 0, 0, 0.3);
         border: 1px solid rgba(0, 255, 127, 0.3);
-        border-radius: 4px;
-        padding: 4px 8px; /* Kompakter: war 6px 10px */
+        border-radius: 8px;
+        padding: 8px 12px;
         display: flex;
         flex-direction: column;
-        gap: 2px;
-        min-width: 140px; /* Kompakter: war 180px */
-        max-width: 200px; /* Kompakter: war 250px */
+        align-items: center;
+        gap: 6px;
+        width: 100%;
+        max-width: 260px;
         font-family: 'Share Tech Mono', monospace;
         transition: all 0.3s ease;
     }
@@ -165,35 +174,39 @@
     .wallet-status {
         display: flex;
         align-items: center;
-        gap: 4px;
-        font-size: 8px; /* Kleiner: war 10px */
+        gap: 6px;
+        font-size: 11px;
         color: #00ff7f;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
+        font-weight: 600;
     }
     
     .status-icon {
-        font-size: 10px; /* Kleiner: war 14px */
+        font-size: 14px;
     }
     
     .wallet-address {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 6px;
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 3px;
-        padding: 2px 6px; /* Kompakter: war 4px 8px */
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: 6px;
+        padding: 6px 10px;
+        border: 1px solid rgba(0, 255, 0, 0.3);
     }
     
     .address-text {
         font-family: 'Share Tech Mono', monospace;
-        font-size: 7px; /* Kleiner: war 9px */
+        font-size: 9px;
         color: #00ff00;
         cursor: pointer;
         word-break: break-all;
+        text-align: center;
         flex: 1;
-        line-height: 1.2;
+        line-height: 1.3;
         transition: color 0.2s ease;
         letter-spacing: 0.3px;
     }
@@ -204,11 +217,11 @@
     }
     
     .copy-btn {
-        background: transparent;
+        background: rgba(0, 255, 127, 0.1);
         border: 1px solid rgba(0, 255, 127, 0.3);
-        border-radius: 2px;
-        padding: 1px 3px; /* Kompakter: war 2px 4px */
-        font-size: 7px; /* Kleiner: war 9px */
+        border-radius: 4px;
+        padding: 3px 6px;
+        font-size: 9px;
         color: #00ff7f;
         cursor: pointer;
         flex-shrink: 0;
@@ -221,100 +234,93 @@
         transform: scale(1.05);
     }
     
-    /* NETWORK STATUS - RECHTS */
+    /* =================================
+       BOTTOM: STATUS DISPLAY - VERTICAL
+       ================================= */
+    
+    .status-display {
+        order: 3;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 8px;
+        width: 100%;
+        max-width: 280px;
+        background: rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(3px);
+        border-radius: 8px;
+        border: 1px solid rgba(0, 255, 127, 0.2);
+        padding: 10px;
+        position: relative;
+        z-index: 2;
+    }
+    
+    /* Network Status */
     .status-row {
-        order: 2; /* Rechts */
         display: flex;
         flex-direction: column;
-        align-items: flex-end;
-        gap: 4px;
-        flex-shrink: 0;
+        align-items: center;
+        gap: 6px;
+        width: 100%;
     }
     
     .network-info {
         display: flex;
         flex-direction: column;
-        align-items: flex-end;
+        align-items: center;
         gap: 4px;
+        width: 100%;
     }
     
-    /* Network Status */
-    .connection-status {
-        padding: 3px 6px; /* Kompakter: war 4px 8px */
-        font-size: 8px; /* Kleiner: war 10px */
-        border-radius: 4px;
-        white-space: nowrap;
-        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
-        flex-shrink: 0;
-    }
-    
-    /* Blockchain Status */
+    .connection-status,
     #blockchain-status {
-        padding: 3px 6px; /* Kompakter: war 4px 8px */
-        font-size: 8px; /* Kleiner: war 10px */
-        border-radius: 4px;
-        white-space: nowrap;
-        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
-        flex-shrink: 0;
-    }
-    
-    /* Timestamp unter Network Status */
-    .timestamp {
-        font-size: 7px; /* Kleiner: war 9px */
-        padding: 2px 4px; /* Kompakter: war 3px 6px */
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 3px;
-        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
-        margin-top: 2px; /* Weniger Margin: war 4px */
-    }
-    
-    /* =================================
-       SOLAR SYSTEM - SICHTBAR MACHEN
-       ================================= */
-    
-    .solar-system-bg {
-        position: absolute;
-        bottom: 5px; /* Ganz unten */
-        left: 5px;   /* Ganz links */
-        transform: none; /* Kein Rotate mehr */
-        width: 80px; /* Kleiner aber sichtbar: war 100px */
-        height: 80px;
-        opacity: 0.6; /* Sichtbarer: war 0.7 */
-        z-index: 1; /* Hinter allem anderen */
-        pointer-events: none;
-    }
-    
-    /* Entfernen der header-middle da nicht mehr gebraucht */
-    .header-middle {
-        display: none;
-    }
-}
-
-/* Wallet Status States */
-@media only screen and (max-width: 768px) {
-    .wallet-display.disconnected .wallet-status {
-        color: #ff6b6b;
-    }
-    
-    .wallet-display.disconnected .status-icon {
-        opacity: 0.6;
-    }
-    
-    .wallet-display.connected .wallet-status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 11px;
         color: #00ff7f;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(0, 255, 127, 0.3);
+        border-radius: 6px;
+        padding: 6px 12px;
+        min-width: 160px;
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+        white-space: nowrap;
     }
     
-    .wallet-display.connecting .wallet-status {
-        color: #ffd700;
+    .status-dot,
+    .dot-connected,
+    .dot-disconnected {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
     }
     
-    .wallet-display.connecting .status-icon {
-        animation: pulse 1.5s infinite;
+    .dot-connected {
+        background: #00ff00;
+        box-shadow: 0 0 6px rgba(0, 255, 0, 0.6);
     }
     
-    /* Copy Success Animation */
-    .wallet-display.copy-success {
-        animation: copySuccessGreen 0.6s ease;
+    .dot-disconnected {
+        background: #ff3333;
+        box-shadow: 0 0 6px rgba(255, 51, 51, 0.6);
+    }
+    
+    /* Timestamp */
+    .timestamp {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 10px;
+        color: #00ff7f;
+        text-align: center;
+        opacity: 0.8;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(0, 255, 127, 0.2);
+        border-radius: 4px;
+        padding: 4px 8px;
+        margin-top: 4px;
     }
 }
 
@@ -325,25 +331,25 @@
         display: flex;
         flex-direction: column;
         gap: 16px;
-        min-height: 0; /* Wichtig für Flexbox */
+        min-height: 0;
     }
     
     /* Research Interface wird HAUPTBEREICH */
     .communication-display {
-        order: 1; /* Erste Priorität */
+        order: 1;
         flex: 1;
-        min-height: 500px; /* Mindesthöhe für Lesbarkeit */
+        min-height: 500px;
         display: flex;
         flex-direction: column;
     }
     
     /* Control Panel wird SIDEBAR → BOTTOM SHEET */
     .control-panel {
-        order: 2; /* Nach Interface */
+        order: 2;
         height: auto;
         max-height: none;
         flex-shrink: 0;
-        margin-bottom: 20px; /* Platz am Ende */
+        margin-bottom: 20px;
         background: linear-gradient(135deg, rgba(0, 100, 150, 0.1) 0%, rgba(0, 50, 100, 0.1) 100%);
         border: 2px solid #0099ff;
         border-radius: 12px;
@@ -354,7 +360,7 @@
 /* Mobile Tab Navigation - ERWEITERT */
 @media only screen and (max-width: 768px) {
     .terminal-tabs {
-        min-height: 50px; /* Größere Touch-Targets */
+        min-height: 50px;
         padding: 0 8px;
         border-radius: 8px 8px 0 0;
         flex-shrink: 0;
@@ -373,10 +379,10 @@
     }
     
     .tab-button {
-        padding: 12px 16px; /* Mehr Padding */
-        font-size: 12px; /* Besser lesbar */
+        padding: 12px 16px;
+        font-size: 12px;
         min-height: 50px;
-        min-width: 90px; /* Mehr Platz */
+        min-width: 90px;
         gap: 6px;
         flex-shrink: 0;
         white-space: nowrap;
@@ -395,7 +401,6 @@
         transform: scale(0.95);
     }
     
-    /* Tab Icons größer und sichtbarer */
     .tab-button::before {
         font-size: 16px;
         margin-right: 4px;
@@ -409,7 +414,7 @@
         padding: 16px;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        min-height: 400px; /* Minimum für Inhalt */
+        min-height: 400px;
         display: none;
     }
     
@@ -449,19 +454,18 @@
     }
     
     .comm-title {
-        font-size: 16px; /* Größer */
+        font-size: 16px;
         margin-bottom: 4px;
     }
     
     .comm-subtitle {
-        font-size: 12px; /* Lesbar */
+        font-size: 12px;
     }
     
-    /* Message Display größer */
     .message-display {
         flex: 1;
         padding: 20px;
-        min-height: 300px; /* Ausreichend Platz */
+        min-height: 300px;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
     }
@@ -479,7 +483,6 @@
         border-radius: 2px;
     }
     
-    /* Input Bereich prominent */
     .input-module {
         padding: 16px 20px;
         border-top: 2px solid #00cc66;
@@ -491,7 +494,7 @@
     }
     
     .terminal-input {
-        padding: 14px 16px; /* Mehr Padding */
+        padding: 14px 16px;
         font-size: 16px;
         min-height: 50px;
         border-radius: 8px;
@@ -556,7 +559,7 @@
     }
     
     .stat-value {
-        font-size: 16px; /* Größer */
+        font-size: 16px;
         margin-bottom: 4px;
         font-weight: bold;
         color: #00ffff;
@@ -570,7 +573,6 @@
         letter-spacing: 1px;
     }
     
-    /* Block Items lesbarer */
     .block-item {
         padding: 10px 12px;
         margin: 6px 0;
@@ -665,7 +667,7 @@
 /* Mobile Buttons - ERWEITERT */
 @media only screen and (max-width: 768px) {
     .terminal-button {
-        min-height: 50px; /* Größere Buttons */
+        min-height: 50px;
         padding: 14px 20px;
         font-size: 12px;
         border-radius: 8px;
@@ -837,226 +839,6 @@
     }
 }
 
-/* Mobile Staking Interface - ERWEITERT */
-@media only screen and (max-width: 768px) {
-    .delegation-item {
-        padding: 12px;
-        margin: 8px 0;
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid #00cc66;
-        border-radius: 6px;
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
-    }
-    
-    .validator-info {
-        width: 100%;
-        flex: 1;
-    }
-    
-    .validator-name {
-        font-size: 12px;
-        margin-bottom: 4px;
-        color: #00ffff;
-        font-weight: 700;
-    }
-    
-    .validator-details {
-        font-size: 10px;
-        color: #999999;
-        font-family: 'Share Tech Mono', monospace;
-    }
-    
-    .delegation-amount {
-        text-align: left;
-        margin-right: 0;
-        font-size: 11px;
-        color: #00ff00;
-        font-weight: 700;
-    }
-    
-    .stake-actions {
-        justify-content: flex-start;
-        flex-wrap: wrap;
-        gap: 6px;
-        display: flex;
-    }
-    
-    .amount-input {
-        width: 100%;
-        padding: 8px 12px;
-        border: 1px solid #00cc66;
-        background: rgba(0, 0, 0, 0.5);
-        color: #00cc66;
-        font-family: 'Share Tech Mono', monospace;
-        margin: 8px 0;
-        border-radius: 6px;
-        font-size: 16px;
-    }
-    
-    .amount-input:focus {
-        border-color: #00ffff;
-        color: #00ffff;
-        outline: none;
-    }
-}
-
-/* Mobile Transaction History - ERWEITERT */
-@media only screen and (max-width: 768px) {
-    .tx-filter {
-        gap: 6px;
-        margin-bottom: 12px;
-        flex-wrap: wrap;
-        display: flex;
-    }
-    
-    .filter-btn {
-        padding: 6px 10px;
-        font-size: 9px;
-        border-radius: 4px;
-        min-height: 32px;
-        border: 1px solid #666;
-        background: transparent;
-        color: #666;
-        cursor: pointer;
-        text-transform: uppercase;
-    }
-    
-    .filter-btn.active {
-        border-color: #00ffff;
-        color: #00ffff;
-    }
-    
-    .tx-item {
-        padding: 12px 14px;
-        margin: 8px 0;
-        border-radius: 6px;
-        font-size: 11px;
-        min-height: 50px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 4px;
-        background: rgba(0, 0, 0, 0.3);
-        border-left: 3px solid;
-        font-family: 'Share Tech Mono', monospace;
-    }
-    
-    .tx-sent { border-left-color: #ff3030; }
-    .tx-received { border-left-color: #00ff00; }
-    .tx-delegate { border-left-color: #ff00ff; }
-    .tx-undelegate { border-left-color: #ffaa00; }
-    
-    .tx-type {
-        font-weight: bold;
-        min-width: 80px;
-        font-size: 11px;
-        color: #00ffff;
-    }
-    
-    .tx-amount {
-        font-size: 12px;
-        font-weight: bold;
-        color: #00ff00;
-        margin: 0 12px;
-    }
-    
-    .tx-time {
-        font-size: 9px;
-        opacity: 0.7;
-        color: #999999;
-        width: 100%;
-        margin-top: 2px;
-    }
-}
-
-/* Mobile System Status - ERWEITERT */
-@media only screen and (max-width: 768px) {
-    .section-header {
-        font-size: 14px;
-        margin-bottom: 16px;
-        text-align: center;
-        font-weight: 700;
-        color: #00ffff;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        border-bottom: 1px solid #00ffff;
-        padding-bottom: 8px;
-    }
-    
-    .auth-module {
-        margin-bottom: 24px;
-    }
-    
-    .module-title {
-        font-size: 13px;
-        margin-bottom: 12px;
-        text-align: center;
-        font-weight: 700;
-        color: #ff00ff;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-    }
-    
-    .module-title::before {
-        content: '▶';
-        color: #ff00ff;
-        font-size: 12px;
-    }
-    
-    .systems-status {
-        margin-top: 20px;
-    }
-    
-    .system-item {
-        padding: 10px 0;
-        font-size: 11px;
-        border-bottom: 1px solid rgba(0, 255, 255, 0.2);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font-family: 'Share Tech Mono', monospace;
-    }
-    
-    .system-name {
-        font-size: 11px;
-        color: #cccccc;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    
-    .system-indicator {
-        gap: 6px;
-        display: flex;
-        align-items: center;
-    }
-    
-    .indicator-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #00ff00;
-        box-shadow: 0 0 8px #00ff00;
-        animation: pulse 2s infinite;
-    }
-    
-    .indicator-offline {
-        background: #ff3030;
-        box-shadow: 0 0 8px #ff3030;
-    }
-    
-    .system-indicator span {
-        font-size: 10px;
-    }
-}
-
 /* Mobile Messages - ERWEITERT */
 @media only screen and (max-width: 768px) {
     .message-item {
@@ -1149,6 +931,227 @@
     }
 }
 
+/* Responsive Breakpoints */
+@media only screen and (max-width: 480px) {
+    .header {
+        min-height: 180px;
+        padding: 12px 8px;
+    }
+    
+    .terminal-header {
+        min-height: 160px;
+        gap: 10px;
+    }
+    
+    .solar-system-bg {
+        width: 150px !important;
+        height: 150px !important;
+    }
+    
+    .main-title {
+        font-size: 14px;
+    }
+    
+    .sub-title {
+        font-size: 9px;
+    }
+    
+    .logo-icon {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .system-info,
+    .status-display,
+    .wallet-section {
+        max-width: 240px;
+        padding: 6px 8px;
+    }
+    
+    .wallet-status {
+        font-size: 10px;
+    }
+    
+    .address-text {
+        font-size: 8px;
+    }
+    
+    .connection-status,
+    #blockchain-status {
+        font-size: 10px;
+        min-width: 140px;
+        padding: 5px 10px;
+    }
+    
+    .timestamp {
+        font-size: 9px;
+    }
+}
+
+@media only screen and (max-width: 320px) {
+    .header {
+        min-height: 160px;
+        padding: 10px 6px;
+    }
+    
+    .terminal-header {
+        min-height: 140px;
+        gap: 8px;
+    }
+    
+    .solar-system-bg {
+        width: 120px !important;
+        height: 120px !important;
+    }
+    
+    .main-title {
+        font-size: 12px;
+    }
+    
+    .sub-title {
+        font-size: 8px;
+    }
+    
+    .logo-icon {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .address-text {
+        font-size: 7px;
+    }
+    
+    .connection-status,
+    #blockchain-status {
+        font-size: 9px;
+        min-width: 120px;
+        padding: 4px 8px;
+    }
+    
+    .stats-grid,
+    .balance-overview {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+}
+
+/* Landscape Orientation */
+@media only screen and (max-height: 500px) and (orientation: landscape) {
+    .header {
+        min-height: 120px;
+        padding: 8px 12px;
+    }
+    
+    .terminal-header {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        min-height: 100px;
+    }
+    
+    .system-info {
+        order: 1;
+        max-width: 200px;
+    }
+    
+    .wallet-section {
+        order: 2;
+        max-width: 180px;
+    }
+    
+    .status-display {
+        order: 3;
+        max-width: 160px;
+    }
+    
+    .solar-system-bg {
+        width: 100px !important;
+        height: 100px !important;
+    }
+    
+    .logo-section {
+        flex-direction: row !important;
+        gap: 8px;
+    }
+    
+    .main-title {
+        font-size: 12px;
+    }
+    
+    .main-interface {
+        flex-direction: row;
+        gap: 16px;
+        height: calc(100vh - 140px);
+    }
+    
+    .communication-display {
+        flex: 2;
+        min-height: 300px;
+    }
+    
+    .control-panel {
+        flex: 1;
+        max-width: 300px;
+    }
+}
+
+/* Tablet Size (481px - 768px) */
+@media only screen and (min-width: 481px) and (max-width: 768px) {
+    .header {
+        min-height: 220px;
+        padding: 20px 16px;
+    }
+    
+    .terminal-header {
+        min-height: 200px;
+        gap: 16px;
+    }
+    
+    .solar-system-bg {
+        width: 200px !important;
+        height: 200px !important;
+    }
+    
+    .main-title {
+        font-size: 18px;
+    }
+    
+    .sub-title {
+        font-size: 12px;
+    }
+    
+    .logo-icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .system-info,
+    .status-display,
+    .wallet-section {
+        max-width: 320px;
+        padding: 10px 12px;
+    }
+    
+    .wallet-status {
+        font-size: 12px;
+    }
+    
+    .address-text {
+        font-size: 10px;
+    }
+    
+    .connection-status,
+    #blockchain-status {
+        font-size: 12px;
+        min-width: 180px;
+        padding: 7px 14px;
+    }
+    
+    .timestamp {
+        font-size: 11px;
+    }
+}
+
 /* Error and Success States */
 @media only screen and (max-width: 768px) {
     .error-display {
@@ -1186,261 +1189,30 @@
     }
 }
 
-/* Tablet Size (481px - 768px) */
-@media only screen and (min-width: 481px) and (max-width: 768px) {
-    .header {
-        min-height: 140px; /* Angepasst */
-        padding: 16px;
+/* Wallet Status States */
+@media only screen and (max-width: 768px) {
+    .wallet-display.disconnected .wallet-status {
+        color: #ff6b6b;
     }
     
-    .terminal-header {
-        min-height: 120px; /* Angepasst */
-        gap: 12px;
+    .wallet-display.disconnected .status-icon {
+        opacity: 0.6;
     }
     
-    .main-title {
-        font-size: 18px;
+    .wallet-display.connected .wallet-status {
+        color: #00ff7f;
     }
     
-    .sub-title {
-        font-size: 11px;
+    .wallet-display.connecting .wallet-status {
+        color: #ffd700;
     }
     
-    .logo-icon {
-        width: 46px;
-        height: 46px;
+    .wallet-display.connecting .status-icon {
+        animation: pulse 1.5s infinite;
     }
     
-    .solar-system-bg {
-        width: 90px;
-        height: 90px;
-        bottom: 8px;
-        left: 8px;
-    }
-    
-    .connection-status,
-    #blockchain-status {
-        font-size: 9px;
-        padding: 4px 7px;
-    }
-    
-    .timestamp {
-        font-size: 8px;
-    }
-    
-    .stats-grid,
-    .balance-overview {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .wallet-display {
-        min-width: 160px;
-        max-width: 220px;
-        padding: 4px 8px;
-    }
-    
-    .wallet-status {
-        font-size: 8px;
-    }
-    
-    .address-text {
-        font-size: 7px;
-    }
-    
-    .copy-btn {
-        font-size: 7px;
-        padding: 1px 3px;
-    }
-}
-
-/* Very Small Phones (< 400px) */
-@media only screen and (max-width: 400px) {
-    .container {
-        padding: 6px;
-    }
-    
-    .header {
-        min-height: 100px; /* Sehr kompakt */
-        padding: 8px;
-    }
-    
-    .terminal-header {
-        min-height: 80px;
-        gap: 6px;
-    }
-    
-    .main-title {
-        font-size: 14px;
-    }
-    
-    .sub-title {
-        font-size: 8px;
-    }
-    
-    .logo-icon {
-        width: 32px;
-        height: 32px;
-    }
-    
-    .solar-system-bg {
-        width: 60px;
-        height: 60px;
-        bottom: 3px;
-        left: 3px;
-    }
-    
-    .status-display {
-        padding: 4px 6px;
-        gap: 8px;
-    }
-    
-    .connection-status,
-    #blockchain-status {
-        font-size: 7px;
-        padding: 2px 4px;
-    }
-    
-    .timestamp {
-        font-size: 6px;
-    }
-    
-    .tab-button {
-        min-width: 70px;
-        padding: 10px 12px;
-        font-size: 11px;
-    }
-    
-    .stats-grid,
-    .balance-overview {
-        grid-template-columns: 1fr;
-        gap: 8px;
-    }
-    
-    .control-panel,
-    .tab-content {
-        padding: 12px;
-    }
-    
-    .logo-section {
-        flex-direction: column;
-        text-align: center;
-        gap: 4px;
-        margin-bottom: 4px;
-    }
-    
-    .wallet-display {
-        min-width: 120px;
-        max-width: 160px;
-        padding: 3px 6px;
-    }
-    
-    .wallet-status {
-        font-size: 6px;
-    }
-    
-    .status-icon {
-        font-size: 8px;
-    }
-    
-    .address-text {
-        font-size: 5px;
-    }
-    
-    .copy-btn {
-        font-size: 6px;
-        padding: 1px 2px;
-    }
-}
-
-/* Landscape Mode (Phone horizontal) */
-@media only screen and (max-height: 500px) and (orientation: landscape) {
-    .header {
-        min-height: 80px; /* Sehr kompakt im Landscape */
-        padding: 8px 12px;
-    }
-    
-    .terminal-header {
-        grid-template-columns: 1fr auto;
-        grid-template-rows: auto;
-        min-height: 60px;
-        gap: 8px;
-    }
-    
-    .system-info {
-        grid-column: 1;
-        grid-row: 1;
-        flex-direction: row;
-        justify-content: flex-start;
-        margin-bottom: 0;
-        gap: 8px;
-    }
-    
-    .logo-section {
-        flex-direction: row;
-        gap: 6px;
-        margin-bottom: 0;
-    }
-    
-    .status-display {
-        grid-column: 2;
-        grid-row: 1;
-        margin-top: 0;
-        align-self: stretch;
-        justify-content: center;
-        min-width: 160px;
-        flex-direction: row;
-        gap: 8px;
-    }
-    
-    .wallet-section {
-        order: 1;
-        max-width: 120px;
-    }
-    
-    .status-row {
-        order: 2;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 2px;
-    }
-    
-    .wallet-display {
-        padding: 2px 6px;
-        min-width: 100px;
-        max-width: 140px;
-    }
-    
-    .solar-system-bg {
-        width: 50px;
-        height: 50px;
-        bottom: 3px;
-        left: 3px;
-        opacity: 0.4;
-    }
-    
-    .main-interface {
-        flex-direction: row;
-        gap: 16px;
-        height: calc(100vh - 100px);
-    }
-    
-    .communication-display {
-        flex: 2;
-        min-height: 300px;
-    }
-    
-    .control-panel {
-        flex: 1;
-        max-width: 300px;
-    }
-    
-    .tab-button {
-        min-height: 32px;
-        padding: 4px 8px;
-    }
-    
-    .message-display {
-        max-height: calc(100vh - 150px);
+    .wallet-display.copy-success {
+        animation: copySuccessGreen 0.6s ease;
     }
 }
 
@@ -1461,18 +1233,8 @@
         border-radius: 8px;
     }
     
-    /* Disable iOS zoom on double tap */
     * {
         touch-action: manipulation;
-    }
-}
-
-/* Android Specific Adjustments */
-@media screen and (-webkit-min-device-pixel-ratio: 0) and (min-resolution: .001dpcm) {
-    .terminal-input,
-    .form-input,
-    .search-input {
-        font-size: 16px;
     }
 }
 
@@ -1492,85 +1254,8 @@
     }
 }
 
-/* Dark Mode Mobile Adjustments */
-@media (prefers-color-scheme: dark) and (max-width: 768px) {
-    .system-info,
-    .status-display {
-        background: rgba(26, 26, 46, 0.15);
-        border: 1px solid rgba(0, 255, 255, 0.1);
-    }
-    
-    .solar-system-bg {
-        opacity: 0.5;
-    }
-    
-    .terminal-tabs {
-        background: rgba(26, 26, 26, 0.98);
-        backdrop-filter: blur(20px);
-    }
-    
-    .input-module {
-        background: rgba(26, 26, 26, 0.98);
-        backdrop-filter: blur(20px);
-    }
-}
-
-/* High Contrast Mode */
-@media (prefers-contrast: high) and (max-width: 768px) {
-    .system-info,
-    .status-display {
-        border: 2px solid #00ffff;
-        background: rgba(0, 0, 0, 0.3);
-    }
-    
-    .connection-status,
-    #blockchain-status {
-        border-width: 2px;
-    }
-    
-    .terminal-button {
-        border-width: 2px;
-    }
-    
-    .tab-button.active {
-        border-bottom-width: 3px;
-    }
-    
-    .main-title,
-    .sub-title {
-        text-shadow: 
-            0 0 2px rgba(0, 0, 0, 1),
-            0 0 4px rgba(0, 255, 255, 0.8);
-    }
-    
-    .wallet-display {
-        border-width: 2px;
-    }
-    
-    .copy-btn {
-        border: 1px solid #00ff7f;
-    }
-}
-
-/* Accessibility Improvements for Mobile */
-@media only screen and (max-width: 768px) {
-    /* Focus indicators */
-    .tab-button:focus,
-    .terminal-button:focus,
-    .form-input:focus,
-    .form-select:focus,
-    .form-textarea:focus,
-    .search-input:focus,
-    .copy-btn:focus,
-    .address-text:focus {
-        outline: 2px solid #00ffff;
-        outline-offset: 2px;
-    }
-}
-
 /* Animation Performance Optimization */
 @media only screen and (max-width: 768px) {
-    /* Reduce animation complexity on mobile */
     .solar-system-bg circle[r="2.0"] {
         animation-duration: 8s;
     }
@@ -1583,7 +1268,6 @@
         animation-duration: 24s;
     }
     
-    /* Hardware acceleration for smooth animations */
     .tab-button,
     .terminal-button,
     .tab-content,
@@ -1596,7 +1280,7 @@
     }
 }
 
-/* Reduced Motion for Mobile */
+/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) and (max-width: 768px) {
     .solar-system-bg * {
         animation-duration: 0.01ms !important;
@@ -1623,48 +1307,6 @@
     
     .copy-success {
         animation: none;
-    }
-}
-
-/* Utility Classes for Mobile */
-@media only screen and (max-width: 768px) {
-    .mobile-only { display: block !important; }
-    .desktop-only { display: none !important; }
-    .mobile-hidden { display: none !important; }
-    
-    .mobile-full-width { width: 100% !important; }
-    .mobile-text-center { text-align: center !important; }
-    .mobile-text-small { font-size: 10px !important; }
-    .mobile-text-large { font-size: 14px !important; }
-    
-    .mobile-p-1 { padding: 4px !important; }
-    .mobile-p-2 { padding: 8px !important; }
-    .mobile-p-3 { padding: 12px !important; }
-    
-    .mobile-m-1 { margin: 4px !important; }
-    .mobile-m-2 { margin: 8px !important; }
-    .mobile-m-3 { margin: 12px !important; }
-    
-    .mobile-flex-col { flex-direction: column !important; }
-    .mobile-flex-row { flex-direction: row !important; }
-    .mobile-justify-center { justify-content: center !important; }
-    .mobile-items-center { align-items: center !important; }
-    
-    .mobile-gap-1 { gap: 4px !important; }
-    .mobile-gap-2 { gap: 8px !important; }
-    .mobile-gap-3 { gap: 12px !important; }
-}
-
-/* PWA Support */
-@media only screen and (max-width: 768px) {
-    .pwa-status-bar {
-        height: env(safe-area-inset-top);
-        background: linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(255, 0, 255, 0.1) 100%);
-    }
-    
-    .pwa-home-indicator {
-        height: env(safe-area-inset-bottom);
-        background: linear-gradient(135deg, rgba(0, 255, 255, 0.1) 0%, rgba(255, 0, 255, 0.1) 100%);
     }
 }
 
