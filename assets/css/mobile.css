@@ -57,64 +57,48 @@
         box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - SEHR GROß UND DEUTLICH NACH LINKS */
+    /* SOLAR SYSTEM ANIMATION - NUR POSITION UND GRÖßE, KEINE ANIMATION-ÜBERSCHREIBUNG */
     .solar-system-container {
         position: absolute !important; /* Relativ zum Header */
         top: 50% !important; /* Vertikal zentriert */
-        left: 35% !important; /* Deutlich nach links (war 45%) */
-        transform: translate(-50%, -50%) !important; /* Perfekt zentriert */
-        width: 400px !important; /* Noch viel größer */
+        left: 35% !important; /* Deutlich nach links */
+        transform: translate(-50%, -50%) !important; /* Nur für Positionierung */
+        width: 400px !important;
         height: 400px !important;
-        z-index: 1 !important; /* Hinter den Boxen aber über dem Header-Hintergrund */
+        z-index: 1 !important;
         pointer-events: none !important;
-        opacity: 0.8 !important; /* Gut sichtbar */
+        opacity: 0.8 !important;
     }
     
     .solar-system-bg {
         position: absolute !important; /* Relativ zum Header */
         top: 50% !important; /* Vertikal zentriert */
-        left: 35% !important; /* Deutlich nach links (war 45%) */
-        transform: translate(-50%, -50%) !important; /* Perfekt zentriert */
-        width: 380px !important; /* Noch viel größer */
+        left: 35% !important; /* Deutlich nach links */
+        transform: translate(-50%, -50%) !important; /* Nur für Positionierung */
+        width: 380px !important;
         height: 380px !important;
-        z-index: 1 !important; /* Hinter den Boxen */
+        z-index: 1 !important;
         pointer-events: none !important;
-        opacity: 0.8 !important; /* Gut sichtbar */
+        opacity: 0.8 !important;
     }
     
-    /* ALLE MÖGLICHEN SOLAR SYSTEM SELEKTOREN MIT HOHER SPEZIFITÄT */
+    /* NUR CONTAINER-GRÖßEN, KEINE KINDER-ELEMENTE ÜBERSCHREIBEN */
     .header .solar-system-container,
-    .header .solar-system-bg,
-    .header .solar-system,
-    .header [class*="solar-system"],
-    .header [id*="solar-system"],
-    .header svg[class*="solar"],
-    .header canvas[class*="solar"] {
+    .header .solar-system-bg {
         width: 400px !important;
         height: 400px !important;
-        min-width: 400px !important;
-        min-height: 400px !important;
-        max-width: 400px !important;
-        max-height: 400px !important;
     }
     
-    /* FALLS ES SVG ELEMENTE SIND */
-    .header .solar-system-container svg,
-    .header .solar-system-bg svg,
-    .header .solar-system svg {
-        width: 100% !important;
-        height: 100% !important;
-        min-width: 100% !important;
-        min-height: 100% !important;
-        viewBox: 0 0 400 400 !important;
-    }
-    
-    /* FALLS ES CANVAS ELEMENTE SIND */
-    .header .solar-system-container canvas,
-    .header .solar-system-bg canvas,
-    .header .solar-system canvas {
-        width: 400px !important;
-        height: 400px !important;
+    /* PLANETEN UND ORBITS NICHT ÜBERSCHREIBEN - ANIMATIONEN ERLAUBEN */
+    .header .solar-system-container .planet,
+    .header .solar-system-container .orbit,
+    .header .solar-system-container .sun,
+    .header .solar-system-bg .planet,
+    .header .solar-system-bg .orbit,
+    .header .solar-system-bg .sun {
+        /* Keine Größen-Überschreibungen hier - lasse animation.css wirken */
+        animation: inherit !important; /* Erlaube Original-Animationen */
+        transform: inherit !important; /* Erlaube Original-Transforms */
     }
     
     /* Terminal Header - Z-INDEX ÜBER ANIMATION */
