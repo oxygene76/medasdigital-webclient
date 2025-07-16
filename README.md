@@ -106,7 +106,7 @@ docker-compose up -d daemon
 
 ### Blockchain Integration
 
-- **Chain**: Medas Digital (medasdigital-1)
+- **Chain**: Medas Digital (medasdigital-2)
 - **RPC**: https://rpc.medas-digital.io:26657
 - **REST**: https://api.medas-digital.io:1317
 - **Token**: MEDAS (6 decimals)
