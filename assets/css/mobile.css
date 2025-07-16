@@ -89,23 +89,36 @@
         background: rgba(0, 0, 255, 0.1) !important; /* DEBUG: Blauer Hintergrund */
     }
     
-    /* SOLAR SYSTEM ANIMATION - MINIMAL: NUR CONTAINER POSITIONIEREN */
+    /* SOLAR SYSTEM ANIMATION - WEITER RECHTS + KEIN DEBUG */
     .solar-system-container {
         position: fixed !important;
         top: 10% !important;
-        left: 80px !important; /* Weiter nach rechts */
-        /* KEINE anderen Überschreibungen - lasse animation.css unberührt */
+        left: 120px !important; /* Noch weiter nach rechts (war 80px) */
         z-index: 0 !important;
         pointer-events: none !important;
+        border: none !important; /* Explizit kein roter Rahmen */
+        background: none !important; /* Explizit kein Hintergrund */
     }
     
     .solar-system-bg {
         position: fixed !important;
         top: 20% !important;
-        left: 100px !important; /* Weiter nach rechts */
-        /* KEINE anderen Überschreibungen - lasse animation.css unberührt */
+        left: 140px !important; /* Noch weiter nach rechts (war 100px) */
         z-index: 0 !important;
         pointer-events: none !important;
+        border: none !important; /* Explizit kein roter Rahmen */
+        background: none !important; /* Explizit kein Hintergrund */
+    }
+    
+    /* Alle möglichen Debug-Rahmen explizit entfernen */
+    .solar-system-container *,
+    .solar-system-bg *,
+    .solar-system,
+    .sun,
+    .orbit,
+    .planet {
+        border: none !important;
+        outline: none !important;
     }
     
     /* Solar System selbst anpassen */
