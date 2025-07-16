@@ -1,4 +1,4 @@
-/* MedasDigital WebClient - Complete Mobile Responsive Styles - VERTICAL LAYOUT + LARGE SOLAR SYSTEM */
+/* MedasDigital WebClient - Complete Mobile Responsive Styles - VERTICAL LAYOUT + LARGE SOLAR SYSTEM + CONNECT WALLET */
 
 /* Mobile Viewport Meta Setup */
 /* Required in HTML head: <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> */
@@ -211,10 +211,10 @@
     }
     
     /* =================================
-       MIDDLE: WALLET SECTION
+       MIDDLE: WALLET SECTION - CONNECT WALLET INTEGRATION
        ================================= */
     
-    /* WALLET SEKTION - TRANSPARENTE BOX */
+    /* WALLET SEKTION - TRANSPARENTE BOX + CONNECT FUNCTIONALITY */
     .wallet-section {
         order: 2;
         width: 100% !important;
@@ -241,8 +241,66 @@
         font-family: 'Share Tech Mono', monospace;
         transition: all 0.3s ease;
         box-sizing: border-box !important;
+        cursor: pointer; /* Zeigt dass es klickbar ist */
     }
     
+    /* Connect Wallet Button Style wenn disconnected */
+    .wallet-display.disconnected {
+        border-color: rgba(255, 215, 0, 0.4) !important;
+        background: rgba(255, 215, 0, 0.02) !important;
+    }
+    
+    .wallet-display.disconnected:hover {
+        background: rgba(255, 215, 0, 0.1) !important;
+        border-color: rgba(255, 215, 0, 0.6) !important;
+        transform: scale(1.02);
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    }
+    
+    /* Connect Button Text Style */
+    .wallet-display.disconnected .wallet-status {
+        color: #ffd700;
+        font-size: 14px !important;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+    }
+    
+    .wallet-display.disconnected .status-icon {
+        font-size: 18px !important;
+        color: #ffd700;
+        animation: pulse 2s infinite;
+    }
+    
+    /* Connect Wallet Text statt Address */
+    .wallet-display.disconnected .wallet-address {
+        background: rgba(255, 215, 0, 0.1);
+        border: 1px solid rgba(255, 215, 0, 0.3);
+        justify-content: center;
+        padding: 10px 16px;
+    }
+    
+    .wallet-display.disconnected .address-text {
+        color: #ffd700;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 12px !important;
+        text-align: center;
+        cursor: pointer;
+    }
+    
+    .wallet-display.disconnected .address-text:hover {
+        color: #ffffff;
+        text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+    }
+    
+    /* Copy Button verstecken wenn disconnected */
+    .wallet-display.disconnected .copy-btn {
+        display: none;
+    }
+    
+    /* Connected State Styles */
     .wallet-display:hover {
         background: rgba(0, 255, 127, 0.1);
         border-color: rgba(0, 255, 127, 0.5);
