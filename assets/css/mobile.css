@@ -82,6 +82,41 @@
         opacity: 0.8 !important; /* Gut sichtbar */
     }
     
+    /* ALLE MÖGLICHEN SOLAR SYSTEM SELEKTOREN MIT HOHER SPEZIFITÄT */
+    .header .solar-system-container,
+    .header .solar-system-bg,
+    .header .solar-system,
+    .header [class*="solar-system"],
+    .header [id*="solar-system"],
+    .header svg[class*="solar"],
+    .header canvas[class*="solar"] {
+        width: 400px !important;
+        height: 400px !important;
+        min-width: 400px !important;
+        min-height: 400px !important;
+        max-width: 400px !important;
+        max-height: 400px !important;
+    }
+    
+    /* FALLS ES SVG ELEMENTE SIND */
+    .header .solar-system-container svg,
+    .header .solar-system-bg svg,
+    .header .solar-system svg {
+        width: 100% !important;
+        height: 100% !important;
+        min-width: 100% !important;
+        min-height: 100% !important;
+        viewBox: 0 0 400 400 !important;
+    }
+    
+    /* FALLS ES CANVAS ELEMENTE SIND */
+    .header .solar-system-container canvas,
+    .header .solar-system-bg canvas,
+    .header .solar-system canvas {
+        width: 400px !important;
+        height: 400px !important;
+    }
+    
     /* Terminal Header - Z-INDEX ÜBER ANIMATION */
     .terminal-header {
         display: flex !important;
