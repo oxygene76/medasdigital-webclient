@@ -40,12 +40,12 @@
        HEADER LAYOUT - VERTICAL STACK + LARGE SOLAR SYSTEM
        ================================= */
     
-    /* Header Container - NOCH TRANSPARENTER + MEHR PLATZ FÜR ANIMATION */
+    /* Header Container - POSITION CONTEXT FÜR ANIMATION */
     .header {
         padding: 12px 8px;
         min-height: 180px;
         margin: 0;
-        position: relative;
+        position: relative !important; /* Wichtig für absolute Positionierung der Animation */
         overflow: visible !important; /* Animation nicht abschneiden */
         display: flex;
         flex-direction: column;
@@ -57,24 +57,32 @@
         box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - WEITER NACH OBEN */
+    /* SOLAR SYSTEM ANIMATION - MITTIG HINTER HEADER */
     .solar-system-container {
-        position: fixed !important;
-        top: 5% !important; /* Weiter nach oben (war 10%) */
-        left: 120px !important;
-        z-index: 0 !important;
+        position: absolute !important; /* Relativ zum Header */
+        top: 50% !important; /* Vertikal zentriert */
+        left: 50% !important; /* Horizontal zentriert */
+        transform: translate(-50%, -50%) !important; /* Perfekt zentriert */
+        width: 200px !important; /* Passende Größe für Header */
+        height: 200px !important;
+        z-index: 1 !important; /* Hinter den Boxen aber über dem Header-Hintergrund */
         pointer-events: none !important;
+        opacity: 0.6 !important; /* Dezent sichtbar */
     }
     
     .solar-system-bg {
-        position: fixed !important;
-        top: 8% !important; /* Weiter nach oben (war 20%) */
-        left: 140px !important;
-        z-index: 0 !important;
+        position: absolute !important; /* Relativ zum Header */
+        top: 50% !important; /* Vertikal zentriert */
+        left: 50% !important; /* Horizontal zentriert */
+        transform: translate(-50%, -50%) !important; /* Perfekt zentriert */
+        width: 160px !important; /* Etwas kleiner */
+        height: 160px !important;
+        z-index: 1 !important; /* Hinter den Boxen */
         pointer-events: none !important;
+        opacity: 0.6 !important; /* Dezent sichtbar */
     }
     
-    /* Terminal Header - VOLLE BREITE */
+    /* Terminal Header - Z-INDEX ÜBER ANIMATION */
     .terminal-header {
         display: flex !important;
         flex-direction: column !important;
@@ -84,7 +92,7 @@
         min-height: 160px;
         gap: 8px;
         position: relative;
-        z-index: 2;
+        z-index: 10 !important; /* Über der Animation */
         padding: 0 !important; /* Kein Padding */
         width: 100% !important;
         box-sizing: border-box !important;
