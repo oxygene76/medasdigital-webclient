@@ -89,12 +89,12 @@
         background: rgba(0, 0, 255, 0.1) !important; /* DEBUG: Blauer Hintergrund */
     }
     
-    /* SOLAR SYSTEM ANIMATION - NUR BEZUGSPUNKT NACH RECHTS VERSCHIEBEN */
+    /* SOLAR SYSTEM ANIMATION - DEBUG RAHMEN LINKS, ANIMATION INNEN NACH RECHTS */
     .solar-system-bg {
         position: fixed !important;
         top: 20% !important;
-        left: 100px !important;
-        transform: rotate(180deg) !important; /* Einfach, ohne translate */
+        left: 40px !important; /* Debug-Rahmen zurück nach links */
+        transform: rotate(180deg) !important;
         width: 240px !important;
         height: 240px !important;
         opacity: 0.9 !important;
@@ -104,15 +104,13 @@
         visibility: visible !important;
         border: 2px solid red !important;
         background: rgba(255, 0, 0, 0.1) !important;
-        /* Bezugspunkt der Animation nach rechts verschieben */
-        transform-origin: calc(50% + 100px) 50% !important;
     }
     
     /* Falls es der komplette Solar System Container ist */
     .solar-system-container {
         position: fixed !important;
         top: 10% !important;
-        left: 80px !important;
+        left: 20px !important; /* Debug-Rahmen zurück nach links */
         transform: scale(0.9) !important;
         width: 450px !important;
         height: 450px !important;
@@ -122,14 +120,27 @@
         overflow: visible !important;
         border: 2px solid blue !important;
         background: rgba(0, 0, 255, 0.1) !important;
-        /* Bezugspunkt der Animation nach rechts verschieben */
-        transform-origin: calc(50% + 100px) 50% !important;
     }
     
-    /* NUR Solar System Container verschieben - NICHT andere Elemente */
-    .solar-system-container > .solar-system {
-        transform-origin: calc(50% + 100px) 50% !important;
-        margin-left: 100px !important; /* Einfache Verschiebung nach rechts */
+    /* NUR die Animation INNERHALB des Containers nach rechts verschieben */
+    .solar-system-container > * {
+        transform: translateX(100px) !important; /* Inhalt nach rechts */
+    }
+    
+    .solar-system-bg > * {
+        transform: translateX(100px) !important; /* Inhalt nach rechts */
+    }
+    
+    /* Spezifisch für Solar System Elemente innerhalb der Container */
+    .solar-system-container .solar-system {
+        margin-left: 80px !important; /* Nach rechts im Container */
+        border: 2px solid green !important; /* Debug: Grüner Rahmen */
+        background: rgba(0, 255, 0, 0.1) !important;
+    }
+    
+    .solar-system-container .sun {
+        margin-left: 80px !important; /* Sonne nach rechts im Container */
+        border: 2px solid yellow !important; /* Debug: Gelber Rahmen */
     }
     
     /* Solar System selbst anpassen */
