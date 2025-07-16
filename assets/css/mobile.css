@@ -57,48 +57,17 @@
         box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - NUR POSITION, NICHT TRANSFORM ÜBERSCHREIBEN */
+    /* SOLAR SYSTEM ANIMATION - ZURÜCK ZUM URSPRUNG + NUR SICHTBARKEIT */
     .solar-system-container {
-        position: absolute !important; /* Relativ zum Header */
-        top: 50% !important; /* Vertikal zentriert */
-        left: 35% !important; /* Deutlich nach links */
-        width: 400px !important;
-        height: 400px !important;
-        z-index: 1 !important;
-        pointer-events: none !important;
-        opacity: 0.8 !important;
-        /* KEIN TRANSFORM - lasse animation.css wirken */
+        /* Keine Überschreibungen - lasse animation.css unverändert */
+        z-index: 1 !important; /* Nur z-index ändern für Sichtbarkeit */
+        opacity: 0.8 !important; /* Nur opacity für bessere Sichtbarkeit */
     }
     
     .solar-system-bg {
-        position: absolute !important; /* Relativ zum Header */
-        top: 50% !important; /* Vertikal zentriert */
-        left: 35% !important; /* Deutlich nach links */
-        width: 380px !important;
-        height: 380px !important;
-        z-index: 1 !important;
-        pointer-events: none !important;
-        opacity: 0.8 !important;
-        /* KEIN TRANSFORM - lasse Original-Transform aus main.css */
-    }
-    
-    /* NUR CONTAINER-GRÖßEN, KEINE TRANSFORM-ÜBERSCHREIBUNG */
-    .header .solar-system-container,
-    .header .solar-system-bg {
-        width: 400px !important;
-        height: 400px !important;
-        /* WICHTIG: Kein transform hier - sonst werden Animationen gestoppt */
-    }
-    
-    /* ALTERNATIVE: TOP/LEFT STATT TRANSFORM FÜR ZENTRIERUNG */
-    .header .solar-system-container {
-        top: calc(50% - 200px) !important; /* 50% minus halbe Höhe */
-        left: calc(35% - 200px) !important; /* 35% minus halbe Breite */
-    }
-    
-    .header .solar-system-bg {
-        top: calc(50% - 190px) !important; /* 50% minus halbe Höhe */
-        left: calc(35% - 190px) !important; /* 35% minus halbe Breite */
+        /* Keine Überschreibungen - lasse main.css unverändert */
+        z-index: 1 !important; /* Nur z-index ändern für Sichtbarkeit */
+        opacity: 0.8 !important; /* Nur opacity für bessere Sichtbarkeit */
     }
     
     /* Terminal Header - Z-INDEX ÜBER ANIMATION */
