@@ -57,48 +57,48 @@
         box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - NUR POSITION UND GRÖßE, KEINE ANIMATION-ÜBERSCHREIBUNG */
+    /* SOLAR SYSTEM ANIMATION - NUR POSITION, NICHT TRANSFORM ÜBERSCHREIBEN */
     .solar-system-container {
         position: absolute !important; /* Relativ zum Header */
         top: 50% !important; /* Vertikal zentriert */
         left: 35% !important; /* Deutlich nach links */
-        transform: translate(-50%, -50%) !important; /* Nur für Positionierung */
         width: 400px !important;
         height: 400px !important;
         z-index: 1 !important;
         pointer-events: none !important;
         opacity: 0.8 !important;
+        /* KEIN TRANSFORM - lasse animation.css wirken */
     }
     
     .solar-system-bg {
         position: absolute !important; /* Relativ zum Header */
         top: 50% !important; /* Vertikal zentriert */
         left: 35% !important; /* Deutlich nach links */
-        transform: translate(-50%, -50%) !important; /* Nur für Positionierung */
         width: 380px !important;
         height: 380px !important;
         z-index: 1 !important;
         pointer-events: none !important;
         opacity: 0.8 !important;
+        /* KEIN TRANSFORM - lasse Original-Transform aus main.css */
     }
     
-    /* NUR CONTAINER-GRÖßEN, KEINE KINDER-ELEMENTE ÜBERSCHREIBEN */
+    /* NUR CONTAINER-GRÖßEN, KEINE TRANSFORM-ÜBERSCHREIBUNG */
     .header .solar-system-container,
     .header .solar-system-bg {
         width: 400px !important;
         height: 400px !important;
+        /* WICHTIG: Kein transform hier - sonst werden Animationen gestoppt */
     }
     
-    /* PLANETEN UND ORBITS NICHT ÜBERSCHREIBEN - ANIMATIONEN ERLAUBEN */
-    .header .solar-system-container .planet,
-    .header .solar-system-container .orbit,
-    .header .solar-system-container .sun,
-    .header .solar-system-bg .planet,
-    .header .solar-system-bg .orbit,
-    .header .solar-system-bg .sun {
-        /* Keine Größen-Überschreibungen hier - lasse animation.css wirken */
-        animation: inherit !important; /* Erlaube Original-Animationen */
-        transform: inherit !important; /* Erlaube Original-Transforms */
+    /* ALTERNATIVE: TOP/LEFT STATT TRANSFORM FÜR ZENTRIERUNG */
+    .header .solar-system-container {
+        top: calc(50% - 200px) !important; /* 50% minus halbe Höhe */
+        left: calc(35% - 200px) !important; /* 35% minus halbe Breite */
+    }
+    
+    .header .solar-system-bg {
+        top: calc(50% - 190px) !important; /* 50% minus halbe Höhe */
+        left: calc(35% - 190px) !important; /* 35% minus halbe Breite */
     }
     
     /* Terminal Header - Z-INDEX ÜBER ANIMATION */
