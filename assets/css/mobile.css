@@ -89,11 +89,11 @@
         background: rgba(0, 0, 255, 0.1) !important; /* DEBUG: Blauer Hintergrund */
     }
     
-    /* SOLAR SYSTEM ANIMATION - CONTAINER NOCH WEITER LINKS */
+    /* SOLAR SYSTEM ANIMATION - DEBUG RAHMEN WEITER NACH RECHTS */
     .solar-system-bg {
         position: fixed !important;
         top: 20% !important;
-        left: 10px !important; /* Noch weiter links (war 40px) */
+        left: 60px !important; /* Weiter nach rechts (war 10px) */
         transform: rotate(180deg) !important;
         width: 300px !important;
         height: 300px !important;
@@ -110,7 +110,7 @@
     .solar-system-container {
         position: fixed !important;
         top: 10% !important;
-        left: -50px !important; /* NEGATIV: Über den Bildschirmrand hinaus */
+        left: 40px !important; /* Weiter nach rechts (war -50px) */
         transform: scale(1.0) !important;
         width: 500px !important;
         height: 500px !important;
