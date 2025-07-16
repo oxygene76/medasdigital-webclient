@@ -122,25 +122,37 @@
         background: rgba(0, 0, 255, 0.1) !important;
     }
     
-    /* NUR die Animation INNERHALB des Containers nach rechts verschieben */
+    /* NUR die Animation INNERHALB des Containers nach RECHTS verschieben */
     .solar-system-container > * {
-        transform: translateX(100px) !important; /* Inhalt nach rechts */
+        transform: translateX(-100px) !important; /* UMGEKEHRT: Animation nach rechts */
     }
     
     .solar-system-bg > * {
-        transform: translateX(100px) !important; /* Inhalt nach rechts */
+        transform: translateX(-100px) !important; /* UMGEKEHRT: Animation nach rechts */
     }
     
     /* Spezifisch für Solar System Elemente innerhalb der Container */
     .solar-system-container .solar-system {
-        margin-left: 80px !important; /* Nach rechts im Container */
-        border: 2px solid green !important; /* Debug: Grüner Rahmen */
+        margin-left: -80px !important; /* UMGEKEHRT: Nach rechts im Container */
+        border: 2px solid green !important;
         background: rgba(0, 255, 0, 0.1) !important;
     }
     
     .solar-system-container .sun {
-        margin-left: 80px !important; /* Sonne nach rechts im Container */
-        border: 2px solid yellow !important; /* Debug: Gelber Rahmen */
+        margin-left: -80px !important; /* UMGEKEHRT: Sonne nach rechts im Container */
+        border: 2px solid yellow !important;
+    }
+    
+    /* Alternative: Direkte Positionierung */
+    .solar-system-container .solar-system {
+        position: relative !important;
+        left: 150px !important; /* Direkt nach rechts */
+    }
+    
+    /* Alle Orbits nach rechts */
+    .solar-system-container .orbit {
+        margin-left: 150px !important;
+        border: 1px solid white !important;
     }
     
     /* Solar System selbst anpassen */
