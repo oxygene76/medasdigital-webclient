@@ -55,22 +55,44 @@
         box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - WIE IN MAIN.CSS */
+    /* SOLAR SYSTEM ANIMATION - ETWAS NACH RECHTS GERÜCKT */
     .solar-system-bg {
         position: absolute !important;
         top: 50% !important;
-        left: 30px !important; /* Links positioniert */
-        transform: translateY(-50%) rotate(180deg) !important; /* Wie in main.css */
-        width: 100px !important; /* Kleiner für mobile */
+        left: 60px !important; /* Weiter nach rechts (war 30px) */
+        transform: translateY(-50%) rotate(180deg) !important;
+        width: 100px !important;
         height: 100px !important;
-        opacity: 0.8 !important; /* Wie in main.css */
-        z-index: 0 !important; /* Hinter Content */
+        opacity: 0.8 !important;
+        z-index: 0 !important;
         pointer-events: none !important;
         display: block !important;
         visibility: visible !important;
     }
     
-    /* Kein Emoji-Fallback mehr */
+    /* Falls es der komplette Solar System Container ist */
+    .solar-system-container {
+        position: absolute !important;
+        top: 50% !important;
+        left: 60px !important; /* Weiter nach rechts */
+        transform: translateY(-50%) scale(0.3) !important; /* Kleiner für mobile */
+        width: 200px !important;
+        height: 200px !important;
+        opacity: 0.8 !important;
+        z-index: 0 !important;
+        pointer-events: none !important;
+        overflow: visible !important;
+    }
+    
+    /* Solar System selbst anpassen */
+    .solar-system {
+        position: relative !important;
+        top: 0 !important;
+        left: 0 !important;
+        transform: none !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
     
     /* Terminal Header - VOLLE BREITE */
     .terminal-header {
