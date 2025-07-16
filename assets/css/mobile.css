@@ -55,15 +55,15 @@
         box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - MEHR PLATZ + NICHT ABGESCHNITTEN */
+    /* SOLAR SYSTEM ANIMATION - GRÖSSER + WEITER NACH RECHTS */
     .solar-system-bg {
         position: absolute !important;
         top: 50% !important;
-        left: 40px !important; /* Etwas weniger rechts für mehr Platz links */
+        left: 70px !important; /* Weiter nach rechts (war 40px) */
         transform: translateY(-50%) rotate(180deg) !important;
-        width: 120px !important; /* Etwas größer */
-        height: 120px !important;
-        opacity: 0.9 !important; /* Sichtbarer */
+        width: 140px !important; /* Größer (war 120px) */
+        height: 140px !important;
+        opacity: 0.9 !important;
         z-index: 0 !important;
         pointer-events: none !important;
         display: block !important;
@@ -74,11 +74,11 @@
     .solar-system-container {
         position: absolute !important;
         top: 50% !important;
-        left: 20px !important; /* Mehr nach links für vollständige Sichtbarkeit */
-        transform: translateY(-50%) scale(0.4) !important; /* Etwas größer */
-        width: 250px !important; /* Breiter */
-        height: 250px !important; /* Höher */
-        opacity: 0.9 !important; /* Sichtbarer */
+        left: 50px !important; /* Weiter nach rechts (war 20px) */
+        transform: translateY(-50%) scale(0.5) !important; /* Größer (war 0.4) */
+        width: 300px !important; /* Breiter (war 250px) */
+        height: 300px !important; /* Höher (war 250px) */
+        opacity: 0.9 !important;
         z-index: 0 !important;
         pointer-events: none !important;
         overflow: visible !important;
@@ -92,7 +92,7 @@
         transform: none !important;
         width: 100% !important;
         height: 100% !important;
-        overflow: visible !important; /* Nichts abschneiden */
+        overflow: visible !important;
     }
     
     /* Terminal Header - VOLLE BREITE */
