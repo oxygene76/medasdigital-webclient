@@ -89,12 +89,12 @@
         background: rgba(0, 0, 255, 0.1) !important; /* DEBUG: Blauer Hintergrund */
     }
     
-    /* SOLAR SYSTEM ANIMATION - ALLE DEBUG RAHMEN EXPLIZIT ENTFERNT */
+    /* SOLAR SYSTEM ANIMATION - ANIMATIONEN EXPLIZIT WIEDERHERSTELLEN */
     .solar-system-bg {
         position: fixed !important;
         top: 20% !important;
         left: 60px !important;
-        transform: rotate(180deg) !important;
+        /* REMOVE: transform override - lasse animation.css wirken */
         width: 300px !important;
         height: 300px !important;
         opacity: 0.9 !important;
@@ -102,8 +102,8 @@
         pointer-events: none !important;
         display: block !important;
         visibility: visible !important;
-        border: none !important; /* EXPLIZIT kein Border */
-        background: transparent !important; /* EXPLIZIT transparent */
+        border: none !important;
+        background: transparent !important;
     }
     
     /* Falls es der komplette Solar System Container ist */
@@ -111,44 +111,60 @@
         position: fixed !important;
         top: 10% !important;
         left: 40px !important;
-        transform: scale(1.0) !important;
+        /* REMOVE: transform override - lasse animation.css wirken */
         width: 500px !important;
         height: 500px !important;
         opacity: 0.9 !important;
         z-index: 0 !important;
         pointer-events: none !important;
         overflow: visible !important;
-        border: none !important; /* EXPLIZIT kein Border */
-        background: transparent !important; /* EXPLIZIT transparent */
+        border: none !important;
+        background: transparent !important;
     }
     
-    /* Alle Solar System Kinder ohne Debug */
+    /* MINIMAL positioning - KEINE Animation-Überschreibung */
     .solar-system-container .solar-system {
-        margin-left: -20px !important;
-        border: none !important; /* EXPLIZIT kein Border */
-        background: transparent !important; /* EXPLIZIT transparent */
+        /* REMOVE: margin-left override */
+        border: none !important;
+        background: transparent !important;
+        /* Lasse ALLE transform/animation aus animation.css */
     }
     
-    /* Sonne ohne Debug */
+    /* Sonne - NUR Border entfernen, Animation beibehalten */
     .solar-system-container .sun {
-        margin-left: -20px !important;
-        border: none !important; /* EXPLIZIT kein Border für Sonne */
+        /* REMOVE: margin-left override */
+        border: none !important;
+        /* Lasse sunPulse Animation aus animation.css */
     }
     
-    /* Orbits ohne Debug */
+    /* Orbits - NUR Border korrigieren, Animation beibehalten */
     .solar-system-container .orbit {
-        margin-left: 50px !important;
-        border-color: rgba(255, 255, 255, 0.1) !important; /* Original Orbit Border */
+        /* REMOVE: margin-left override */
+        /* Lasse rotateOrbit Animation aus animation.css */
     }
     
-    /* Alle anderen Elemente ohne Debug */
-    .solar-system-container .planet,
-    .solar-system-container .comet,
-    .solar-system-container .nebula,
-    .solar-system-container .star,
-    .solar-system-container .asteroid,
-    .solar-system-container .tno {
-        border: none !important; /* EXPLIZIT kein Border */
+    /* Planeten - Animationen explizit beibehalten */
+    .solar-system-container .planet {
+        /* Lasse rotatePlanet Animation aus animation.css */
+        animation: rotatePlanet linear infinite !important;
+    }
+    
+    /* Komet - Animation beibehalten */
+    .solar-system-container .comet {
+        /* Lasse cometFly Animation aus animation.css */
+        animation: cometFly 30s linear infinite !important;
+    }
+    
+    /* Nebula - Animation beibehalten */
+    .solar-system-container .nebula {
+        /* Lasse nebulaShift Animation aus animation.css */
+        animation: nebulaShift 120s ease-in-out infinite !important;
+    }
+    
+    /* Sterne - Animation beibehalten */
+    .solar-system-container .star {
+        /* Lasse twinkle Animation aus animation.css */
+        animation: twinkle 3s ease-in-out infinite !important;
     }
     
     /* Solar System selbst anpassen */
