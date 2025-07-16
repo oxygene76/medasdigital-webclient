@@ -89,82 +89,23 @@
         background: rgba(0, 0, 255, 0.1) !important; /* DEBUG: Blauer Hintergrund */
     }
     
-    /* SOLAR SYSTEM ANIMATION - ANIMATIONEN EXPLIZIT WIEDERHERSTELLEN */
-    .solar-system-bg {
-        position: fixed !important;
-        top: 20% !important;
-        left: 60px !important;
-        /* REMOVE: transform override - lasse animation.css wirken */
-        width: 300px !important;
-        height: 300px !important;
-        opacity: 0.9 !important;
-        z-index: 0 !important;
-        pointer-events: none !important;
-        display: block !important;
-        visibility: visible !important;
-        border: none !important;
-        background: transparent !important;
-    }
-    
-    /* Falls es der komplette Solar System Container ist */
+    /* SOLAR SYSTEM ANIMATION - MINIMAL: NUR CONTAINER POSITIONIEREN */
     .solar-system-container {
         position: fixed !important;
         top: 10% !important;
-        left: 40px !important;
-        /* REMOVE: transform override - lasse animation.css wirken */
-        width: 500px !important;
-        height: 500px !important;
-        opacity: 0.9 !important;
+        left: 80px !important; /* Weiter nach rechts */
+        /* KEINE anderen Überschreibungen - lasse animation.css unberührt */
         z-index: 0 !important;
         pointer-events: none !important;
-        overflow: visible !important;
-        border: none !important;
-        background: transparent !important;
     }
     
-    /* MINIMAL positioning - KEINE Animation-Überschreibung */
-    .solar-system-container .solar-system {
-        /* REMOVE: margin-left override */
-        border: none !important;
-        background: transparent !important;
-        /* Lasse ALLE transform/animation aus animation.css */
-    }
-    
-    /* Sonne - NUR Border entfernen, Animation beibehalten */
-    .solar-system-container .sun {
-        /* REMOVE: margin-left override */
-        border: none !important;
-        /* Lasse sunPulse Animation aus animation.css */
-    }
-    
-    /* Orbits - NUR Border korrigieren, Animation beibehalten */
-    .solar-system-container .orbit {
-        /* REMOVE: margin-left override */
-        /* Lasse rotateOrbit Animation aus animation.css */
-    }
-    
-    /* Planeten - Animationen explizit beibehalten */
-    .solar-system-container .planet {
-        /* Lasse rotatePlanet Animation aus animation.css */
-        animation: rotatePlanet linear infinite !important;
-    }
-    
-    /* Komet - Animation beibehalten */
-    .solar-system-container .comet {
-        /* Lasse cometFly Animation aus animation.css */
-        animation: cometFly 30s linear infinite !important;
-    }
-    
-    /* Nebula - Animation beibehalten */
-    .solar-system-container .nebula {
-        /* Lasse nebulaShift Animation aus animation.css */
-        animation: nebulaShift 120s ease-in-out infinite !important;
-    }
-    
-    /* Sterne - Animation beibehalten */
-    .solar-system-container .star {
-        /* Lasse twinkle Animation aus animation.css */
-        animation: twinkle 3s ease-in-out infinite !important;
+    .solar-system-bg {
+        position: fixed !important;
+        top: 20% !important;
+        left: 100px !important; /* Weiter nach rechts */
+        /* KEINE anderen Überschreibungen - lasse animation.css unberührt */
+        z-index: 0 !important;
+        pointer-events: none !important;
     }
     
     /* Solar System selbst anpassen */
