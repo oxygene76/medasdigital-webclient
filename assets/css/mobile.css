@@ -55,58 +55,22 @@
         box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - KLARER UND DEUTLICHER */
-    .solar-system-bg,
-    .solar-system-bg *,
-    div[class*="solar"],
-    div[id*="solar"] {
+    /* SOLAR SYSTEM ANIMATION - WIE IN MAIN.CSS */
+    .solar-system-bg {
         position: absolute !important;
         top: 50% !important;
-        left: 30px !important; /* Etwas weiter rechts */
-        transform: translateY(-50%) !important;
-        width: 100px !important; /* Kleiner aber klarer */
+        left: 30px !important; /* Links positioniert */
+        transform: translateY(-50%) rotate(180deg) !important; /* Wie in main.css */
+        width: 100px !important; /* Kleiner für mobile */
         height: 100px !important;
-        opacity: 1 !important; /* Voll sichtbar */
-        z-index: 1 !important;
+        opacity: 0.8 !important; /* Wie in main.css */
+        z-index: 0 !important; /* Hinter Content */
         pointer-events: none !important;
         display: block !important;
         visibility: visible !important;
-        /* Klarer Fallback mit definierten Kreisen */
-        background: 
-            radial-gradient(circle at 50% 50%, rgba(255, 255, 0, 0.8) 2px, transparent 3px),
-            radial-gradient(circle at 30% 30%, rgba(0, 255, 255, 0.6) 1px, transparent 2px),
-            radial-gradient(circle at 70% 70%, rgba(255, 0, 255, 0.6) 1px, transparent 2px),
-            radial-gradient(circle at 20% 80%, rgba(0, 255, 0, 0.5) 1px, transparent 2px),
-            radial-gradient(circle at 80% 20%, rgba(255, 100, 0, 0.5) 1px, transparent 2px) !important;
-        border: 1px solid rgba(255, 255, 0, 0.3) !important;
-        border-radius: 50% !important;
     }
     
-    /* Falls Solar System eine SVG ist - klarer machen */
-    .solar-system-bg svg,
-    svg[class*="solar"],
-    svg[id*="solar"] {
-        width: 100px !important;
-        height: 100px !important;
-        opacity: 1 !important;
-        display: block !important;
-        visibility: visible !important;
-        filter: contrast(1.5) brightness(1.2) !important;
-    }
-    
-    /* Fallback: Falls kein Solar System Element gefunden wird */
-    .header::before {
-        content: "⭐🪐☀️" !important;
-        position: absolute;
-        top: 50%;
-        left: 30px;
-        transform: translateY(-50%);
-        font-size: 24px;
-        opacity: 0.8;
-        z-index: 1;
-        pointer-events: none;
-        animation: solarRotate 10s linear infinite;
-    }
+    /* Kein Emoji-Fallback mehr */
     
     /* Terminal Header - VOLLE BREITE */
     .terminal-header {
@@ -128,7 +92,7 @@
        TOP: LOGO UND TITEL - VERTICAL
        ================================= */
     
-    /* LOGO SEKTION - NOCH SCHMALER FÜR SICHTBARE RÄNDER */
+    /* LOGO SEKTION - VIEL SCHMALER FÜR SICHTBARE RÄNDER */
     .system-info {
         order: 1;
         display: flex !important;
@@ -139,10 +103,10 @@
         background: rgba(0, 0, 0, 0.1);
         backdrop-filter: blur(2px);
         border-radius: 12px !important;
-        border: 2px solid rgba(0, 255, 127, 0.4) !important; /* Dickerer Border */
-        width: calc(100% - 40px) !important; /* Noch viel schmaler */
-        max-width: calc(100% - 40px) !important;
-        margin: 4px 20px !important; /* Viel mehr seitlicher Abstand */
+        border: 2px solid rgba(0, 255, 127, 0.4) !important;
+        width: calc(100% - 60px) !important; /* VIEL schmaler */
+        max-width: calc(100% - 60px) !important;
+        margin: 4px 30px !important; /* VIEL mehr seitlicher Abstand */
         box-sizing: border-box !important;
     }
     
@@ -301,23 +265,23 @@
        BOTTOM: STATUS DISPLAY - VERTICAL
        ================================= */
     
-    /* STATUS DISPLAY - NOCH SCHMALER FÜR SICHTBARE RÄNDER */
+    /* STATUS DISPLAY - VIEL SCHMALER FÜR SICHTBARE RÄNDER */
     .status-display {
         order: 3;
         display: flex !important;
         flex-direction: column !important;
         align-items: flex-end !important;
         gap: 8px;
-        width: calc(100% - 40px) !important; /* Noch viel schmaler */
-        max-width: calc(100% - 40px) !important;
+        width: calc(100% - 60px) !important; /* VIEL schmaler */
+        max-width: calc(100% - 60px) !important;
         background: rgba(0, 0, 0, 0.1);
         backdrop-filter: blur(2px);
         border-radius: 12px !important;
-        border: 2px solid rgba(0, 255, 127, 0.4) !important; /* Dickerer Border */
+        border: 2px solid rgba(0, 255, 127, 0.4) !important;
         padding: 12px 16px !important;
         position: relative;
         z-index: 2;
-        margin: 4px 20px !important; /* Viel mehr seitlicher Abstand */
+        margin: 4px 30px !important; /* VIEL mehr seitlicher Abstand */
         box-sizing: border-box !important;
     }
     
@@ -1411,8 +1375,27 @@
     50% { opacity: 0.7; }
 }
 
-/* CSS Animation für Solar System Fallback */
-@keyframes solarRotate {
-    0% { transform: translateY(-50%) rotate(0deg); }
-    100% { transform: translateY(-50%) rotate(360deg); }
+/* CSS Animation für Solar System - ohne Emoji Fallback */
+@keyframes copySuccessGreen {
+    0% { 
+        background: rgba(0, 255, 127, 0.05);
+        border-color: rgba(0, 255, 127, 0.3);
+        transform: scale(1);
+    }
+    50% { 
+        background: rgba(0, 255, 127, 0.2);
+        border-color: rgba(0, 255, 127, 0.7);
+        transform: scale(1.02);
+        box-shadow: 0 0 8px rgba(0, 255, 127, 0.4);
+    }
+    100% { 
+        background: rgba(0, 255, 127, 0.05);
+        border-color: rgba(0, 255, 127, 0.3);
+        transform: scale(1);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
 }
