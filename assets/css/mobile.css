@@ -56,16 +56,16 @@
         box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - WEITER NACH RECHTS + DEBUG ENTFERNT */
+    /* SOLAR SYSTEM ANIMATION - CONTAINER + INNERE ELEMENTE NACH RECHTS */
     .solar-system-bg {
         position: fixed !important;
         top: 20% !important;
-        left: 80px !important; /* Weiter nach rechts (war 20px) */
-        transform: rotate(180deg) !important;
+        left: 60px !important;
+        transform: rotate(180deg) translate(50px, 0) !important; /* Animation nach rechts verschieben */
         width: 240px !important;
         height: 240px !important;
         opacity: 0.9 !important;
-        z-index: 0 !important; /* Zurück nach hinten */
+        z-index: 0 !important;
         pointer-events: none !important;
         display: block !important;
         visibility: visible !important;
@@ -75,14 +75,35 @@
     .solar-system-container {
         position: fixed !important;
         top: 10% !important;
-        left: 60px !important; /* Weiter nach rechts (war 10px) */
+        left: 40px !important;
         transform: scale(0.9) !important;
         width: 450px !important;
         height: 450px !important;
         opacity: 0.9 !important;
-        z-index: 0 !important; /* Zurück nach hinten */
+        z-index: 0 !important;
         pointer-events: none !important;
         overflow: visible !important;
+    }
+    
+    /* Solar System selbst nach rechts verschieben */
+    .solar-system {
+        position: relative !important;
+        top: 0 !important;
+        left: 80px !important; /* Animation innerhalb des Containers nach rechts */
+        transform: none !important;
+        width: 100% !important;
+        height: 100% !important;
+        overflow: visible !important;
+    }
+    
+    /* Sonne nach rechts verschieben */
+    .sun {
+        left: calc(50% + 40px) !important; /* Sonne nach rechts */
+    }
+    
+    /* Alle Orbits nach rechts verschieben */
+    .orbit {
+        left: calc(50% + 40px) !important; /* Orbits nach rechts */
     }
     
     /* Solar System selbst anpassen */
