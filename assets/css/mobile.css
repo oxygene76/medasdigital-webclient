@@ -38,32 +38,32 @@
        HEADER LAYOUT - VERTICAL STACK + LARGE SOLAR SYSTEM
        ================================= */
     
-    /* Header Container - TRANSPARENTER HINTERGRUND */
+    /* Header Container - NOCH TRANSPARENTER + MEHR PLATZ FÜR ANIMATION */
     .header {
         padding: 12px 8px;
         min-height: 180px;
         margin: 0;
         position: relative;
-        overflow: hidden;
+        overflow: visible !important; /* Animation nicht abschneiden */
         display: flex;
         flex-direction: column;
         flex-shrink: 0;
-        background: rgba(0, 0, 0, 0.3) !important; /* Sehr transparent */
+        background: rgba(0, 0, 0, 0.1) !important; /* Noch transparenter */
         border-bottom: 2px solid rgba(0, 255, 127, 0.3);
         width: 100%;
         max-width: 100%;
         box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - ETWAS NACH RECHTS GERÜCKT */
+    /* SOLAR SYSTEM ANIMATION - MEHR PLATZ + NICHT ABGESCHNITTEN */
     .solar-system-bg {
         position: absolute !important;
         top: 50% !important;
-        left: 60px !important; /* Weiter nach rechts (war 30px) */
+        left: 40px !important; /* Etwas weniger rechts für mehr Platz links */
         transform: translateY(-50%) rotate(180deg) !important;
-        width: 100px !important;
-        height: 100px !important;
-        opacity: 0.8 !important;
+        width: 120px !important; /* Etwas größer */
+        height: 120px !important;
+        opacity: 0.9 !important; /* Sichtbarer */
         z-index: 0 !important;
         pointer-events: none !important;
         display: block !important;
@@ -74,11 +74,11 @@
     .solar-system-container {
         position: absolute !important;
         top: 50% !important;
-        left: 60px !important; /* Weiter nach rechts */
-        transform: translateY(-50%) scale(0.3) !important; /* Kleiner für mobile */
-        width: 200px !important;
-        height: 200px !important;
-        opacity: 0.8 !important;
+        left: 20px !important; /* Mehr nach links für vollständige Sichtbarkeit */
+        transform: translateY(-50%) scale(0.4) !important; /* Etwas größer */
+        width: 250px !important; /* Breiter */
+        height: 250px !important; /* Höher */
+        opacity: 0.9 !important; /* Sichtbarer */
         z-index: 0 !important;
         pointer-events: none !important;
         overflow: visible !important;
@@ -92,6 +92,7 @@
         transform: none !important;
         width: 100% !important;
         height: 100% !important;
+        overflow: visible !important; /* Nichts abschneiden */
     }
     
     /* Terminal Header - VOLLE BREITE */
@@ -114,7 +115,7 @@
        TOP: LOGO UND TITEL - VERTICAL
        ================================= */
     
-    /* LOGO SEKTION - TRANSPARENTER + BREITER WIE RESEARCH INTERFACE */
+    /* LOGO SEKTION - NOCH TRANSPARENTER */
     .system-info {
         order: 1;
         display: flex !important;
@@ -122,13 +123,13 @@
         align-items: center !important;
         gap: 10px;
         padding: 16px;
-        background: rgba(0, 0, 0, 0.05) !important; /* Sehr transparent */
-        backdrop-filter: blur(1px) !important; /* Weniger Blur */
+        background: rgba(0, 0, 0, 0.02) !important; /* Extrem transparent */
+        backdrop-filter: blur(0.5px) !important; /* Minimal Blur */
         border-radius: 12px !important;
-        border: 1px solid rgba(0, 255, 127, 0.2) !important; /* Dünner Border */
-        width: calc(100% - 16px) !important; /* Breiter - wie Research Interface */
+        border: 1px solid rgba(0, 255, 127, 0.15) !important; /* Sehr dünner Border */
+        width: calc(100% - 16px) !important;
         max-width: calc(100% - 16px) !important;
-        margin: 4px 8px !important; /* Weniger seitlicher Abstand */
+        margin: 4px 8px !important;
         box-sizing: border-box !important;
     }
     
@@ -287,23 +288,23 @@
        BOTTOM: STATUS DISPLAY - VERTICAL
        ================================= */
     
-    /* STATUS DISPLAY - TRANSPARENTER + BREITER WIE RESEARCH INTERFACE */
+    /* STATUS DISPLAY - NOCH TRANSPARENTER */
     .status-display {
         order: 3;
         display: flex !important;
         flex-direction: column !important;
         align-items: flex-end !important;
         gap: 8px;
-        width: calc(100% - 16px) !important; /* Breiter - wie Research Interface */
+        width: calc(100% - 16px) !important;
         max-width: calc(100% - 16px) !important;
-        background: rgba(0, 0, 0, 0.05) !important; /* Sehr transparent */
-        backdrop-filter: blur(1px) !important; /* Weniger Blur */
+        background: rgba(0, 0, 0, 0.02) !important; /* Extrem transparent */
+        backdrop-filter: blur(0.5px) !important; /* Minimal Blur */
         border-radius: 12px !important;
-        border: 1px solid rgba(0, 255, 127, 0.2) !important; /* Dünner Border */
+        border: 1px solid rgba(0, 255, 127, 0.15) !important; /* Sehr dünner Border */
         padding: 12px 16px !important;
         position: relative;
         z-index: 2;
-        margin: 4px 8px !important; /* Weniger seitlicher Abstand */
+        margin: 4px 8px !important;
         box-sizing: border-box !important;
     }
     
