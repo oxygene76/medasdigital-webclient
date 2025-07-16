@@ -1458,4 +1458,1464 @@
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
+}/* MedasDigital WebClient - Complete Mobile Responsive Styles - VERTICAL LAYOUT + LARGE SOLAR SYSTEM */
+
+/* Mobile Viewport Meta Setup */
+/* Required in HTML head: <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> */
+
+/* Mobile Base Styles */
+@media only screen and (max-width: 768px) {
+    /* Prevent zoom on input focus */
+    input, textarea, select {
+        font-size: 16px !important;
+    }
+    
+    /* Body Mobile - KEIN CLIPPING DER ANIMATION */
+    body {
+        overflow: visible !important; /* Kein Clipping */
+        -webkit-overflow-scrolling: touch;
+        -webkit-text-size-adjust: none;
+        -webkit-tap-highlight-color: transparent;
+        font-size: 14px;
+        position: relative; /* Für absolute Positionierung */
+    }
+    
+    /* Container adjustments - KORREKTE BREITE */
+    .container {
+        height: auto;
+        min-height: 100vh;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        width: 100%; /* 100% statt 100vw */
+        max-width: 100%;
+        margin: 0;
+        box-sizing: border-box;
+        overflow-x: hidden; /* Verhindert horizontales Scrollen */
+    }
+    
+    /* =================================
+       HEADER LAYOUT - VERTICAL STACK + LARGE SOLAR SYSTEM
+       ================================= */
+    
+    /* Header Container - NOCH TRANSPARENTER + MEHR PLATZ FÜR ANIMATION */
+    .header {
+        padding: 12px 8px;
+        min-height: 180px;
+        margin: 0;
+        position: relative;
+        overflow: visible !important; /* Animation nicht abschneiden */
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        background: rgba(0, 0, 0, 0.1) !important; /* Noch transparenter */
+        border-bottom: 2px solid rgba(0, 255, 127, 0.3);
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    
+    /* SOLAR SYSTEM ANIMATION - ALLES WEITER NACH RECHTS + DEBUG RAHMEN */
+    .solar-system-bg {
+        position: fixed !important;
+        top: 20% !important;
+        left: 100px !important; /* Weiter nach rechts (war 60px) */
+        transform: rotate(180deg) translate(80px, 0) !important; /* Noch weiter nach rechts (war 50px) */
+        width: 240px !important;
+        height: 240px !important;
+        opacity: 0.9 !important;
+        z-index: 999 !important; /* Debug: Nach vorne */
+        pointer-events: none !important;
+        display: block !important;
+        visibility: visible !important;
+        border: 2px solid red !important; /* DEBUG: Rote Umrandung */
+        background: rgba(255, 0, 0, 0.1) !important; /* DEBUG: Roter Hintergrund */
+    }
+    
+    /* Falls es der komplette Solar System Container ist */
+    .solar-system-container {
+        position: fixed !important;
+        top: 10% !important;
+        left: 80px !important; /* Weiter nach rechts (war 40px) */
+        transform: scale(0.9) !important;
+        width: 450px !important;
+        height: 450px !important;
+        opacity: 0.9 !important;
+        z-index: 999 !important; /* Debug: Nach vorne */
+        pointer-events: none !important;
+        overflow: visible !important;
+        border: 2px solid blue !important; /* DEBUG: Blaue Umrandung */
+        background: rgba(0, 0, 255, 0.1) !important; /* DEBUG: Blauer Hintergrund */
+    }
+    
+    /* SOLAR SYSTEM ANIMATION - WEITER RECHTS + KEIN DEBUG */
+    .solar-system-container {
+        position: fixed !important;
+        top: 10% !important;
+        left: 120px !important; /* Noch weiter nach rechts (war 80px) */
+        z-index: 0 !important;
+        pointer-events: none !important;
+        border: none !important; /* Explizit kein roter Rahmen */
+        background: none !important; /* Explizit kein Hintergrund */
+    }
+    
+    .solar-system-bg {
+        position: fixed !important;
+        top: 20% !important;
+        left: 140px !important; /* Noch weiter nach rechts (war 100px) */
+        z-index: 0 !important;
+        pointer-events: none !important;
+        border: none !important; /* Explizit kein roter Rahmen */
+        background: none !important; /* Explizit kein Hintergrund */
+    }
+    
+    /* Alle möglichen Debug-Rahmen explizit entfernen */
+    .solar-system-container *,
+    .solar-system-bg *,
+    .solar-system,
+    .sun,
+    .orbit,
+    .planet {
+        border: none !important;
+        outline: none !important;
+    }
+    
+    /* Solar System selbst anpassen */
+    .solar-system {
+        position: relative !important;
+        top: 0 !important;
+        left: 0 !important;
+        transform: none !important;
+        width: 100% !important;
+        height: 100% !important;
+        overflow: visible !important;
+    }
+    
+    /* Terminal Header - VOLLE BREITE */
+    .terminal-header {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important; /* Stretch für volle Breite */
+        justify-content: space-between !important;
+        height: 100%;
+        min-height: 160px;
+        gap: 8px;
+        position: relative;
+        z-index: 2;
+        padding: 0 !important; /* Kein Padding */
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* =================================
+       TOP: LOGO UND TITEL - VERTICAL
+       ================================= */
+    
+    /* LOGO SEKTION - NOCH TRANSPARENTER */
+    .system-info {
+        order: 1;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 10px;
+        padding: 16px;
+        background: rgba(0, 0, 0, 0.02) !important; /* Extrem transparent */
+        backdrop-filter: blur(0.5px) !important; /* Minimal Blur */
+        border-radius: 12px !important;
+        border: 1px solid rgba(0, 255, 127, 0.15) !important; /* Sehr dünner Border */
+        width: calc(100% - 16px) !important;
+        max-width: calc(100% - 16px) !important;
+        margin: 4px 8px !important;
+        box-sizing: border-box !important;
+    }
+    
+    .logo-section {
+        display: flex;
+        flex-direction: column !important;
+        align-items: center;
+        gap: 10px; /* Mehr Abstand */
+        margin-bottom: 0;
+    }
+    
+    .logo-icon {
+        width: 48px; /* Noch größer */
+        height: 48px;
+        flex-shrink: 0;
+    }
+    
+    .system-title {
+        text-align: center;
+    }
+    
+    .main-title {
+        font-size: 24px; /* VIEL größer */
+        line-height: 1.1;
+        margin-bottom: 6px;
+        color: #00ff7f;
+        text-shadow: 0 0 15px rgba(0, 255, 127, 1); /* Stärkerer Glow */
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        letter-spacing: 3px; /* Noch mehr Spacing */
+        text-transform: uppercase;
+    }
+    
+    .sub-title {
+        font-size: 14px; /* Viel größer */
+        opacity: 0.9;
+        color: #00ff7f;
+        text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+    
+    /* =================================
+       MIDDLE: WALLET SECTION
+       ================================= */
+    
+    /* WALLET SEKTION - VOLLE BREITE */
+    .wallet-section {
+        order: 2;
+        width: 100% !important;
+        max-width: none !important;
+        display: flex !important;
+        justify-content: stretch !important;
+        margin: 4px 0;
+        box-sizing: border-box !important;
+    }
+    
+    .wallet-display {
+        background: rgba(0, 0, 0, 0.3);
+        border: none !important; /* Keine seitlichen Borders */
+        border-top: 1px solid rgba(0, 255, 127, 0.3) !important;
+        border-bottom: 1px solid rgba(0, 255, 127, 0.3) !important;
+        border-radius: 0 !important; /* Keine Rundung für volle Breite */
+        padding: 10px 8px; /* Minimales seitliches Padding */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        width: 100% !important;
+        max-width: none !important;
+        font-family: 'Share Tech Mono', monospace;
+        transition: all 0.3s ease;
+        box-sizing: border-box !important;
+    }
+    
+    .wallet-display:hover {
+        background: rgba(0, 255, 127, 0.1);
+        border-color: rgba(0, 255, 127, 0.5);
+    }
+    
+    .wallet-display.connected {
+        border-color: rgba(0, 255, 127, 0.5);
+        background: rgba(0, 255, 127, 0.05);
+    }
+    
+    .wallet-display.connecting {
+        border-color: rgba(255, 215, 0, 0.5);
+        background: rgba(255, 215, 0, 0.05);
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    .wallet-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px; /* Größer */
+        color: #00ff7f;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+    }
+    
+    .status-icon {
+        font-size: 16px; /* Größer */
+    }
+    
+    .wallet-address {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: 6px;
+        padding: 8px 12px; /* Mehr Padding */
+        border: 1px solid rgba(0, 255, 0, 0.3);
+    }
+    
+    .address-text {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 11px; /* Größer */
+        color: #00ff00;
+        cursor: pointer;
+        word-break: break-all;
+        text-align: center;
+        flex: 1;
+        line-height: 1.3;
+        transition: color 0.2s ease;
+        letter-spacing: 0.3px;
+    }
+    
+    .address-text:hover {
+        color: #00ffff;
+        text-shadow: 0 0 4px rgba(0, 255, 0, 0.5);
+    }
+    
+    .copy-btn {
+        background: rgba(0, 255, 127, 0.1);
+        border: 1px solid rgba(0, 255, 127, 0.3);
+        border-radius: 4px;
+        padding: 3px 6px;
+        font-size: 9px;
+        color: #00ff7f;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: all 0.3s ease;
+    }
+    
+    .copy-btn:hover {
+        background: rgba(0, 255, 127, 0.2);
+        border-color: rgba(0, 255, 127, 0.5);
+        transform: scale(1.05);
+    }
+    
+    /* =================================
+       BOTTOM: STATUS DISPLAY - VERTICAL
+       ================================= */
+    
+    /* STATUS DISPLAY - NOCH TRANSPARENTER */
+    .status-display {
+        order: 3;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-end !important;
+        gap: 8px;
+        width: calc(100% - 16px) !important;
+        max-width: calc(100% - 16px) !important;
+        background: rgba(0, 0, 0, 0.02) !important; /* Extrem transparent */
+        backdrop-filter: blur(0.5px) !important; /* Minimal Blur */
+        border-radius: 12px !important;
+        border: 1px solid rgba(0, 255, 127, 0.15) !important; /* Sehr dünner Border */
+        padding: 12px 16px !important;
+        position: relative;
+        z-index: 2;
+        margin: 4px 8px !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Network Status - RECHTS INNERHALB DES BLOCKS */
+    .status-row {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end; /* RECHTS ausrichten */
+        gap: 6px;
+        width: 100%;
+    }
+    
+    .network-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end; /* RECHTS ausrichten */
+        gap: 4px;
+        width: 100%;
+    }
+    
+    .connection-status,
+    #blockchain-status {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end; /* RECHTS ausrichten */
+        gap: 8px;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 14px;
+        color: #00ff7f;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(0, 255, 127, 0.4);
+        border-radius: 8px;
+        padding: 8px 16px;
+        min-width: 160px; /* Feste Breite */
+        width: fit-content; /* Nur so breit wie nötig */
+        text-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+        white-space: nowrap;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+        margin-left: auto; /* Nach rechts drücken */
+    }
+    
+    .status-dot,
+    .dot-connected,
+    .dot-disconnected {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    
+    .dot-connected {
+        background: #00ff00;
+        box-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
+    }
+    
+    .dot-disconnected {
+        background: #ff3333;
+        box-shadow: 0 0 8px rgba(255, 51, 51, 0.8);
+    }
+    
+    /* Timestamp - RECHTS */
+    .timestamp {
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 13px;
+        color: #00ff7f;
+        text-align: right; /* RECHTS ausrichten */
+        opacity: 0.9;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(0, 255, 127, 0.3);
+        border-radius: 6px;
+        padding: 6px 12px;
+        margin-top: 4px;
+        margin-left: auto; /* Nach rechts drücken */
+        width: fit-content; /* Nur so breit wie nötig */
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-shadow: 0 0 6px rgba(0, 255, 127, 0.4);
+    }
+}
+
+/* Main Interface Mobile Layout - ANTI-STAUCHUNG */
+@media only screen and (max-width: 768px) {
+    .main-interface {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-height: 0;
+    }
+    
+    /* Research Interface wird HAUPTBEREICH */
+    .communication-display {
+        order: 1;
+        flex: 1;
+        min-height: 500px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Control Panel wird SIDEBAR → BOTTOM SHEET */
+    .control-panel {
+        order: 2;
+        height: auto;
+        max-height: none;
+        flex-shrink: 0;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, rgba(0, 100, 150, 0.1) 0%, rgba(0, 50, 100, 0.1) 100%);
+        border: 2px solid #0099ff;
+        border-radius: 12px;
+        padding: 20px;
+    }
+}
+
+/* Mobile Tab Navigation - ERWEITERT */
+@media only screen and (max-width: 768px) {
+    .terminal-tabs {
+        min-height: 50px;
+        padding: 0 8px;
+        border-radius: 8px 8px 0 0;
+        flex-shrink: 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+    }
+    
+    .terminal-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .tab-button {
+        padding: 12px 16px;
+        font-size: 12px;
+        min-height: 50px;
+        min-width: 90px;
+        gap: 6px;
+        flex-shrink: 0;
+        white-space: nowrap;
+        border-radius: 6px 6px 0 0;
+        margin: 0 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .tab-button:active {
+        background: rgba(255, 255, 255, 0.1);
+        transform: scale(0.95);
+    }
+    
+    .tab-button::before {
+        font-size: 16px;
+        margin-right: 4px;
+    }
+}
+
+/* Mobile Tab Content - OPTIMIERT */
+@media only screen and (max-width: 768px) {
+    .tab-content {
+        flex: 1;
+        padding: 16px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        min-height: 400px;
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .content-area {
+        padding: 16px;
+        overflow-y: auto;
+        height: auto;
+        min-height: 400px;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .content-area::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    .content-area::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+    }
+    
+    .content-area::-webkit-scrollbar-thumb {
+        background: rgba(0, 204, 102, 0.5);
+        border-radius: 2px;
+    }
+}
+
+/* Mobile Communication Display - ERWEITERT */
+@media only screen and (max-width: 768px) {
+    .comm-header {
+        padding: 16px 20px;
+        flex-shrink: 0;
+        border-bottom: 2px solid #00cc66;
+    }
+    
+    .comm-title {
+        font-size: 16px;
+        margin-bottom: 4px;
+    }
+    
+    .comm-subtitle {
+        font-size: 12px;
+    }
+    
+    .message-display {
+        flex: 1;
+        padding: 20px;
+        min-height: 300px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .message-display::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    .message-display::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.1);
+    }
+    
+    .message-display::-webkit-scrollbar-thumb {
+        background: rgba(0, 204, 102, 0.5);
+        border-radius: 2px;
+    }
+    
+    .input-module {
+        padding: 16px 20px;
+        border-top: 2px solid #00cc66;
+        background: rgba(0, 0, 0, 0.8);
+        flex-shrink: 0;
+        position: sticky;
+        bottom: 0;
+        backdrop-filter: blur(10px);
+    }
+    
+    .terminal-input {
+        padding: 14px 16px;
+        font-size: 16px;
+        min-height: 50px;
+        border-radius: 8px;
+        line-height: 1.4;
+        max-height: 120px;
+        resize: none;
+        width: 100%;
+        border: 1px solid #00cc66;
+        background: rgba(0, 0, 0, 0.5);
+        color: #00cc66;
+        font-family: 'Share Tech Mono', monospace;
+    }
+    
+    .terminal-input:focus {
+        border-color: #00ffff;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        color: #00ffff;
+        outline: none;
+    }
+}
+
+/* Mobile Explorer Sections - ERWEITERT */
+@media only screen and (max-width: 768px) {
+    .explorer-section {
+        margin-bottom: 20px;
+        padding: 16px;
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid #00cc66;
+        position: relative;
+    }
+    
+    .explorer-section::before {
+        position: absolute;
+        top: -8px;
+        left: 12px;
+        background: #0a0a0a;
+        padding: 0 8px;
+        font-size: 10px;
+        color: #00cc66;
+        letter-spacing: 1px;
+    }
+    
+    .network-overview::before { content: 'NETWORK OVERVIEW'; }
+    .recent-blocks::before { content: 'RECENT BLOCKS'; }
+    .search-section::before { content: 'BLOCKCHAIN SEARCH'; }
+    .wallet-history::before { content: 'WALLET HISTORY'; }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 16px;
+        display: grid;
+    }
+    
+    .stat-item {
+        padding: 12px;
+        border-radius: 6px;
+        text-align: center;
+        background: rgba(0, 255, 255, 0.05);
+        border: 1px solid rgba(0, 255, 255, 0.2);
+    }
+    
+    .stat-value {
+        font-size: 16px;
+        margin-bottom: 4px;
+        font-weight: bold;
+        color: #00ffff;
+        font-family: 'Share Tech Mono', monospace;
+    }
+    
+    .stat-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        color: #999999;
+        letter-spacing: 1px;
+    }
+    
+    .block-item {
+        padding: 10px 12px;
+        margin: 6px 0;
+        font-size: 11px;
+        border-radius: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.3);
+        border-left: 3px solid #00cc66;
+        font-family: 'Share Tech Mono', monospace;
+    }
+    
+    .block-height {
+        font-weight: bold;
+        font-size: 12px;
+        color: #00ffff;
+    }
+    
+    .block-time {
+        color: #999999;
+    }
+    
+    .block-txs {
+        color: #ff00ff;
+    }
+    
+    .search-input {
+        padding: 10px 12px;
+        font-size: 16px;
+        border-radius: 6px;
+        margin-bottom: 6px;
+        width: 100%;
+        border: 1px solid #00cc66;
+        background: rgba(0, 0, 0, 0.5);
+        color: #00cc66;
+        font-family: 'Share Tech Mono', monospace;
+    }
+    
+    .search-input:focus {
+        border-color: #00ffff;
+        color: #00ffff;
+        outline: none;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    }
+}
+
+/* Mobile Forms - ERWEITERT */
+@media only screen and (max-width: 768px) {
+    .form-group {
+        margin-bottom: 16px;
+    }
+    
+    .form-label {
+        font-size: 12px;
+        margin-bottom: 6px;
+        display: block;
+        font-weight: 600;
+        color: #999999;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .form-input, .form-select, .form-textarea {
+        padding: 14px 16px;
+        font-size: 16px;
+        border-radius: 8px;
+        min-height: 50px;
+        width: 100%;
+        margin-bottom: 8px;
+        border: 1px solid #00cc66;
+        background: rgba(0, 0, 0, 0.5);
+        color: #00cc66;
+        font-family: 'Share Tech Mono', monospace;
+    }
+    
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+        border-color: #00ffff;
+        color: #00ffff;
+        outline: none;
+        box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+    }
+    
+    .form-textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+}
+
+/* Mobile Buttons - ERWEITERT */
+@media only screen and (max-width: 768px) {
+    .terminal-button {
+        min-height: 50px;
+        padding: 14px 20px;
+        font-size: 12px;
+        border-radius: 8px;
+        text-align: center;
+        margin-bottom: 8px;
+        transition: all 0.2s ease;
+        width: 100%;
+        border: 2px solid;
+        background: transparent;
+        font-family: 'Share Tech Mono', monospace;
+        font-weight: 400;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .terminal-button:active {
+        transform: scale(0.95);
+    }
+    
+    .btn-primary {
+        border-color: #00ffff;
+        color: #00ffff;
+    }
+    
+    .btn-primary:hover {
+        background: rgba(0, 255, 255, 0.1);
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+    }
+    
+    .btn-danger {
+        border-color: #ff3030;
+        color: #ff3030;
+    }
+    
+    .btn-danger:hover {
+        background: rgba(255, 48, 48, 0.1);
+        box-shadow: 0 0 15px rgba(255, 48, 48, 0.4);
+    }
+    
+    .btn-success {
+        border-color: #00ff00;
+        color: #00ff00;
+    }
+    
+    .btn-success:hover {
+        background: rgba(0, 255, 0, 0.1);
+        box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+    }
+    
+    .btn-small {
+        padding: 8px 14px;
+        font-size: 10px;
+        min-height: 36px;
+        width: auto;
+    }
+}
+
+/* Mobile Wallet and Balance Display - ERWEITERT */
+@media only screen and (max-width: 768px) {
+    .wallet-display {
+        padding: 16px;
+        margin: 16px 0;
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid #00ffff;
+        position: relative;
+    }
+    
+    .wallet-display::before {
+        content: 'WALLET DATA';
+        position: absolute;
+        top: -8px;
+        left: 12px;
+        background: #0a0a0a;
+        padding: 0 8px;
+        font-size: 10px;
+        color: #00ffff;
+        letter-spacing: 1px;
+    }
+    
+    .data-field {
+        margin-bottom: 12px;
+    }
+    
+    .field-label {
+        font-size: 11px;
+        margin-bottom: 4px;
+        color: #999999;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .field-value {
+        font-size: 12px;
+        padding: 8px 10px;
+        border-radius: 4px;
+        line-height: 1.3;
+        font-family: 'Share Tech Mono', monospace;
+        color: #00ffff;
+        word-break: break-all;
+        background: rgba(0, 255, 255, 0.1);
+        border-left: 2px solid #00ffff;
+    }
+    
+    .balance-display {
+        color: #00ff00;
+        font-size: 14px;
+        font-weight: 700;
+        text-shadow: 0 0 10px #00ff00;
+    }
+    
+    .balance-overview {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+        display: grid;
+    }
+    
+    .balance-item {
+        padding: 16px 12px;
+        border-radius: 8px;
+        text-align: center;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid #00ffff;
+    }
+    
+    .balance-amount {
+        font-size: 15px;
+        margin-bottom: 4px;
+        font-weight: bold;
+        color: #00ff00;
+        font-family: 'Share Tech Mono', monospace;
+    }
+    
+    .balance-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        color: #999999;
+    }
+    
+    .send-form {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid #00cc66;
+        padding: 16px;
+        margin: 16px 0;
+        border-radius: 8px;
+    }
+    
+    .input-wrapper {
+        position: relative;
+    }
+    
+    .max-button {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #ff00ff;
+        color: #000;
+        border: none;
+        padding: 2px 6px;
+        font-size: 8px;
+        cursor: pointer;
+        font-weight: 700;
+        border-radius: 3px;
+    }
+}
+
+/* Mobile Messages - ERWEITERT */
+@media only screen and (max-width: 768px) {
+    .message-item {
+        margin-bottom: 16px;
+        padding: 14px 16px;
+        border-radius: 8px;
+        max-width: 90%;
+        border-left: 3px solid;
+        background: rgba(0, 0, 0, 0.3);
+        position: relative;
+    }
+    
+    .message-sent {
+        margin-left: 10%;
+        margin-right: 0;
+        background: rgba(0, 255, 255, 0.05);
+        border-left-color: #00ffff;
+    }
+    
+    .message-received {
+        margin-right: 10%;
+        margin-left: 0;
+        background: rgba(255, 0, 255, 0.05);
+        border-left-color: #ff00ff;
+    }
+    
+    .message-system {
+        border-left-color: #ffaa00;
+        background: rgba(255, 170, 0, 0.05);
+    }
+    
+    .message-header {
+        margin-bottom: 6px;
+        font-size: 11px;
+        flex-wrap: wrap;
+        gap: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-family: 'Share Tech Mono', monospace;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .message-sender {
+        font-size: 10px;
+        color: #cccccc;
+    }
+    
+    .message-time {
+        font-size: 9px;
+        color: #666666;
+    }
+    
+    .message-content {
+        font-size: 13px;
+        line-height: 1.5;
+        word-break: break-word;
+        color: #ffffff;
+        font-family: 'Share Tech Mono', monospace;
+        white-space: pre-wrap;
+    }
+    
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+        color: #666666;
+        font-family: 'Share Tech Mono', monospace;
+    }
+    
+    .empty-state h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+        color: #00cc66;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    
+    .empty-state p {
+        font-size: 13px;
+        line-height: 1.4;
+        margin-bottom: 8px;
+    }
+    
+    .empty-state .icon {
+        font-size: 48px;
+        margin: 20px 0;
+        color: #00cc66;
+        animation: pulse 3s infinite;
+    }
+}
+
+/* Responsive Breakpoints */
+@media only screen and (max-width: 480px) {
+    .header {
+        min-height: 180px;
+        padding: 12px 8px;
+    }
+    
+    .terminal-header {
+        min-height: 160px;
+        gap: 10px;
+    }
+    
+    .solar-system-bg {
+        width: 150px !important;
+        height: 150px !important;
+    }
+    
+    .main-title {
+        font-size: 14px;
+    }
+    
+    .sub-title {
+        font-size: 9px;
+    }
+    
+    .logo-icon {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .system-info,
+    .status-display,
+    .wallet-section {
+        max-width: 240px;
+        padding: 6px 8px;
+    }
+    
+    .wallet-status {
+        font-size: 10px;
+    }
+    
+    .address-text {
+        font-size: 8px;
+    }
+    
+    .connection-status,
+    #blockchain-status {
+        font-size: 10px;
+        min-width: 140px;
+        padding: 5px 10px;
+    }
+    
+    .timestamp {
+        font-size: 9px;
+    }
+}
+
+@media only screen and (max-width: 320px) {
+    .header {
+        min-height: 160px;
+        padding: 10px 6px;
+    }
+    
+    .terminal-header {
+        min-height: 140px;
+        gap: 8px;
+    }
+    
+    .solar-system-bg {
+        width: 120px !important;
+        height: 120px !important;
+    }
+    
+    .main-title {
+        font-size: 12px;
+    }
+    
+    .sub-title {
+        font-size: 8px;
+    }
+    
+    .logo-icon {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .address-text {
+        font-size: 7px;
+    }
+    
+    .connection-status,
+    #blockchain-status {
+        font-size: 9px;
+        min-width: 120px;
+        padding: 4px 8px;
+    }
+    
+    .stats-grid,
+    .balance-overview {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+}
+
+/* Landscape Orientation */
+@media only screen and (max-height: 500px) and (orientation: landscape) {
+    .header {
+        min-height: 120px;
+        padding: 8px 12px;
+    }
+    
+    .terminal-header {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        min-height: 100px;
+    }
+    
+    .system-info {
+        order: 1;
+        max-width: 200px;
+    }
+    
+    .wallet-section {
+        order: 2;
+        max-width: 180px;
+    }
+    
+    .status-display {
+        order: 3;
+        max-width: 160px;
+    }
+    
+    .solar-system-bg {
+        width: 100px !important;
+        height: 100px !important;
+    }
+    
+    .logo-section {
+        flex-direction: row !important;
+        gap: 8px;
+    }
+    
+    .main-title {
+        font-size: 12px;
+    }
+    
+    .main-interface {
+        flex-direction: row;
+        gap: 16px;
+        height: calc(100vh - 140px);
+    }
+    
+    .communication-display {
+        flex: 2;
+        min-height: 300px;
+    }
+    
+    .control-panel {
+        flex: 1;
+        max-width: 300px;
+    }
+}
+
+/* Tablet Size (481px - 768px) */
+@media only screen and (min-width: 481px) and (max-width: 768px) {
+    .header {
+        min-height: 220px;
+        padding: 20px 16px;
+    }
+    
+    .terminal-header {
+        min-height: 200px;
+        gap: 16px;
+    }
+    
+    .solar-system-bg {
+        width: 200px !important;
+        height: 200px !important;
+    }
+    
+    .main-title {
+        font-size: 18px;
+    }
+    
+    .sub-title {
+        font-size: 12px;
+    }
+    
+    .logo-icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .system-info,
+    .status-display,
+    .wallet-section {
+        max-width: 320px;
+        padding: 10px 12px;
+    }
+    
+    .wallet-status {
+        font-size: 12px;
+    }
+    
+    .address-text {
+        font-size: 10px;
+    }
+    
+    .connection-status,
+    #blockchain-status {
+        font-size: 12px;
+        min-width: 180px;
+        padding: 7px 14px;
+    }
+    
+    .timestamp {
+        font-size: 11px;
+    }
+}
+
+/* Error and Success States */
+@media only screen and (max-width: 768px) {
+    .error-display {
+        background: rgba(255, 48, 48, 0.1);
+        border: 1px solid #ff3030;
+        color: #ff3030;
+        padding: 12px 16px;
+        margin: 8px 0;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 12px;
+        border-left: 4px solid #ff3030;
+        border-radius: 6px;
+    }
+    
+    .success-display {
+        background: rgba(0, 255, 0, 0.1);
+        border: 1px solid #00ff00;
+        color: #00ff00;
+        padding: 12px 16px;
+        margin: 8px 0;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 12px;
+        border-left: 4px solid #00ff00;
+        border-radius: 6px;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        border-top: 2px solid #00ffff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+}
+
+/* Wallet Status States */
+@media only screen and (max-width: 768px) {
+    .wallet-display.disconnected .wallet-status {
+        color: #ff6b6b;
+    }
+    
+    .wallet-display.disconnected .status-icon {
+        opacity: 0.6;
+    }
+    
+    .wallet-display.connected .wallet-status {
+        color: #00ff7f;
+    }
+    
+    .wallet-display.connecting .wallet-status {
+        color: #ffd700;
+    }
+    
+    .wallet-display.connecting .status-icon {
+        animation: pulse 1.5s infinite;
+    }
+    
+    .wallet-display.copy-success {
+        animation: copySuccessGreen 0.6s ease;
+    }
+}
+
+/* iOS Specific Adjustments */
+@supports (-webkit-touch-callout: none) {
+    .container {
+        height: -webkit-fill-available;
+    }
+    
+    .input-module {
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    }
+    
+    .terminal-input,
+    .form-input,
+    .search-input {
+        -webkit-appearance: none;
+        border-radius: 8px;
+    }
+    
+    * {
+        touch-action: manipulation;
+    }
+}
+
+/* High DPI Displays */
+@media only screen and (-webkit-min-device-pixel-ratio: 2), 
+       only screen and (min-resolution: 192dpi),
+       only screen and (min-resolution: 2dppx) {
+    .indicator-dot,
+    .solar-system-bg svg {
+        transform: translateZ(0);
+        backface-visibility: hidden;
+    }
+    
+    .logo-icon svg,
+    .solar-system-bg svg {
+        shape-rendering: geometricPrecision;
+    }
+}
+
+/* Animation Performance Optimization */
+@media only screen and (max-width: 768px) {
+    .solar-system-bg circle[r="2.0"] {
+        animation-duration: 8s;
+    }
+    
+    .solar-system-bg circle[cx="104"] {
+        animation-duration: 16s;
+    }
+    
+    .solar-system-bg circle[cx="105.5"] {
+        animation-duration: 24s;
+    }
+    
+    .tab-button,
+    .terminal-button,
+    .tab-content,
+    .solar-system-bg *,
+    .wallet-display,
+    .copy-btn {
+        will-change: transform;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) and (max-width: 768px) {
+    .solar-system-bg * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+    
+    .tab-button:active,
+    .terminal-button:active,
+    .copy-btn:active {
+        transform: none;
+    }
+    
+    * {
+        transition-duration: 0.01ms !important;
+    }
+    
+    .indicator-dot {
+        animation: none;
+    }
+    
+    .wallet-display.connecting .status-icon {
+        animation: none;
+    }
+    
+    .copy-success {
+        animation: none;
+    }
+}
+
+/* CSS Animations */
+@keyframes copySuccessGreen {
+    0% { 
+        background: rgba(0, 255, 127, 0.05);
+        border-color: rgba(0, 255, 127, 0.3);
+        transform: scale(1);
+    }
+    50% { 
+        background: rgba(0, 255, 127, 0.2);
+        border-color: rgba(0, 255, 127, 0.7);
+        transform: scale(1.02);
+        box-shadow: 0 0 8px rgba(0, 255, 127, 0.4);
+    }
+    100% { 
+        background: rgba(0, 255, 127, 0.05);
+        border-color: rgba(0, 255, 127, 0.3);
+        transform: scale(1);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* CSS Animation für Solar System - ohne Emoji Fallback */
+@keyframes copySuccessGreen {
+    0% { 
+        background: rgba(0, 255, 127, 0.05);
+        border-color: rgba(0, 255, 127, 0.3);
+        transform: scale(1);
+    }
+    50% { 
+        background: rgba(0, 255, 127, 0.2);
+        border-color: rgba(0, 255, 127, 0.7);
+        transform: scale(1.02);
+        box-shadow: 0 0 8px rgba(0, 255, 127, 0.4);
+    }
+    100% { 
+        background: rgba(0, 255, 127, 0.05);
+        border-color: rgba(0, 255, 127, 0.3);
+        transform: scale(1);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
 }
