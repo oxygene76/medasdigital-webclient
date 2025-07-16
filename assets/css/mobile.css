@@ -55,14 +55,14 @@
         box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - NOCH GRÖSSER FÜR ALLE UMLAUFBAHNEN */
+    /* SOLAR SYSTEM ANIMATION - NOCH GRÖSSER + ZURÜCK NACH LINKS */
     .solar-system-bg {
         position: absolute !important;
         top: 50% !important;
-        left: 100px !important; /* Noch weiter nach rechts (war 70px) */
+        left: 60px !important; /* Zurück nach links (war 100px) */
         transform: translateY(-50%) rotate(180deg) !important;
-        width: 180px !important; /* Noch größer (war 140px) */
-        height: 180px !important;
+        width: 200px !important; /* Noch größer (war 180px) */
+        height: 200px !important;
         opacity: 0.9 !important;
         z-index: 0 !important;
         pointer-events: none !important;
@@ -74,10 +74,10 @@
     .solar-system-container {
         position: absolute !important;
         top: 50% !important;
-        left: 80px !important; /* Noch weiter nach rechts (war 50px) */
-        transform: translateY(-50%) scale(0.7) !important; /* Deutlich größer (war 0.5) */
-        width: 400px !important; /* Viel breiter (war 300px) */
-        height: 400px !important; /* Viel höher (war 300px) */
+        left: 40px !important; /* Zurück nach links (war 80px) */
+        transform: translateY(-50%) scale(0.8) !important; /* Noch größer (war 0.7) */
+        width: 450px !important; /* Noch breiter (war 400px) */
+        height: 450px !important; /* Noch höher (war 400px) */
         opacity: 0.9 !important;
         z-index: 0 !important;
         pointer-events: none !important;
