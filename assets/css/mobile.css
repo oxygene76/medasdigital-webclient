@@ -57,11 +57,11 @@
         box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - SEHR GROß UND ETWAS NACH LINKS */
+    /* SOLAR SYSTEM ANIMATION - SEHR GROß UND DEUTLICH NACH LINKS */
     .solar-system-container {
         position: absolute !important; /* Relativ zum Header */
         top: 50% !important; /* Vertikal zentriert */
-        left: 45% !important; /* Etwas nach links (war 50%) */
+        left: 35% !important; /* Deutlich nach links (war 45%) */
         transform: translate(-50%, -50%) !important; /* Perfekt zentriert */
         width: 400px !important; /* Noch viel größer */
         height: 400px !important;
@@ -73,7 +73,7 @@
     .solar-system-bg {
         position: absolute !important; /* Relativ zum Header */
         top: 50% !important; /* Vertikal zentriert */
-        left: 45% !important; /* Etwas nach links (war 50%) */
+        left: 35% !important; /* Deutlich nach links (war 45%) */
         transform: translate(-50%, -50%) !important; /* Perfekt zentriert */
         width: 380px !important; /* Noch viel größer */
         height: 380px !important;
