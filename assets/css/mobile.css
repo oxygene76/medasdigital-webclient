@@ -38,9 +38,9 @@
        HEADER LAYOUT - VERTICAL STACK + LARGE SOLAR SYSTEM
        ================================= */
     
-    /* Header Container - KORREKTE BREITE */
+    /* Header Container - HORIZONTAL LAYOUT FÜR SOLAR SYSTEM */
     .header {
-        padding: 12px 4px; /* Mehr seitliches Padding */
+        padding: 12px 8px;
         min-height: 180px;
         margin: 0;
         position: relative;
@@ -48,39 +48,39 @@
         display: flex;
         flex-direction: column;
         flex-shrink: 0;
-        background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(0, 50, 0, 0.3));
+        background: linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(0, 50, 0, 0.2)); /* Transparenter */
         border-bottom: 2px solid rgba(0, 255, 127, 0.3);
-        width: 100%; /* 100% statt 100vw */
+        width: 100%;
         max-width: 100%;
         box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - ERZWINGEN DER SICHTBARKEIT */
+    /* SOLAR SYSTEM ANIMATION - LINKS SICHTBAR */
     .solar-system-bg,
     .solar-system-bg *,
     div[class*="solar"],
     div[id*="solar"] {
         position: absolute !important;
         top: 50% !important;
-        left: 50% !important;
-        transform: translate(-50%, -50%) !important;
-        width: 160px !important;
-        height: 160px !important;
-        opacity: 0.6 !important;
+        left: 20px !important; /* Links positioniert */
+        transform: translateY(-50%) !important; /* Nur vertikal zentrieren */
+        width: 120px !important;
+        height: 120px !important;
+        opacity: 0.8 !important; /* Sehr sichtbar */
         z-index: 1 !important;
         pointer-events: none !important;
         display: block !important;
         visibility: visible !important;
-        background: radial-gradient(circle, rgba(255, 255, 0, 0.1) 0%, transparent 70%) !important;
+        background: radial-gradient(circle, rgba(255, 255, 0, 0.3) 0%, rgba(0, 255, 255, 0.1) 70%) !important;
     }
     
     /* Falls Solar System eine SVG ist */
     .solar-system-bg svg,
     svg[class*="solar"],
     svg[id*="solar"] {
-        width: 160px !important;
-        height: 160px !important;
-        opacity: 0.6 !important;
+        width: 120px !important;
+        height: 120px !important;
+        opacity: 0.8 !important;
         display: block !important;
         visibility: visible !important;
     }
@@ -105,21 +105,21 @@
        TOP: LOGO UND TITEL - VERTICAL
        ================================= */
     
-    /* LOGO SEKTION - KORREKTE BREITE + GRÖSSERE TEXTE */
+    /* LOGO SEKTION - TRANSPARENTER + KORREKTE RUNDUNGEN */
     .system-info {
         order: 1;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         gap: 10px;
-        padding: 16px 8px; /* Mehr Padding */
-        background: rgba(0, 0, 0, 0.2);
-        backdrop-filter: blur(3px);
-        border-radius: 8px; /* Rundung zurück für besseres Aussehen */
-        border: 1px solid rgba(0, 255, 127, 0.2);
-        width: 100% !important;
-        max-width: 100% !important;
-        margin: 4px 0 !important; /* Margin für Abstand */
+        padding: 16px 12px;
+        background: rgba(0, 0, 0, 0.1); /* Sehr transparent */
+        backdrop-filter: blur(2px);
+        border-radius: 12px !important; /* Deutliche Rundung */
+        border: 1px solid rgba(0, 255, 127, 0.3);
+        width: calc(100% - 16px) !important; /* Abstand zu Rändern */
+        max-width: calc(100% - 16px) !important;
+        margin: 8px !important; /* Rundherum Abstand */
         box-sizing: border-box !important;
     }
     
@@ -278,41 +278,42 @@
        BOTTOM: STATUS DISPLAY - VERTICAL
        ================================= */
     
-    /* STATUS DISPLAY - KORREKTE BREITE + GRÖSSERE TEXTE */
+    /* STATUS DISPLAY - RECHTS POSITIONIERT + TRANSPARENT */
     .status-display {
         order: 3;
         display: flex !important;
-        flex-direction: column !important;
+        flex-direction: row !important; /* HORIZONTAL für rechts */
         align-items: center !important;
-        gap: 8px;
-        width: 100% !important;
-        max-width: 100% !important;
-        background: rgba(0, 0, 0, 0.2);
-        backdrop-filter: blur(3px);
-        border-radius: 8px; /* Rundung zurück */
-        border: 1px solid rgba(0, 255, 127, 0.2);
-        padding: 12px 8px; /* Mehr Padding */
+        justify-content: flex-end !important; /* Rechts ausrichten */
+        gap: 12px;
+        width: calc(100% - 16px) !important;
+        max-width: calc(100% - 16px) !important;
+        background: rgba(0, 0, 0, 0.1); /* Sehr transparent */
+        backdrop-filter: blur(2px);
+        border-radius: 12px !important; /* Deutliche Rundung */
+        border: 1px solid rgba(0, 255, 127, 0.3);
+        padding: 12px !important;
         position: relative;
         z-index: 2;
-        margin: 4px 0;
+        margin: 8px !important; /* Rundherum Abstand */
         box-sizing: border-box !important;
+        margin-left: 140px !important; /* Platz für Solar System links lassen */
     }
     
-    /* Network Status */
+    /* Network Status - KOMPAKT RECHTS */
     .status-row {
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: flex-end; /* Rechts ausrichten */
         gap: 6px;
-        width: 100%;
+        flex-shrink: 0;
     }
     
     .network-info {
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: flex-end; /* Rechts ausrichten */
         gap: 4px;
-        width: 100%;
     }
     
     .connection-status,
@@ -322,13 +323,13 @@
         justify-content: center;
         gap: 8px;
         font-family: 'Share Tech Mono', monospace;
-        font-size: 14px; /* VIEL größer */
+        font-size: 12px; /* Etwas kleiner für rechts */
         color: #00ff7f;
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(0, 255, 127, 0.3);
-        border-radius: 6px;
-        padding: 8px 16px; /* Mehr Padding */
-        min-width: 200px; /* Breiter */
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(0, 255, 127, 0.4);
+        border-radius: 8px;
+        padding: 6px 12px;
+        min-width: 140px; /* Kompakter */
         text-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
         white-space: nowrap;
         text-transform: uppercase;
@@ -339,15 +340,15 @@
     .status-dot,
     .dot-connected,
     .dot-disconnected {
-        width: 10px; /* Größer */
-        height: 10px;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
         display: inline-block;
     }
     
     .dot-connected {
         background: #00ff00;
-        box-shadow: 0 0 8px rgba(0, 255, 0, 0.8); /* Stärkerer Glow */
+        box-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
     }
     
     .dot-disconnected {
@@ -355,17 +356,17 @@
         box-shadow: 0 0 8px rgba(255, 51, 51, 0.8);
     }
     
-    /* Timestamp */
+    /* Timestamp - RECHTS */
     .timestamp {
         font-family: 'Share Tech Mono', monospace;
-        font-size: 13px; /* VIEL größer */
+        font-size: 11px;
         color: #00ff7f;
-        text-align: center;
+        text-align: right; /* Rechts ausrichten */
         opacity: 0.9;
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(0, 255, 127, 0.2);
-        border-radius: 4px;
-        padding: 6px 12px; /* Mehr Padding */
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(0, 255, 127, 0.3);
+        border-radius: 6px;
+        padding: 4px 8px;
         margin-top: 4px;
         text-transform: uppercase;
         letter-spacing: 1px;
