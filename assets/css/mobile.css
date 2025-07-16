@@ -122,36 +122,36 @@
         background: rgba(0, 0, 255, 0.1) !important;
     }
     
-    /* NUR die Animation INNERHALB des Containers WENIGER nach rechts verschieben */
+    /* NUR die Animation INNERHALB des Containers nach LINKS verschieben */
     .solar-system-container > * {
-        transform: translateX(-50px) !important; /* Nur halb soviel (war -100px) */
+        transform: translateX(-25px) !important; /* Weniger nach rechts (war -50px) */
     }
     
     .solar-system-bg > * {
-        transform: translateX(-50px) !important; /* Nur halb soviel (war -100px) */
+        transform: translateX(-25px) !important; /* Weniger nach rechts (war -50px) */
     }
     
     /* Spezifisch für Solar System Elemente innerhalb der Container */
     .solar-system-container .solar-system {
-        margin-left: -40px !important; /* Nur halb soviel (war -80px) */
+        margin-left: -20px !important; /* Weniger nach rechts (war -40px) */
         border: 2px solid green !important;
         background: rgba(0, 255, 0, 0.1) !important;
     }
     
     .solar-system-container .sun {
-        margin-left: -40px !important; /* Nur halb soviel (war -80px) */
+        margin-left: -20px !important; /* Weniger nach rechts (war -40px) */
         border: 2px solid yellow !important;
     }
     
-    /* Alternative: Direkte Positionierung - weniger */
+    /* Alternative: Direkte Positionierung - nach links */
     .solar-system-container .solar-system {
         position: relative !important;
-        left: 75px !important; /* Nur halb soviel (war 150px) */
+        left: 50px !important; /* Weniger nach rechts (war 75px) */
     }
     
     /* Alle Orbits weniger nach rechts */
     .solar-system-container .orbit {
-        margin-left: 75px !important; /* Nur halb soviel (war 150px) */
+        margin-left: 50px !important; /* Weniger nach rechts (war 75px) */
         border: 1px solid white !important;
     }
     
