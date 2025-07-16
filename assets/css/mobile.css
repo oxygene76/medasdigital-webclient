@@ -55,13 +55,13 @@
         box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - NOCH GRÖSSER + ZURÜCK NACH LINKS */
+    /* SOLAR SYSTEM ANIMATION - ABSOLUTE POSITIONIERUNG AUSSERHALB DER CONTAINER */
     .solar-system-bg {
-        position: absolute !important;
-        top: 50% !important;
-        left: 70px !important; /* Zurück nach links (war 100px) */
-        transform: translateY(-50%) rotate(180deg) !important;
-        width: 240px !important; /* Noch größer (war 180px) */
+        position: fixed !important; /* FIXED statt absolute */
+        top: 20% !important; /* Feste Position vom Viewport */
+        left: 70px !important;
+        transform: rotate(180deg) !important; /* Ohne translateY */
+        width: 240px !important;
         height: 240px !important;
         opacity: 0.9 !important;
         z-index: 0 !important;
@@ -72,12 +72,12 @@
     
     /* Falls es der komplette Solar System Container ist */
     .solar-system-container {
-        position: absolute !important;
-        top: 50% !important;
-        left: 50px !important; /* Zurück nach links (war 80px) */
-        transform: translateY(-50%) scale(0.9) !important; /* Noch größer (war 0.7) */
-        width: 450px !important; /* Noch breiter (war 400px) */
-        height: 450px !important; /* Noch höher (war 400px) */
+        position: fixed !important; /* FIXED statt absolute */
+        top: 10% !important; /* Feste Position vom Viewport */
+        left: 50px !important;
+        transform: scale(0.9) !important; /* Ohne translateY */
+        width: 450px !important;
+        height: 450px !important;
         opacity: 0.9 !important;
         z-index: 0 !important;
         pointer-events: none !important;
