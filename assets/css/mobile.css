@@ -19,27 +19,30 @@
         font-size: 14px;
     }
     
-    /* Container adjustments - VOLLE BREITE */
+    /* Container adjustments - KORREKTE BREITE */
     .container {
         height: auto;
         min-height: 100vh;
-        padding: 0; /* KEIN Padding für volle Breite */
+        padding: 0;
         display: flex;
         flex-direction: column;
-        gap: 0; /* Kein Gap */
-        width: 100vw; /* Volle Viewport-Breite */
-        margin: 0; /* Kein Margin */
+        gap: 0;
+        width: 100%; /* 100% statt 100vw */
+        max-width: 100%;
+        margin: 0;
+        box-sizing: border-box;
+        overflow-x: hidden; /* Verhindert horizontales Scrollen */
     }
     
     /* =================================
        HEADER LAYOUT - VERTICAL STACK + LARGE SOLAR SYSTEM
        ================================= */
     
-    /* Header Container - VOLLE BREITE */
+    /* Header Container - KORREKTE BREITE */
     .header {
-        padding: 12px 8px; /* Nur minimales seitliches Padding */
+        padding: 12px 4px; /* Mehr seitliches Padding */
         min-height: 180px;
-        margin: 0; /* Kein Margin */
+        margin: 0;
         position: relative;
         overflow: hidden;
         display: flex;
@@ -47,7 +50,8 @@
         flex-shrink: 0;
         background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(0, 50, 0, 0.3));
         border-bottom: 2px solid rgba(0, 255, 127, 0.3);
-        width: 100vw; /* Volle Viewport-Breite */
+        width: 100%; /* 100% statt 100vw */
+        max-width: 100%;
         box-sizing: border-box;
     }
     
@@ -101,23 +105,21 @@
        TOP: LOGO UND TITEL - VERTICAL
        ================================= */
     
-    /* LOGO SEKTION - VOLLE BREITE */
+    /* LOGO SEKTION - KORREKTE BREITE + GRÖSSERE TEXTE */
     .system-info {
         order: 1;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        gap: 8px;
-        padding: 12px 8px; /* Minimales seitliches Padding */
+        gap: 10px;
+        padding: 16px 8px; /* Mehr Padding */
         background: rgba(0, 0, 0, 0.2);
         backdrop-filter: blur(3px);
-        border-radius: 0 !important; /* Keine Rundung für volle Breite */
-        border: none !important; /* Keine seitlichen Borders */
-        border-top: 1px solid rgba(0, 255, 127, 0.2) !important;
-        border-bottom: 1px solid rgba(0, 255, 127, 0.2) !important;
+        border-radius: 8px; /* Rundung zurück für besseres Aussehen */
+        border: 1px solid rgba(0, 255, 127, 0.2);
         width: 100% !important;
-        max-width: none !important;
-        margin: 0 !important;
+        max-width: 100% !important;
+        margin: 4px 0 !important; /* Margin für Abstand */
         box-sizing: border-box !important;
     }
     
@@ -125,13 +127,13 @@
         display: flex;
         flex-direction: column !important;
         align-items: center;
-        gap: 8px; /* Mehr Abstand */
+        gap: 10px; /* Mehr Abstand */
         margin-bottom: 0;
     }
     
     .logo-icon {
-        width: 42px; /* Größer für mehr Präsenz */
-        height: 42px;
+        width: 48px; /* Noch größer */
+        height: 48px;
         flex-shrink: 0;
     }
     
@@ -140,22 +142,24 @@
     }
     
     .main-title {
-        font-size: 20px; /* Größer für mehr Präsenz */
+        font-size: 24px; /* VIEL größer */
         line-height: 1.1;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
         color: #00ff7f;
-        text-shadow: 0 0 12px rgba(0, 255, 127, 0.8); /* Stärkerer Glow */
+        text-shadow: 0 0 15px rgba(0, 255, 127, 1); /* Stärkerer Glow */
         font-family: 'Orbitron', sans-serif;
         font-weight: 700;
-        letter-spacing: 2px; /* Mehr Spacing für Präsenz */
+        letter-spacing: 3px; /* Noch mehr Spacing */
+        text-transform: uppercase;
     }
     
     .sub-title {
-        font-size: 12px; /* Größer */
-        opacity: 0.9; /* Sichtbarer */
+        font-size: 14px; /* Viel größer */
+        opacity: 0.9;
         color: #00ff7f;
-        text-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
-        letter-spacing: 1px;
+        text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+        letter-spacing: 2px;
+        text-transform: uppercase;
     }
     
     /* =================================
@@ -274,25 +278,23 @@
        BOTTOM: STATUS DISPLAY - VERTICAL
        ================================= */
     
-    /* STATUS DISPLAY - VOLLE BREITE */
+    /* STATUS DISPLAY - KORREKTE BREITE + GRÖSSERE TEXTE */
     .status-display {
         order: 3;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        gap: 6px;
+        gap: 8px;
         width: 100% !important;
-        max-width: none !important;
+        max-width: 100% !important;
         background: rgba(0, 0, 0, 0.2);
         backdrop-filter: blur(3px);
-        border-radius: 0 !important; /* Keine Rundung für volle Breite */
-        border: none !important; /* Keine seitlichen Borders */
-        border-top: 1px solid rgba(0, 255, 127, 0.2) !important;
-        border-bottom: 1px solid rgba(0, 255, 127, 0.2) !important;
-        padding: 8px !important; /* Minimales seitliches Padding */
+        border-radius: 8px; /* Rundung zurück */
+        border: 1px solid rgba(0, 255, 127, 0.2);
+        padding: 12px 8px; /* Mehr Padding */
         position: relative;
         z-index: 2;
-        margin: 2px 0;
+        margin: 4px 0;
         box-sizing: border-box !important;
     }
     
@@ -301,7 +303,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 4px; /* Weniger Gap */
+        gap: 6px;
         width: 100%;
     }
     
@@ -309,7 +311,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 3px; /* Weniger Gap */
+        gap: 4px;
         width: 100%;
     }
     
@@ -318,50 +320,56 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 6px;
+        gap: 8px;
         font-family: 'Share Tech Mono', monospace;
-        font-size: 12px; /* Größer */
+        font-size: 14px; /* VIEL größer */
         color: #00ff7f;
         background: rgba(0, 0, 0, 0.3);
         border: 1px solid rgba(0, 255, 127, 0.3);
         border-radius: 6px;
-        padding: 6px 12px; /* Kompakter */
-        min-width: 180px; /* Breiter */
-        text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+        padding: 8px 16px; /* Mehr Padding */
+        min-width: 200px; /* Breiter */
+        text-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
         white-space: nowrap;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
     }
     
     .status-dot,
     .dot-connected,
     .dot-disconnected {
-        width: 8px;
-        height: 8px;
+        width: 10px; /* Größer */
+        height: 10px;
         border-radius: 50%;
         display: inline-block;
     }
     
     .dot-connected {
         background: #00ff00;
-        box-shadow: 0 0 6px rgba(0, 255, 0, 0.6);
+        box-shadow: 0 0 8px rgba(0, 255, 0, 0.8); /* Stärkerer Glow */
     }
     
     .dot-disconnected {
         background: #ff3333;
-        box-shadow: 0 0 6px rgba(255, 51, 51, 0.6);
+        box-shadow: 0 0 8px rgba(255, 51, 51, 0.8);
     }
     
     /* Timestamp */
     .timestamp {
         font-family: 'Share Tech Mono', monospace;
-        font-size: 11px; /* Größer */
+        font-size: 13px; /* VIEL größer */
         color: #00ff7f;
         text-align: center;
-        opacity: 0.8;
+        opacity: 0.9;
         background: rgba(0, 0, 0, 0.3);
         border: 1px solid rgba(0, 255, 127, 0.2);
         border-radius: 4px;
-        padding: 4px 8px;
-        margin-top: 2px; /* Weniger Margin */
+        padding: 6px 12px; /* Mehr Padding */
+        margin-top: 4px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-shadow: 0 0 6px rgba(0, 255, 127, 0.4);
     }
 }
 
