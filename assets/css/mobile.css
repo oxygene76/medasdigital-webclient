@@ -89,7 +89,7 @@
         background: rgba(0, 0, 255, 0.1) !important; /* DEBUG: Blauer Hintergrund */
     }
     
-    /* SOLAR SYSTEM ANIMATION - DEBUG ENTFERNT + ANIMATIONEN AKTIVIERT */
+    /* SOLAR SYSTEM ANIMATION - ALLE DEBUG RAHMEN KOMPLETT ENTFERNT */
     .solar-system-bg {
         position: fixed !important;
         top: 20% !important;
@@ -98,11 +98,12 @@
         width: 300px !important;
         height: 300px !important;
         opacity: 0.9 !important;
-        z-index: 0 !important; /* Zurück nach hinten */
+        z-index: 0 !important;
         pointer-events: none !important;
         display: block !important;
         visibility: visible !important;
-        /* DEBUG ENTFERNT */
+        /* KEIN border mehr */
+        /* KEIN background mehr */
     }
     
     /* Falls es der komplette Solar System Container ist */
@@ -114,47 +115,30 @@
         width: 500px !important;
         height: 500px !important;
         opacity: 0.9 !important;
-        z-index: 0 !important; /* Zurück nach hinten */
+        z-index: 0 !important;
         pointer-events: none !important;
         overflow: visible !important;
-        /* DEBUG ENTFERNT */
+        /* KEIN border mehr */
+        /* KEIN background mehr */
     }
     
-    /* Animation INNERHALB des Containers - ANIMATIONEN ERHALTEN */
-    .solar-system-container > * {
-        /* REMOVE: transform override */
-        /* Lasse die ursprünglichen Animationen laufen */
-    }
-    
-    .solar-system-bg > * {
-        /* REMOVE: transform override */
-        /* Lasse die ursprünglichen Animationen laufen */
-    }
-    
-    /* NUR Positionierung, KEINE Animation-Überschreibung */
+    /* NUR Positionierung, KEINE Debug-Rahmen */
     .solar-system-container .solar-system {
         margin-left: -20px !important;
-        /* KEINE transform/animation Überschreibungen */
+        /* KEIN border mehr */
+        /* KEIN background mehr */
     }
     
-    /* Lasse Sonne animieren */
+    /* Sonne ohne Debug-Rahmen */
     .solar-system-container .sun {
         margin-left: -20px !important;
-        /* KEINE transform/animation Überschreibungen */
+        /* KEIN border mehr */
     }
     
-    /* Lasse Orbits animieren */
+    /* Orbits ohne Debug-Rahmen */
     .solar-system-container .orbit {
         margin-left: 50px !important;
-        /* KEINE transform/animation Überschreibungen */
-    }
-    
-    /* WICHTIG: Animationen aus animation.css NICHT überschreiben */
-    .solar-system-container .planet,
-    .solar-system-container .comet,
-    .solar-system-container .nebula {
-        /* Lasse alle Animationen aus animation.css laufen */
-        animation: unset !important; /* Falls überschrieben */
+        /* KEIN border mehr */
     }
     
     /* Solar System selbst anpassen */
