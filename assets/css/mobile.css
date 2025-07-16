@@ -10,13 +10,14 @@
         font-size: 16px !important;
     }
     
-    /* Body adjustments for mobile */
+    /* Body Mobile - KEIN CLIPPING DER ANIMATION */
     body {
-        overflow-x: hidden;
+        overflow: visible !important; /* Kein Clipping */
         -webkit-overflow-scrolling: touch;
         -webkit-text-size-adjust: none;
         -webkit-tap-highlight-color: transparent;
         font-size: 14px;
+        position: relative; /* Für absolute Positionierung */
     }
     
     /* Container adjustments - KORREKTE BREITE */
@@ -55,33 +56,37 @@
         box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - WEITER NACH RECHTS FÜR VOLLSTÄNDIGE SICHTBARKEIT */
+    /* SOLAR SYSTEM ANIMATION - DEBUGGING: SICHTBARER HINTERGRUND */
     .solar-system-bg {
         position: fixed !important;
         top: 20% !important;
-        left: 100px !important; /* Weiter nach rechts (war 70px) */
+        left: 20px !important; /* Viel näher zum linken Rand für Test */
         transform: rotate(180deg) !important;
         width: 240px !important;
         height: 240px !important;
         opacity: 0.9 !important;
-        z-index: 0 !important;
+        z-index: 999 !important; /* Ganz nach vorne für Test */
         pointer-events: none !important;
         display: block !important;
         visibility: visible !important;
+        border: 2px solid red !important; /* DEBUG: Rote Umrandung */
+        background: rgba(255, 0, 0, 0.1) !important; /* DEBUG: Roter Hintergrund */
     }
     
     /* Falls es der komplette Solar System Container ist */
     .solar-system-container {
         position: fixed !important;
         top: 10% !important;
-        left: 80px !important; /* Weiter nach rechts (war 50px) */
+        left: 10px !important; /* Sehr nah am linken Rand */
         transform: scale(0.9) !important;
         width: 450px !important;
         height: 450px !important;
         opacity: 0.9 !important;
-        z-index: 0 !important;
+        z-index: 999 !important; /* Ganz nach vorne für Test */
         pointer-events: none !important;
         overflow: visible !important;
+        border: 2px solid blue !important; /* DEBUG: Blaue Umrandung */
+        background: rgba(0, 0, 255, 0.1) !important; /* DEBUG: Blauer Hintergrund */
     }
     
     /* Solar System selbst anpassen */
