@@ -89,44 +89,92 @@
         background: rgba(0, 0, 255, 0.1) !important; /* DEBUG: Blauer Hintergrund */
     }
     
-    /* Solar System selbst NOCH WEITER nach rechts innerhalb des Containers */
-    .solar-system {
+    /* ALLE MÖGLICHEN SOLAR SYSTEM ELEMENTE NACH RECHTS VERSCHIEBEN */
+    
+    /* Solar System Container selbst nach rechts */
+    .solar-system,
+    #solar-system,
+    [class*="solar-system"],
+    [id*="solar-system"] {
         position: relative !important;
         top: 0 !important;
-        left: 180px !important; /* VIEL weiter nach rechts (war 120px) */
-        transform: none !important;
+        left: 0 !important;
+        transform: translateX(150px) !important; /* KOMPLETTES System nach rechts */
         width: 100% !important;
         height: 100% !important;
         overflow: visible !important;
-        border: 2px solid green !important; /* DEBUG: Grüne Umrandung für .solar-system */
-        background: rgba(0, 255, 0, 0.1) !important; /* DEBUG: Grüner Hintergrund */
+        border: 2px solid green !important;
+        background: rgba(0, 255, 0, 0.1) !important;
     }
     
-    /* Sonne NOCH WEITER nach rechts verschieben */
-    .sun {
-        left: calc(50% + 150px) !important; /* VIEL weiter nach rechts (war +80px) */
-        border: 2px solid yellow !important; /* DEBUG: Gelbe Umrandung für Sonne */
+    /* ALLE Sonne Varianten nach rechts */
+    .sun,
+    #sun,
+    [class*="sun"],
+    [id*="sun"] {
+        transform: translate(calc(-50% + 150px), -50%) !important;
+        border: 2px solid yellow !important;
     }
     
-    /* Alle Orbits NOCH WEITER nach rechts verschieben */
-    .orbit {
-        left: calc(50% + 150px) !important; /* VIEL weiter nach rechts (war +80px) */
-        border-color: rgba(255, 255, 255, 0.8) !important; /* DEBUG: Noch sichtbarere Orbits */
+    /* ALLE Orbit Varianten nach rechts */
+    .orbit,
+    .orbit-mercury,
+    .orbit-venus,
+    .orbit-earth,
+    .orbit-mars,
+    .orbit-jupiter,
+    .orbit-saturn,
+    .orbit-uranus,
+    .orbit-neptune,
+    .orbit-planet9,
+    [class*="orbit"] {
+        transform: translate(calc(-50% + 150px), -50%) !important;
+        border-color: rgba(255, 255, 255, 0.8) !important;
     }
     
-    /* Alle Planeten auch nach rechts verschieben */
-    .planet {
-        transform: translateX(calc(-50% + 150px)) !important; /* Planeten auch nach rechts */
+    /* ALLE Planet Varianten nach rechts */
+    .planet,
+    .planet-mercury,
+    .planet-venus,
+    .planet-earth,
+    .planet-mars,
+    .planet-jupiter,
+    .planet-saturn,
+    .planet-uranus,
+    .planet-neptune,
+    .planet-planet9,
+    [class*="planet"] {
+        transform: translateX(calc(-50% + 150px)) rotate(var(--rotation, 0deg)) translateX(var(--distance, 50px)) rotate(calc(-1 * var(--rotation, 0deg))) !important;
     }
     
-    /* Asteroid Belt nach rechts */
-    .asteroid-belt {
-        left: calc(50% + 150px) !important;
+    /* Asteroid und TNO Belts nach rechts */
+    .asteroid-belt,
+    .tno-belt,
+    [class*="belt"] {
+        transform: translate(calc(-50% + 150px), -50%) !important;
     }
     
-    /* TNO Belt nach rechts */
-    .tno-belt {
-        left: calc(50% + 150px) !important;
+    /* Alle anderen Solar System Elemente */
+    .comet,
+    .nebula,
+    .stars,
+    .star,
+    [class*="comet"],
+    [class*="nebula"],
+    [class*="star"] {
+        transform: translateX(150px) !important;
+    }
+    
+    /* Falls es SVG Elemente sind */
+    .solar-system-container svg,
+    .solar-system-bg svg {
+        transform: translateX(150px) !important;
+    }
+    
+    /* Falls es Canvas ist */
+    .solar-system-container canvas,
+    .solar-system-bg canvas {
+        transform: translateX(150px) !important;
     }
     
     /* Solar System selbst anpassen */
