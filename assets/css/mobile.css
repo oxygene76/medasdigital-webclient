@@ -89,7 +89,7 @@
         background: rgba(0, 0, 255, 0.1) !important; /* DEBUG: Blauer Hintergrund */
     }
     
-    /* SOLAR SYSTEM ANIMATION - ALLE DEBUG RAHMEN KOMPLETT ENTFERNT */
+    /* SOLAR SYSTEM ANIMATION - ALLE DEBUG RAHMEN EXPLIZIT ENTFERNT */
     .solar-system-bg {
         position: fixed !important;
         top: 20% !important;
@@ -102,8 +102,8 @@
         pointer-events: none !important;
         display: block !important;
         visibility: visible !important;
-        /* KEIN border mehr */
-        /* KEIN background mehr */
+        border: none !important; /* EXPLIZIT kein Border */
+        background: transparent !important; /* EXPLIZIT transparent */
     }
     
     /* Falls es der komplette Solar System Container ist */
@@ -118,27 +118,37 @@
         z-index: 0 !important;
         pointer-events: none !important;
         overflow: visible !important;
-        /* KEIN border mehr */
-        /* KEIN background mehr */
+        border: none !important; /* EXPLIZIT kein Border */
+        background: transparent !important; /* EXPLIZIT transparent */
     }
     
-    /* NUR Positionierung, KEINE Debug-Rahmen */
+    /* Alle Solar System Kinder ohne Debug */
     .solar-system-container .solar-system {
         margin-left: -20px !important;
-        /* KEIN border mehr */
-        /* KEIN background mehr */
+        border: none !important; /* EXPLIZIT kein Border */
+        background: transparent !important; /* EXPLIZIT transparent */
     }
     
-    /* Sonne ohne Debug-Rahmen */
+    /* Sonne ohne Debug */
     .solar-system-container .sun {
         margin-left: -20px !important;
-        /* KEIN border mehr */
+        border: none !important; /* EXPLIZIT kein Border für Sonne */
     }
     
-    /* Orbits ohne Debug-Rahmen */
+    /* Orbits ohne Debug */
     .solar-system-container .orbit {
         margin-left: 50px !important;
-        /* KEIN border mehr */
+        border-color: rgba(255, 255, 255, 0.1) !important; /* Original Orbit Border */
+    }
+    
+    /* Alle anderen Elemente ohne Debug */
+    .solar-system-container .planet,
+    .solar-system-container .comet,
+    .solar-system-container .nebula,
+    .solar-system-container .star,
+    .solar-system-container .asteroid,
+    .solar-system-container .tno {
+        border: none !important; /* EXPLIZIT kein Border */
     }
     
     /* Solar System selbst anpassen */
