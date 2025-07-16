@@ -89,92 +89,47 @@
         background: rgba(0, 0, 255, 0.1) !important; /* DEBUG: Blauer Hintergrund */
     }
     
-    /* ALLE MÖGLICHEN SOLAR SYSTEM ELEMENTE NACH RECHTS VERSCHIEBEN */
+    /* SOLAR SYSTEM ANIMATION - NUR BEZUGSPUNKT NACH RECHTS VERSCHIEBEN */
+    .solar-system-bg {
+        position: fixed !important;
+        top: 20% !important;
+        left: 100px !important;
+        transform: rotate(180deg) !important; /* Einfach, ohne translate */
+        width: 240px !important;
+        height: 240px !important;
+        opacity: 0.9 !important;
+        z-index: 999 !important;
+        pointer-events: none !important;
+        display: block !important;
+        visibility: visible !important;
+        border: 2px solid red !important;
+        background: rgba(255, 0, 0, 0.1) !important;
+        /* Bezugspunkt der Animation nach rechts verschieben */
+        transform-origin: calc(50% + 100px) 50% !important;
+    }
     
-    /* Solar System Container selbst nach rechts */
-    .solar-system,
-    #solar-system,
-    [class*="solar-system"],
-    [id*="solar-system"] {
-        position: relative !important;
-        top: 0 !important;
-        left: 0 !important;
-        transform: translateX(150px) !important; /* KOMPLETTES System nach rechts */
-        width: 100% !important;
-        height: 100% !important;
+    /* Falls es der komplette Solar System Container ist */
+    .solar-system-container {
+        position: fixed !important;
+        top: 10% !important;
+        left: 80px !important;
+        transform: scale(0.9) !important;
+        width: 450px !important;
+        height: 450px !important;
+        opacity: 0.9 !important;
+        z-index: 999 !important;
+        pointer-events: none !important;
         overflow: visible !important;
-        border: 2px solid green !important;
-        background: rgba(0, 255, 0, 0.1) !important;
+        border: 2px solid blue !important;
+        background: rgba(0, 0, 255, 0.1) !important;
+        /* Bezugspunkt der Animation nach rechts verschieben */
+        transform-origin: calc(50% + 100px) 50% !important;
     }
     
-    /* ALLE Sonne Varianten nach rechts */
-    .sun,
-    #sun,
-    [class*="sun"],
-    [id*="sun"] {
-        transform: translate(calc(-50% + 150px), -50%) !important;
-        border: 2px solid yellow !important;
-    }
-    
-    /* ALLE Orbit Varianten nach rechts */
-    .orbit,
-    .orbit-mercury,
-    .orbit-venus,
-    .orbit-earth,
-    .orbit-mars,
-    .orbit-jupiter,
-    .orbit-saturn,
-    .orbit-uranus,
-    .orbit-neptune,
-    .orbit-planet9,
-    [class*="orbit"] {
-        transform: translate(calc(-50% + 150px), -50%) !important;
-        border-color: rgba(255, 255, 255, 0.8) !important;
-    }
-    
-    /* ALLE Planet Varianten nach rechts */
-    .planet,
-    .planet-mercury,
-    .planet-venus,
-    .planet-earth,
-    .planet-mars,
-    .planet-jupiter,
-    .planet-saturn,
-    .planet-uranus,
-    .planet-neptune,
-    .planet-planet9,
-    [class*="planet"] {
-        transform: translateX(calc(-50% + 150px)) rotate(var(--rotation, 0deg)) translateX(var(--distance, 50px)) rotate(calc(-1 * var(--rotation, 0deg))) !important;
-    }
-    
-    /* Asteroid und TNO Belts nach rechts */
-    .asteroid-belt,
-    .tno-belt,
-    [class*="belt"] {
-        transform: translate(calc(-50% + 150px), -50%) !important;
-    }
-    
-    /* Alle anderen Solar System Elemente */
-    .comet,
-    .nebula,
-    .stars,
-    .star,
-    [class*="comet"],
-    [class*="nebula"],
-    [class*="star"] {
-        transform: translateX(150px) !important;
-    }
-    
-    /* Falls es SVG Elemente sind */
-    .solar-system-container svg,
-    .solar-system-bg svg {
-        transform: translateX(150px) !important;
-    }
-    
-    /* Falls es Canvas ist */
-    .solar-system-container canvas,
-    .solar-system-bg canvas {
-        transform: translateX(150px) !important;
+    /* NUR Solar System Container verschieben - NICHT andere Elemente */
+    .solar-system-container > .solar-system {
+        transform-origin: calc(50% + 100px) 50% !important;
+        margin-left: 100px !important; /* Einfache Verschiebung nach rechts */
     }
     
     /* Solar System selbst anpassen */
