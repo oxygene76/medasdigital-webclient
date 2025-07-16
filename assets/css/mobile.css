@@ -133,6 +133,7 @@
         overflow: visible !important;
     }
     
+    
     /* LOGO SEKTION - HORIZONTAL ERZWINGEN */
     .terminal-header .system-info {
         order: 1 !important;
@@ -182,7 +183,6 @@
         margin: 0 !important;
         flex: 1 !important;
     }
-    
     /* =================================
        TOP: LOGO UND TITEL - VERTICAL
        ================================= */
