@@ -19,25 +19,27 @@
         font-size: 14px;
     }
     
-    /* Container adjustments - ANTI-STAUCHUNG FIX */
+    /* Container adjustments - VOLLE BREITE */
     .container {
         height: auto;
         min-height: 100vh;
-        padding: 8px;
+        padding: 0; /* KEIN Padding für volle Breite */
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 0; /* Kein Gap */
+        width: 100vw; /* Volle Viewport-Breite */
+        margin: 0; /* Kein Margin */
     }
     
     /* =================================
        HEADER LAYOUT - VERTICAL STACK + LARGE SOLAR SYSTEM
        ================================= */
     
-    /* Header Container - HÖHER FÜR VERTIKALES LAYOUT */
+    /* Header Container - VOLLE BREITE */
     .header {
-        padding: 12px 0; /* Kein seitliches Padding für volle Breite */
-        min-height: 180px; /* Etwas niedriger */
-        margin-bottom: 0;
+        padding: 12px 8px; /* Nur minimales seitliches Padding */
+        min-height: 180px;
+        margin: 0; /* Kein Margin */
         position: relative;
         overflow: hidden;
         display: flex;
@@ -45,55 +47,78 @@
         flex-shrink: 0;
         background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(0, 50, 0, 0.3));
         border-bottom: 2px solid rgba(0, 255, 127, 0.3);
-        width: 100%;
+        width: 100vw; /* Volle Viewport-Breite */
+        box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - GROSSER HINTERGRUND - SICHTBAR */
-    .solar-system-bg {
+    /* SOLAR SYSTEM ANIMATION - ERZWINGEN DER SICHTBARKEIT */
+    .solar-system-bg,
+    .solar-system-bg *,
+    div[class*="solar"],
+    div[id*="solar"] {
         position: absolute !important;
         top: 50% !important;
         left: 50% !important;
         transform: translate(-50%, -50%) !important;
-        width: 160px !important;  /* Groß im Hintergrund */
+        width: 160px !important;
         height: 160px !important;
-        opacity: 0.4 !important;  /* Sichtbarer */
-        z-index: 1 !important;    /* Über Hintergrund, unter Content */
+        opacity: 0.6 !important;
+        z-index: 1 !important;
         pointer-events: none !important;
-        display: block !important; /* Sicherstellen dass sichtbar */
+        display: block !important;
+        visibility: visible !important;
+        background: radial-gradient(circle, rgba(255, 255, 0, 0.1) 0%, transparent 70%) !important;
     }
     
-    /* Terminal Header - VERTICAL STACK */
+    /* Falls Solar System eine SVG ist */
+    .solar-system-bg svg,
+    svg[class*="solar"],
+    svg[id*="solar"] {
+        width: 160px !important;
+        height: 160px !important;
+        opacity: 0.6 !important;
+        display: block !important;
+        visibility: visible !important;
+    }
+    
+    /* Terminal Header - VOLLE BREITE */
     .terminal-header {
         display: flex !important;
         flex-direction: column !important;
-        align-items: center !important;
+        align-items: stretch !important; /* Stretch für volle Breite */
         justify-content: space-between !important;
         height: 100%;
-        min-height: 160px; /* Reduziert */
-        gap: 8px; /* Weniger Gap */
+        min-height: 160px;
+        gap: 8px;
         position: relative;
-        z-index: 2; /* Über Solar System */
-        padding: 0 8px; /* Minimales seitliches Padding */
-        width: 100%;
+        z-index: 2;
+        padding: 0 !important; /* Kein Padding */
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
     
     /* =================================
        TOP: LOGO UND TITEL - VERTICAL
        ================================= */
     
+    /* LOGO SEKTION - VOLLE BREITE */
     .system-info {
         order: 1;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         gap: 8px;
-        padding: 12px 16px; /* Mehr Padding für Präsenz */
+        padding: 12px 8px; /* Minimales seitliches Padding */
         background: rgba(0, 0, 0, 0.2);
         backdrop-filter: blur(3px);
-        border-radius: 8px;
-        border: 1px solid rgba(0, 255, 127, 0.2);
-        width: 100%; /* Volle Breite */
-        max-width: none; /* Keine Begrenzung */
+        border-radius: 0 !important; /* Keine Rundung für volle Breite */
+        border: none !important; /* Keine seitlichen Borders */
+        border-top: 1px solid rgba(0, 255, 127, 0.2) !important;
+        border-bottom: 1px solid rgba(0, 255, 127, 0.2) !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
     }
     
     .logo-section {
@@ -137,28 +162,33 @@
        MIDDLE: WALLET SECTION
        ================================= */
     
+    /* WALLET SEKTION - VOLLE BREITE */
     .wallet-section {
         order: 2;
-        width: 100%; /* Volle Breite */
-        max-width: none; /* Keine Begrenzung */
-        display: flex;
-        justify-content: center;
-        margin: 4px 0; /* Weniger Margin */
+        width: 100% !important;
+        max-width: none !important;
+        display: flex !important;
+        justify-content: stretch !important;
+        margin: 4px 0;
+        box-sizing: border-box !important;
     }
     
     .wallet-display {
         background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(0, 255, 127, 0.3);
-        border-radius: 8px;
-        padding: 10px 16px; /* Mehr Padding */
+        border: none !important; /* Keine seitlichen Borders */
+        border-top: 1px solid rgba(0, 255, 127, 0.3) !important;
+        border-bottom: 1px solid rgba(0, 255, 127, 0.3) !important;
+        border-radius: 0 !important; /* Keine Rundung für volle Breite */
+        padding: 10px 8px; /* Minimales seitliches Padding */
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 6px;
-        width: 100%; /* Volle Breite */
-        max-width: none; /* Keine Begrenzung */
+        width: 100% !important;
+        max-width: none !important;
         font-family: 'Share Tech Mono', monospace;
         transition: all 0.3s ease;
+        box-sizing: border-box !important;
     }
     
     .wallet-display:hover {
@@ -244,22 +274,26 @@
        BOTTOM: STATUS DISPLAY - VERTICAL
        ================================= */
     
+    /* STATUS DISPLAY - VOLLE BREITE */
     .status-display {
         order: 3;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        gap: 6px; /* Weniger Gap */
-        width: 100%; /* Volle Breite */
-        max-width: none; /* Keine Begrenzung */
+        gap: 6px;
+        width: 100% !important;
+        max-width: none !important;
         background: rgba(0, 0, 0, 0.2);
         backdrop-filter: blur(3px);
-        border-radius: 8px;
-        border: 1px solid rgba(0, 255, 127, 0.2);
-        padding: 8px 16px; /* Weniger Padding oben/unten */
+        border-radius: 0 !important; /* Keine Rundung für volle Breite */
+        border: none !important; /* Keine seitlichen Borders */
+        border-top: 1px solid rgba(0, 255, 127, 0.2) !important;
+        border-bottom: 1px solid rgba(0, 255, 127, 0.2) !important;
+        padding: 8px !important; /* Minimales seitliches Padding */
         position: relative;
         z-index: 2;
-        margin: 2px 0; /* Weniger Margin */
+        margin: 2px 0;
+        box-sizing: border-box !important;
     }
     
     /* Network Status */
