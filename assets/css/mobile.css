@@ -57,17 +57,17 @@
         box-sizing: border-box;
     }
     
-    /* SOLAR SYSTEM ANIMATION - MITTIG HINTER HEADER */
+    /* SOLAR SYSTEM ANIMATION - GRÖßER UND MITTIG HINTER HEADER */
     .solar-system-container {
         position: absolute !important; /* Relativ zum Header */
         top: 50% !important; /* Vertikal zentriert */
         left: 50% !important; /* Horizontal zentriert */
         transform: translate(-50%, -50%) !important; /* Perfekt zentriert */
-        width: 200px !important; /* Passende Größe für Header */
-        height: 200px !important;
+        width: 300px !important; /* Viel größer für bessere Sichtbarkeit */
+        height: 300px !important;
         z-index: 1 !important; /* Hinter den Boxen aber über dem Header-Hintergrund */
         pointer-events: none !important;
-        opacity: 0.6 !important; /* Dezent sichtbar */
+        opacity: 0.7 !important; /* Etwas sichtbarer */
     }
     
     .solar-system-bg {
@@ -75,11 +75,11 @@
         top: 50% !important; /* Vertikal zentriert */
         left: 50% !important; /* Horizontal zentriert */
         transform: translate(-50%, -50%) !important; /* Perfekt zentriert */
-        width: 160px !important; /* Etwas kleiner */
-        height: 160px !important;
+        width: 280px !important; /* Viel größer */
+        height: 280px !important;
         z-index: 1 !important; /* Hinter den Boxen */
         pointer-events: none !important;
-        opacity: 0.6 !important; /* Dezent sichtbar */
+        opacity: 0.7 !important; /* Etwas sichtbarer */
     }
     
     /* Terminal Header - Z-INDEX ÜBER ANIMATION */
@@ -1143,13 +1143,15 @@
     }
     
     .solar-system-bg {
-        width: 80px !important; /* Kleiner für Landscape */
-        height: 80px !important;
-        top: 3% !important; /* Ganz nach oben */
+        width: 200px !important; /* Groß auch im Landscape */
+        height: 200px !important;
+        /* Position bleibt mittig durch bestehende absolute Positionierung */
     }
     
     .solar-system-container {
-        top: 2% !important; /* Ganz nach oben */
+        width: 220px !important; /* Groß auch im Landscape */
+        height: 220px !important;
+        /* Position bleibt mittig durch bestehende absolute Positionierung */
     }
     
     .logo-section {
