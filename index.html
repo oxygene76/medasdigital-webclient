@@ -163,11 +163,25 @@
                     <!-- Für zukünftige Features -->
                 </div>
                 
-                <!-- Status Display - NUR NOCH EINE WALLET BOX -->
+                <!-- Status Display -->
                 <div class="status-display">  
-                    <!-- WALLET CONNECTION - der einzige Wallet-Bereich -->
+                    <!-- DESKTOP WALLET CONNECTION (nur Desktop) -->
                     <div class="header-wallet-section">
                         <div class="header-wallet-display disconnected">
+                            <div class="wallet-status">
+                                <span class="status-icon">⚡</span>
+                                NOT CONNECTED
+                            </div>
+                            <div class="wallet-address">
+                                <span class="address-text">CLICK TO CONNECT KEPLR WALLET</span>
+                                <button class="copy-btn" style="display: none;">📋</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- MOBILE WALLET CONNECTION (nur Mobile) - BESTEHENDE STRUKTUR -->
+                    <div class="wallet-section">
+                        <div class="wallet-display disconnected">
                             <div class="wallet-status">
                                 <span class="status-icon">⚡</span>
                                 NOT CONNECTED
