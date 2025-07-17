@@ -157,14 +157,13 @@ initializeWalletHeader() {
             });
         }
 
+        
         // ===================================
-        // EVENT LISTENERS - MOBILE WALLET (ALLE INNEREN ELEMENTE!)
+        // EVENT LISTENERS - MOBILE WALLET (ALLE INNEREN ELEMENTE!) - KORRIGIERT
         // ===================================
         if (this.mobileWalletDisplayElement) {
             // HAUPT-CONTAINER Click Handler
             this.mobileWalletDisplayElement.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
                 console.log('📱 Mobile Wallet Container clicked!');
                 this.handleWalletClick('mobile');
             });
@@ -187,37 +186,76 @@ initializeWalletHeader() {
                     e.preventDefault();
                     e.stopPropagation();
                     console.log('📱 Mobile Wallet Address Area clicked!');
-                    
-                    // Unterscheidung: Copy wenn connected, Connect wenn disconnected
-                    if (this.connected && this.account && !this.mobileWalletDisplayElement.classList.contains('disconnected')) {
-                        this.copyWalletAddress();
-                    } else {
-                        this.handleWalletClick('mobile-address');
-                    }
+                    this.handleWalletClick('mobile-address');
                 });
                 console.log('✅ Mobile Wallet Address Area click handler added');
             }
             
-            // ADDRESS TEXT Click Handler (für bessere Klickbarkeit)
+            // ADDRESS TEXT Click Handler (WICHTIG: Der problematische Teil!)
             if (this.mobileAddressTextElement) {
-                this.mobileAddressTextElement.addEventListener('click', (e) => {
+                // MEHRERE EVENT LISTENER für bessere Kompatibilität
+                ['click', 'touchend', 'touchstart'].forEach(eventType => {
+                    this.mobileAddressTextElement.addEventListener(eventType, (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Verhindere mehrfache Ausführung bei Touch-Events
+                        if (eventType === 'touchstart') {
+                            this.mobileAddressTextElement._touchStarted = true;
+                            return;
+                        }
+                        
+                        if (eventType === 'click' && this.mobileAddressTextElement._touchStarted) {
+                            this.mobileAddressTextElement._touchStarted = false;
+                            return; // Touch-Device hat bereits touchend behandelt
+                        }
+                        
+                        console.log(`📱 Mobile Address Text ${eventType}!`);
+                        
+                        // IMMER CONNECT WENN DISCONNECTED (egal welcher Status)
+                        if (this.mobileWalletDisplayElement.classList.contains('disconnected')) {
+                            console.log('📱 Disconnected -> Starting connection...');
+                            this.handleWalletClick('mobile-text-connect');
+                        } 
+                        // COPY WENN CONNECTED
+                        else if (this.connected && this.account) {
+                            console.log('📱 Connected -> Copying address...');
+                            this.copyWalletAddress();
+                        }
+                        // FALLBACK: IMMER VERSUCHEN ZU CONNECTEN
+                        else {
+                            console.log('📱 Fallback -> Starting connection...');
+                            this.handleWalletClick('mobile-text-fallback');
+                        }
+                    }, { passive: false }); // passive: false für preventDefault
+                });
+                console.log('✅ Mobile Address Text click handlers added (click, touchend, touchstart)');
+            }
+            
+            // COPY BUTTON Click Handler (nur für connected state)
+            if (this.mobileCopyButtonElement) {
+                this.mobileCopyButtonElement.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('📱 Mobile Address Text clicked!');
-                    
-                    // Unterscheidung: Copy wenn connected, Connect wenn disconnected
-                    if (this.connected && this.account && !this.mobileWalletDisplayElement.classList.contains('disconnected')) {
-                        this.copyWalletAddress();
-                    } else {
-                        this.handleWalletClick('mobile-text');
-                    }
+                    console.log('📱 Mobile Copy Button clicked!');
+                    this.copyWalletAddress();
                 });
-                console.log('✅ Mobile Address Text click handler added');
+                console.log('✅ Mobile Copy Button click handler added');
             }
+            
+            // ZUSÄTZLICHER DEBUG: Mouse Events
+            if (this.mobileAddressTextElement) {
+                this.mobileAddressTextElement.addEventListener('mousedown', (e) => {
+                    console.log('📱 DEBUG: Mobile Address Text mousedown');
+                });
+                this.mobileAddressTextElement.addEventListener('mouseup', (e) => {
+                    console.log('📱 DEBUG: Mobile Address Text mouseup');
+                });
+            }
+            
         } else {
             console.warn('⚠️ Mobile Wallet Button (.wallet-section .wallet-display) not found - this is normal on desktop');
         }
-
         // COPY BUTTON Click Handler (nur für connected state)
         if (this.mobileCopyButtonElement) {
             this.mobileCopyButtonElement.addEventListener('click', (e) => {
@@ -237,11 +275,18 @@ initializeWalletHeader() {
     }
 }
 
-// ERWEITERE die handleWalletClick() Funktion:
 handleWalletClick(source) {
     console.log(`🔗 Wallet click from: ${source}`);
     
-    if (this.connected) {
+    // EXTRA DEBUG für Text-Clicks
+    if (source.includes('text')) {
+        console.log('🔍 DEBUG: Text click detected');
+        console.log('🔍 Current connected state:', this.connected);
+        console.log('🔍 Current account:', this.account);
+        console.log('🔍 Mobile element classes:', this.mobileWalletDisplayElement?.className);
+    }
+    
+    if (this.connected && this.account) {
         console.log('📱 Wallet already connected, showing options...');
         // Für Mobile: Bei connected state könnte man auch direkt zur Wallet-Übersicht gehen
         if (source.includes('mobile')) {
@@ -253,6 +298,7 @@ handleWalletClick(source) {
         }
     } else {
         console.log('📱 Wallet not connected, starting connection...');
+        console.log('🔍 About to call connectWallet()...');
         this.connectWallet();
     }
 }
