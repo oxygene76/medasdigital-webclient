@@ -2447,3 +2447,58 @@
 /* =================================================================
    ENDE: Mobile Text Click Detection Fix
    ================================================================= */
+
+/* Mobile Connected State - Kreditkarten-Symbol entfernen */
+@media only screen and (max-width: 768px) {
+    
+    /* CONNECTED: Kreditkarten-Symbol 💳 → ASCII ersetzen */
+    .wallet-display.connected .status-icon {
+        font-size: 0 !important; /* Versteckt das 💳 Symbol */
+    }
+    
+    .wallet-display.connected .status-icon::before {
+        content: '████' !important; /* 80er ASCII Block Pattern */
+        font-family: 'Share Tech Mono', monospace !important;
+        font-size: 16px !important;
+        color: #00ff7f !important;
+        text-shadow: 
+            0 0 5px currentColor,
+            0 0 10px currentColor !important;
+        animation: connected-pulse 3s ease-in-out infinite !important;
+    }
+    
+    /* CONNECTED: Copy-Button entfernen */
+    .wallet-display.connected .copy-btn {
+        display: none !important;
+    }
+    
+    /* CONNECTED: Wallet Address ohne Copy-Button zentrieren */
+    .wallet-display.connected .wallet-address {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important; /* Zentriert ohne Copy-Button */
+        gap: 0 !important; /* Kein Gap für Copy-Button */
+    }
+    
+    /* CONNECTED: Address Text nimmt kompletten Platz */
+    .wallet-display.connected .address-text {
+        flex: 1 !important;
+        text-align: center !important; /* Zentriert ohne Copy-Button */
+        margin: 0 !important;
+    }
+    
+    /* Animation für Connected Pulse */
+    @keyframes connected-pulse {
+        0%, 100% { 
+            text-shadow: 
+                0 0 5px currentColor,
+                0 0 10px currentColor;
+        }
+        50% { 
+            text-shadow: 
+                0 0 8px currentColor,
+                0 0 16px currentColor,
+                0 0 24px currentColor;
+        }
+    }
+}
