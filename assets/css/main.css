@@ -1547,3 +1547,187 @@ body::before {
 /* =================================================================
    ENDE: Komplette main.css mit kompaktem Desktop Header
    ================================================================= */
+/* =================================================================
+   FIX FÜR VOLLSTÄNDIGE ADRESSENANZEIGE - ERSETZE NUR DIESE TEILE
+   ================================================================= */
+
+/* MITTE: WALLET CONNECTION - ERWEITERT FÜR VOLLSTÄNDIGE ADRESSE */
+.header-wallet-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    margin: 0 20px;
+    min-width: 0; /* Wichtig für Flexbox */
+}
+
+.header-wallet-display {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 255, 127, 0.3);
+    border-radius: 6px;
+    padding: 12px 18px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px; /* Weniger Gap für mehr Platz */
+    font-family: 'Share Tech Mono', monospace;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    min-width: 420px; /* BREITER: war 320px */
+    max-width: 600px; /* BREITER: war 450px */
+    width: fit-content;
+}
+
+/* Status - kompakter für mehr Adress-Platz */
+.header-wallet-display .wallet-status {
+    color: #ffd700;
+    font-size: 11px; /* Etwas kleiner */
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 4px; /* Weniger Gap */
+    white-space: nowrap;
+    flex-shrink: 0;
+    cursor: pointer;
+    padding: 4px 6px; /* Kompakter */
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    min-width: 80px; /* Feste Mindestbreite */
+}
+
+/* Wallet Address - MEHR PLATZ FÜR VOLLSTÄNDIGE ADRESSE */
+.header-wallet-display .wallet-address {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 4px;
+    padding: 8px 14px; /* Mehr Padding */
+    flex: 1; /* NIMMT KOMPLETTEN VERFÜGBAREN PLATZ */
+    min-width: 0; /* Wichtig für Flexbox Shrinking */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible; /* WICHTIG: Kein Clipping */
+}
+
+.header-wallet-display.disconnected .wallet-address {
+    background: rgba(255, 215, 0, 0.1);
+    border-color: rgba(255, 215, 0, 0.3);
+}
+
+.header-wallet-display.connected .wallet-address {
+    background: rgba(0, 255, 127, 0.1);
+    border-color: rgba(0, 255, 127, 0.3);
+}
+
+/* Address Text - VOLLSTÄNDIGE ANZEIGE */
+.header-wallet-display .address-text {
+    color: #ffd700;
+    font-size: 12px; /* Etwas größer für bessere Lesbarkeit */
+    font-family: 'Share Tech Mono', monospace;
+    cursor: pointer;
+    text-align: center;
+    letter-spacing: 0.3px; /* Weniger Letter-Spacing für mehr Platz */
+    transition: all 0.2s ease;
+    white-space: nowrap; /* Verhindert Umbruch */
+    overflow: visible; /* WICHTIG: Zeigt komplette Adresse */
+    text-overflow: clip; /* KEIN Ellipsis (...) */
+    text-shadow: 
+        0 0 3px currentColor,
+        0 0 6px currentColor;
+    font-weight: 500;
+    user-select: none;
+    display: block;
+    width: 100%;
+    max-width: none; /* ENTFERNT Max-Width Beschränkung */
+    padding: 4px 8px;
+    border-radius: 3px;
+    animation: terminal-glow 2s ease-in-out infinite alternate;
+    line-height: 1.2;
+}
+
+.header-wallet-display.connected .address-text {
+    color: #00ff00;
+    font-size: 12px; /* Konsistente Größe */
+    animation: terminal-glow 3s ease-in-out infinite alternate;
+}
+
+/* Responsive Anpassungen für Address Display */
+@media (max-width: 1400px) {
+    .header-wallet-display {
+        min-width: 380px;
+        max-width: 550px;
+    }
+    
+    .header-wallet-display .address-text {
+        font-size: 11px;
+        letter-spacing: 0.2px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .header-wallet-display {
+        min-width: 350px;
+        max-width: 500px;
+        padding: 10px 16px;
+    }
+    
+    .header-wallet-display .wallet-status {
+        font-size: 10px;
+        min-width: 70px;
+    }
+    
+    .header-wallet-display .address-text {
+        font-size: 10px;
+        letter-spacing: 0.1px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .terminal-header {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .header-wallet-section {
+        margin: 0;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .header-wallet-display {
+        min-width: 400px; /* Mehr Platz wenn vertikal gestapelt */
+        max-width: 600px;
+    }
+    
+    .header-wallet-display .address-text {
+        font-size: 11px;
+    }
+}
+
+/* Extra große Bildschirme - noch mehr Platz */
+@media (min-width: 1600px) {
+    .header-wallet-display {
+        min-width: 480px;
+        max-width: 700px;
+        padding: 14px 20px;
+    }
+    
+    .header-wallet-display .wallet-status {
+        font-size: 12px;
+        min-width: 90px;
+    }
+    
+    .header-wallet-display .address-text {
+        font-size: 13px;
+        letter-spacing: 0.4px;
+    }
+}
+
+/* =================================================================
+   ENDE: Fix für vollständige Adressenanzeige
+   ================================================================= */
