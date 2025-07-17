@@ -1125,4 +1125,3 @@ if (typeof module !== 'undefined' && module.exports) {
     window.UIManager = UIManager;
     console.log('🎨 UIManager loaded');
 }
-}
