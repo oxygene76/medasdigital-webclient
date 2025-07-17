@@ -525,6 +525,256 @@ body::before {
     letter-spacing: 1px;
 }
 
+/* =================================================================
+   HIER EINFÜGEN: Desktop Header Wallet Button 
+   (NACH dem bestehenden .wallet-display::before Block, ca. Zeile 625)
+   ================================================================= */
+
+/* Desktop Header Connect Button - unterhalb von WALLET DATA */
+.header-wallet-section {
+    margin-top: 16px;
+    margin-bottom: 12px;
+}
+
+.header-wallet-display {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 255, 127, 0.3);
+    border-radius: 4px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.header-wallet-display::before {
+    content: 'WALLET CONNECTION';
+    position: absolute;
+    top: -8px;
+    left: 12px;
+    background: #0a0a0a;
+    padding: 0 8px;
+    font-size: 10px;
+    color: #00ffff;
+    letter-spacing: 1px;
+}
+
+/* Desktop Header Connect Button - Disconnected State */
+.header-wallet-display.disconnected {
+    border-color: rgba(255, 215, 0, 0.4);
+    background: rgba(255, 215, 0, 0.05);
+}
+
+.header-wallet-display.disconnected:hover {
+    background: rgba(255, 215, 0, 0.15);
+    border-color: rgba(255, 215, 0, 0.7);
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.header-wallet-display.disconnected .wallet-status {
+    color: #ffd700;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+
+.header-wallet-display.disconnected .status-icon {
+    font-size: 16px;
+    color: #ffd700;
+    animation: pulse 2s infinite;
+}
+
+.header-wallet-display.disconnected .wallet-address {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 3px;
+    padding: 8px 12px;
+    text-align: center;
+}
+
+.header-wallet-display.disconnected .address-text {
+    color: #ffd700;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.header-wallet-display.disconnected .address-text:hover {
+    color: #ffffff;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+}
+
+.header-wallet-display.disconnected .copy-btn {
+    display: none;
+}
+
+/* Desktop Header Connected State */
+.header-wallet-display.connected {
+    border-color: rgba(0, 255, 127, 0.5);
+    background: rgba(0, 255, 127, 0.05);
+}
+
+.header-wallet-display.connected:hover {
+    background: rgba(0, 255, 127, 0.1);
+    border-color: rgba(0, 255, 127, 0.7);
+    box-shadow: 0 0 10px rgba(0, 255, 127, 0.2);
+}
+
+.header-wallet-display.connected .wallet-status {
+    color: #00ff7f;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+
+.header-wallet-display.connected .status-icon {
+    font-size: 16px;
+    color: #00ff7f;
+}
+
+.header-wallet-display.connected .wallet-address {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 255, 127, 0.3);
+    border-radius: 3px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.header-wallet-display.connected .address-text {
+    color: #00ff00;
+    font-size: 11px;
+    font-family: 'Share Tech Mono', monospace;
+    cursor: pointer;
+    flex: 1;
+    text-align: center;
+    letter-spacing: 0.5px;
+    transition: color 0.2s ease;
+}
+
+.header-wallet-display.connected .address-text:hover {
+    color: #00ffff;
+    text-shadow: 0 0 4px rgba(0, 255, 0, 0.5);
+}
+
+.header-wallet-display.connected .copy-btn {
+    background: transparent;
+    border: 1px solid rgba(0, 255, 127, 0.3);
+    border-radius: 3px;
+    padding: 4px 8px;
+    font-size: 9px;
+    color: #00ff7f;
+    cursor: pointer;
+    font-family: 'Share Tech Mono', monospace;
+    transition: all 0.3s ease;
+}
+
+.header-wallet-display.connected .copy-btn:hover {
+    background: rgba(0, 255, 127, 0.2);
+    border-color: rgba(0, 255, 127, 0.5);
+    transform: scale(1.05);
+    box-shadow: 0 0 5px rgba(0, 255, 127, 0.3);
+}
+
+/* Desktop Header Connecting State */
+.header-wallet-display.connecting {
+    border-color: rgba(255, 215, 0, 0.5);
+    background: rgba(255, 215, 0, 0.05);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.header-wallet-display.connecting .wallet-status {
+    color: #ffd700;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+
+.header-wallet-display.connecting .status-icon {
+    font-size: 16px;
+    color: #ffd700;
+    animation: spin 1s linear infinite;
+}
+
+.header-wallet-display.connecting .wallet-address {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 3px;
+    padding: 8px 12px;
+    text-align: center;
+}
+
+.header-wallet-display.connecting .address-text {
+    color: #ffd700;
+    font-size: 12px;
+    text-align: center;
+}
+
+.header-wallet-display.connecting .copy-btn {
+    display: none;
+}
+
+/* Desktop Header Copy Success Animation */
+.header-wallet-display.copy-success {
+    animation: copySuccessGreenHeader 0.6s ease;
+}
+
+@keyframes copySuccessGreenHeader {
+    0% { 
+        background: rgba(0, 255, 127, 0.05);
+        border-color: rgba(0, 255, 127, 0.3);
+        transform: scale(1);
+    }
+    50% { 
+        background: rgba(0, 255, 127, 0.2);
+        border-color: rgba(0, 255, 127, 0.7);
+        transform: scale(1.02);
+        box-shadow: 0 0 15px rgba(0, 255, 127, 0.4);
+    }
+    100% { 
+        background: rgba(0, 255, 127, 0.05);
+        border-color: rgba(0, 255, 127, 0.3);
+        transform: scale(1);
+    }
+}
+
+/* Hide on mobile - nur Desktop anzeigen */
+@media (max-width: 768px) {
+    .header-wallet-section,
+    .header-wallet-display {
+        display: none !important;
+    }
+}
+
+/* =================================================================
+   ENDE: Desktop Header Wallet Button CSS
+   ================================================================= */
+
 .data-field {
     margin-bottom: 12px;
 }
