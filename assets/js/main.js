@@ -52,24 +52,42 @@ class MedasResearchTerminal {
 
     // ERSETZE diese Funktion in main.js (ca. Zeile 50-100):
 
-// NEW: Initialize Wallet Header Display - ERWEITERTE VERSION
+// ERSETZE die initializeWalletHeader() Funktion in main.js mit dieser VOLLSTÄNDIGEN Version:
+
+// Initialize Wallet Header Display - DESKTOP + MOBILE VOLLSTÄNDIG
 initializeWalletHeader() {
     try {
-        // Bestehende Elemente (Control Panel)
+        // ===================================
+        // CONTROL PANEL ELEMENTS (bestehend)
+        // ===================================
         this.walletDisplayElement = document.getElementById('wallet-display');
         this.walletStatusElement = document.getElementById('wallet-status');
         this.walletAddressElement = document.getElementById('wallet-address');
         this.addressTextElement = document.getElementById('address-text');
         this.copyButtonElement = document.getElementById('copy-address');
 
-        // NEU: Desktop Header Button Elements
+        // ===================================
+        // DESKTOP HEADER ELEMENTS
+        // ===================================
         this.headerWalletDisplayElement = document.querySelector('.header-wallet-display');
         this.headerWalletStatusElement = this.headerWalletDisplayElement?.querySelector('.wallet-status');
         this.headerWalletAddressElement = this.headerWalletDisplayElement?.querySelector('.wallet-address');
         this.headerAddressTextElement = this.headerWalletDisplayElement?.querySelector('.address-text');
         this.headerCopyButtonElement = this.headerWalletDisplayElement?.querySelector('.copy-btn');
 
-        // DEBUG: Log alle gefundenen Elemente
+        // ===================================
+        // MOBILE WALLET ELEMENTS (NEU!)
+        // ===================================
+        // Suche nach dem Mobile Wallet Element in der Wallet-Section
+        this.mobileWalletDisplayElement = document.querySelector('.wallet-section .wallet-display');
+        this.mobileWalletStatusElement = this.mobileWalletDisplayElement?.querySelector('.wallet-status');
+        this.mobileWalletAddressElement = this.mobileWalletDisplayElement?.querySelector('.wallet-address');
+        this.mobileAddressTextElement = this.mobileWalletDisplayElement?.querySelector('.address-text');
+        this.mobileCopyButtonElement = this.mobileWalletDisplayElement?.querySelector('.copy-btn');
+
+        // ===================================
+        // DEBUG LOGGING
+        // ===================================
         console.log('🔍 DEBUG - Wallet Elements Found:');
         console.log('  Control Panel Elements:');
         console.log('    walletDisplayElement:', this.walletDisplayElement);
@@ -77,14 +95,22 @@ initializeWalletHeader() {
         console.log('    walletAddressElement:', this.walletAddressElement);
         console.log('    addressTextElement:', this.addressTextElement);
         console.log('    copyButtonElement:', this.copyButtonElement);
-        console.log('  Header Elements:');
+        console.log('  Desktop Header Elements:');
         console.log('    headerWalletDisplayElement:', this.headerWalletDisplayElement);
         console.log('    headerWalletStatusElement:', this.headerWalletStatusElement);
         console.log('    headerWalletAddressElement:', this.headerWalletAddressElement);
         console.log('    headerAddressTextElement:', this.headerAddressTextElement);
         console.log('    headerCopyButtonElement:', this.headerCopyButtonElement);
+        console.log('  Mobile Elements (NEU):');
+        console.log('    mobileWalletDisplayElement:', this.mobileWalletDisplayElement);
+        console.log('    mobileWalletStatusElement:', this.mobileWalletStatusElement);
+        console.log('    mobileWalletAddressElement:', this.mobileWalletAddressElement);
+        console.log('    mobileAddressTextElement:', this.mobileAddressTextElement);
+        console.log('    mobileCopyButtonElement:', this.mobileCopyButtonElement);
 
-        // Event Listeners für Control Panel (bestehend)
+        // ===================================
+        // EVENT LISTENERS - CONTROL PANEL
+        // ===================================
         if (this.copyButtonElement) {
             this.copyButtonElement.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -101,22 +127,16 @@ initializeWalletHeader() {
             });
         }
 
-        // NEU: Event Listeners für Desktop Header Button
+        // ===================================
+        // EVENT LISTENERS - DESKTOP HEADER
+        // ===================================
         if (this.headerWalletDisplayElement) {
             this.headerWalletDisplayElement.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 
                 console.log('🔗 Desktop Header Button clicked!');
-                
-                // Prüfe Verbindungsstatus
-                if (this.connected && this.account) {
-                    console.log('📱 Already connected, showing wallet options');
-                    this.showWalletOptions();
-                } else {
-                    console.log('🔗 Not connected, starting connection...');
-                    this.connectWallet();
-                }
+                this.handleWalletClick('desktop-header');
             });
             
             console.log('✅ Desktop Header Button click handler added');
@@ -124,7 +144,6 @@ initializeWalletHeader() {
             console.warn('⚠️ Desktop Header Button (.header-wallet-display) not found in DOM');
         }
 
-        // Copy-Button Event für Header
         if (this.headerCopyButtonElement) {
             this.headerCopyButtonElement.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -133,9 +152,41 @@ initializeWalletHeader() {
             });
         }
 
-        // Address-Text Event für Header
         if (this.headerAddressTextElement) {
             this.headerAddressTextElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.copyWalletAddress();
+            });
+        }
+
+        // ===================================
+        // EVENT LISTENERS - MOBILE WALLET (NEU!)
+        // ===================================
+        if (this.mobileWalletDisplayElement) {
+            this.mobileWalletDisplayElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                console.log('📱 Mobile Wallet Button clicked!');
+                this.handleWalletClick('mobile');
+            });
+            
+            console.log('✅ Mobile Wallet Button click handler added');
+        } else {
+            console.warn('⚠️ Mobile Wallet Button (.wallet-section .wallet-display) not found in DOM');
+        }
+
+        if (this.mobileCopyButtonElement) {
+            this.mobileCopyButtonElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.copyWalletAddress();
+            });
+        }
+
+        if (this.mobileAddressTextElement) {
+            this.mobileAddressTextElement.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 this.copyWalletAddress();
@@ -150,6 +201,115 @@ initializeWalletHeader() {
     } catch (error) {
         console.error('❌ Wallet header initialization failed:', error);
     }
+}
+
+// ===================================
+// WALLET CLICK HANDLER (NEU!)
+// ===================================
+handleWalletClick(source) {
+    console.log(`🔗 Wallet clicked from: ${source}`);
+    
+    if (this.connected && this.account) {
+        console.log('📱 Already connected, showing wallet options');
+        this.showWalletOptions();
+    } else {
+        console.log('🔗 Not connected, starting connection...');
+        this.connectWallet();
+    }
+}
+
+// ===================================
+// WALLET OPTIONS DIALOG
+// ===================================
+showWalletOptions() {
+    const options = [
+        {
+            text: '📋 Copy Address',
+            action: () => this.copyWalletAddress()
+        },
+        {
+            text: '💰 View Balance',
+            action: () => this.showBalanceDetails()
+        },
+        {
+            text: '🔌 Disconnect',
+            action: () => this.disconnectWallet()
+        }
+    ];
+
+    this.showOptionsDialog('Wallet Options', options);
+}
+
+// ===================================
+// OPTIONS DIALOG HELPER
+// ===================================
+showOptionsDialog(title, options) {
+    const dialog = document.createElement('div');
+    dialog.className = 'wallet-options-dialog';
+    dialog.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        padding: 20px;
+    `;
+
+    const content = document.createElement('div');
+    content.style.cssText = `
+        background: #1a1a1a;
+        border: 1px solid #00ffff;
+        border-radius: 8px;
+        padding: 20px;
+        max-width: 300px;
+        width: 100%;
+        color: #ffffff;
+        font-family: 'Orbitron', monospace;
+    `;
+
+    content.innerHTML = `
+        <div style="margin-bottom: 20px; font-size: 16px; color: #00ffff; text-align: center;">
+            ${title}
+        </div>
+        <div class="option-buttons" style="display: flex; flex-direction: column; gap: 10px;">
+            ${options.map((option, index) => `
+                <button onclick="this.parentElement.parentElement.parentElement.handleOption(${index})" 
+                        style="background: transparent; color: #00ffff; border: 1px solid #00ffff; padding: 10px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: all 0.3s ease;">
+                    ${option.text}
+                </button>
+            `).join('')}
+            <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                    style="background: transparent; color: #999; border: 1px solid #666; padding: 10px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-top: 10px;">
+                Cancel
+            </button>
+        </div>
+    `;
+
+    dialog.appendChild(content);
+    
+    // Add option handler
+    dialog.handleOption = (index) => {
+        options[index].action();
+        dialog.remove();
+    };
+
+    document.body.appendChild(dialog);
+}
+
+// ===================================
+// BALANCE DETAILS
+// ===================================
+showBalanceDetails() {
+    if (!this.account) return;
+    
+    this.getBalance().then(balance => {
+        alert(`💰 Wallet Balance\n\nAddress: ${this.account.address}\nBalance: ${balance} MEDAS`);
+    });
 }
 
 // NEU: Wallet Options Dialog für Connected State
@@ -240,151 +400,125 @@ showBalanceDetails() {
     });
 }
 
-    // ERSETZE diese Funktion in main.js (ca. Zeile 120-180):
 
-updateWalletHeader() {
-    // Update Control Panel Display (bestehend)
-    if (this.walletDisplayElement) {
-        try {
-            if (this.connected && this.account) {
-                // Connected state - Control Panel
-                this.walletDisplayElement.className = 'wallet-display connected';
-                
-                if (this.walletStatusElement) {
-                    this.walletStatusElement.innerHTML = `
-                        <span class="status-icon">💳</span>
-                        <span class="status-text">Connected</span>
-                    `;
-                }
+Security Vulnerability
+----------------------
+        IIS module anomalies detected: False
+        Security Vulnerability: Download Domains are not configured. You should configure them to be protected against C
+VE-2021-1730.
+                Configuration instructions: https://aka.ms/HC-DownloadDomains
 
-                if (this.walletAddressElement && this.addressTextElement) {
-                    const fullAddress = this.account.address;
-                    this.walletAddressElement.style.display = 'flex';
-                    this.walletAddressElement.style.visibility = 'visible';
-                    this.addressTextElement.textContent = fullAddress;
-                    this.addressTextElement.title = fullAddress;
-                }
+Exchange IIS Information
+------------------------
 
-                console.log('🔄 Control Panel updated: Connected');
-            } else {
-                // Disconnected state - Control Panel
-                this.walletDisplayElement.className = 'wallet-display disconnected';
-                
-                if (this.walletStatusElement) {
-                    this.walletStatusElement.innerHTML = `
-                        <span class="status-icon">💳</span>
-                        <span class="status-text">No Wallet</span>
-                    `;
-                }
+        Name               State    HSTS Enabled  Protocol - Bindings - Certificate
+        ----               -----    ------------  ---------------------------------
+        Default Web Site   Started  False         http  - *:80:          - NULL
+                                                  https - :443:          - 51F481DC19DB6E95FE834EA3B179BBD4ACD210AF
+                                                  http  - 127.0.0.1:80:  - NULL
+                                                  https - 127.0.0.1:443: - 51F481DC19DB6E95FE834EA3B179BBD4ACD210AF
+        Exchange Back End  Started  False         http  - *:81:  - NULL
+                                                  https - *:444: - BA35BDBAE2CEF27F97A75360D53357D31C8419A0
 
-                if (this.walletAddressElement) {
-                    this.walletAddressElement.style.display = 'none';
-                }
 
-                console.log('🔄 Control Panel updated: Disconnected');
-            }
-        } catch (error) {
-            console.error('❌ Control Panel update failed:', error);
-        }
-    }
+        AppPoolName                          State    GCServerEnabled  RestartConditionSet
+        -----------                          -----    ---------------  -------------------
+        MSExchangeMapiFrontEndAppPool        Started  True             False
+        MSExchangeOWAAppPool                 Started  False            False
+        MSExchangeECPAppPool                 Started  False            False
+        MSExchangeRestAppPool                Started  False            False
+        MSExchangeMapiAddressBookAppPool     Started  False            False
+        MSExchangeRpcProxyFrontEndAppPool    Started  False            False
+        MSExchangePowerShellAppPool          Started  False            False
+        MSExchangePowerShellFrontEndAppPool  Started  False            False
+        MSExchangeRestFrontEndAppPool        Started  False            False
+        MSExchangeMapiMailboxAppPool         Started  False            False
+        MSExchangeOABAppPool                 Started  False            False
+        MSExchangePushNotificationsAppPool   Started  False            False
+        MSExchangeOWACalendarAppPool         Started  False            False
+        MSExchangeAutodiscoverAppPool        Started  False            False
+        MSExchangeServicesAppPool            Started  False            False
+        MSExchangeSyncAppPool                Started  True             False
+        MSExchangeRpcProxyAppPool            Started  False            False
 
-    // Update Desktop Header Display (NEU)
-    if (this.headerWalletDisplayElement) {
-        try {
-            if (this.connected && this.account) {
-                // Connected state - Desktop Header
-                this.headerWalletDisplayElement.className = 'header-wallet-display connected';
-                
-                if (this.headerWalletStatusElement) {
-                    this.headerWalletStatusElement.innerHTML = `
-                        <span class="status-icon">💳</span>
-                        CONNECTED
-                    `;
-                }
 
-                if (this.headerWalletAddressElement && this.headerAddressTextElement) {
-                    const fullAddress = this.account.address;
-                    // Mittlere Länge für Desktop Header (12...8)
-                    const shortenedAddress = fullAddress.length > 20 ? 
-                        fullAddress.substring(0, 12) + '...' + fullAddress.substring(fullAddress.length - 8) : 
-                        fullAddress;
-                    
-                    this.headerWalletAddressElement.style.display = 'flex';
-                    this.headerWalletAddressElement.style.visibility = 'visible';
-                    this.headerAddressTextElement.textContent = shortenedAddress;
-                    this.headerAddressTextElement.title = fullAddress; // Volle Adresse im Tooltip
-                }
-
-                if (this.headerCopyButtonElement) {
-                    this.headerCopyButtonElement.style.display = 'inline-block';
-                }
-
-                console.log('🔄 Desktop Header updated: Connected');
-            } else {
-                // Disconnected state - Desktop Header
-                this.headerWalletDisplayElement.className = 'header-wallet-display disconnected';
-                
-                if (this.headerWalletStatusElement) {
-                    this.headerWalletStatusElement.innerHTML = `
-                        <span class="status-icon">⚡</span>
-                        NOT CONNECTED
-                    `;
-                }
-
-                if (this.headerWalletAddressElement && this.headerAddressTextElement) {
-                    this.headerWalletAddressElement.style.display = 'flex';
-                    this.headerWalletAddressElement.style.visibility = 'visible';
-                    this.headerAddressTextElement.textContent = 'CLICK TO CONNECT KEPLR WALLET';
-                    this.headerAddressTextElement.title = '';
-                }
-
-                if (this.headerCopyButtonElement) {
-                    this.headerCopyButtonElement.style.display = 'none';
-                }
-
-                console.log('🔄 Desktop Header updated: Disconnected');
-            }
-        } catch (error) {
-            console.error('❌ Desktop Header update failed:', error);
-        }
-    }
-}
-
-// ERWEITERE auch die setWalletConnecting Funktion:
-setWalletConnecting(isConnecting = true) {
-    // Control Panel Connecting State
-    if (this.walletDisplayElement && isConnecting) {
-        this.walletDisplayElement.className = 'wallet-display connecting';
-        
-        if (this.walletStatusElement) {
-            this.walletStatusElement.innerHTML = `
-                <span class="status-icon">💳</span>
-                <span class="status-text">Connecting...</span>
-            `;
-        }
-
-        console.log('🔄 Control Panel: Connecting state');
-    }
-
-    // Desktop Header Connecting State (NEU)
-    if (this.headerWalletDisplayElement && isConnecting) {
-        this.headerWalletDisplayElement.className = 'header-wallet-display connecting';
-        
-        if (this.headerWalletStatusElement) {
-            this.headerWalletStatusElement.innerHTML = `
-                <span class="status-icon">⚡</span>
-                CONNECTING...
-            `;
-        }
-
-        if (this.headerWalletAddressElement && this.headerAddressTextElement) {
-            this.headerAddressTextElement.textContent = 'CONNECTING TO KEPLR WALLET...';
-        }
-
-        console.log('🔄 Desktop Header: Connecting state');
-    }
-}
-    // NEW: Shorten Wallet Address for Display
+        Name                 ExtendedProtection  SslFlags        IPFilteringEnabled  URLRewrite  Authentication
+        ----                 ------------------  --------        ------------------  ----------  --------------
+        Default Web Site     None                False           False                           anonymous (default
+                                                                                                 setting)
+        Default Web          Require             True (128-bit)  False                           Windows
+        Site/API                                                                                 (Negotiate,NTLM)
+                                                                                                 anonymous (default
+                                                                                                 setting)
+        Default Web          None                True (128-bit)  False                           Windows
+        Site/Autodiscover                                                                        (Negotiate,NTLM)
+                                                                                                 anonymous (default
+                                                                                                 setting)
+                                                                                                 basic
+        Default Web          Require             True (128-bit)  False                           anonymous (default
+        Site/ecp                                                                                 setting)
+                                                                                                 basic
+        Default Web          Allow               True (128-bit)  False                           Windows
+        Site/EWS                                                                                 (Negotiate,NTLM)
+                                                                                                 anonymous (default
+                                                                                                 setting)
+        Default Web          Require             True (128-bit)  False                           Windows
+        Site/mapi                                                                                (Negotiate,NTLM)
+        Default Web          Allow               True (128-bit)  False                           basic
+        Site/Microsoft-Serv
+        er-ActiveSync
+        Default Web          Allow               True (128-bit)  False                           Windows
+        Site/Microsoft-Serv                                                                      (Negotiate,NTLM)
+        er-ActiveSync/Proxy
+        Default Web          Allow               True (128-bit)  False                           Windows
+        Site/OAB                                                                                 (Negotiate,NTLM)
+        Default Web          Require             True (128-bit)  False                           basic
+        Site/owa
+        Default Web          None                False           False
+        Site/PowerShell                          Cert(Accept)
+        Default Web          Require             True (128-bit)  False                           Windows
+        Site/Rpc                                                                                 (Negotiate,NTLM)
+                                                                                                 basic
+        Exchange Back End    None                False           False                           anonymous (default
+                                                                                                 setting)
+        Exchange Back        Require             True (128-bit)  False                           Windows
+        End/API                                                                                  (Negotiate,NTLM)
+                                                                                                 anonymous (default
+                                                                                                 setting)
+        Exchange Back        None                True (128-bit)  False                           Windows
+        End/Autodiscover                                                                         (Negotiate,NTLM)
+                                                                                                 anonymous (default
+                                                                                                 setting)
+        Exchange Back        Require             True (128-bit)  False                           Windows
+        End/ecp                                                                                  (Negotiate,NTLM)
+                                                                                                 anonymous (default
+                                                                                                 setting)
+        Exchange Back        Require             True (128-bit)  False                           Windows
+        End/EWS                                                                                  (Negotiate,NTLM)
+                                                                                                 anonymous (default
+                                                                                                 setting)
+        Exchange Back        Require             True            False                           Windows
+        End/mapi/emsmdb                                                                          (Negotiate,NTLM)
+        Exchange Back        Require             True            False                           Windows
+        End/mapi/nspi                                                                            (Negotiate,NTLM)
+        Exchange Back        Require             True (128-bit)  False                           basic
+        End/Microsoft-Serve
+        r-ActiveSync
+        Exchange Back        Require             True (128-bit)  False                           Windows
+        End/Microsoft-Serve                                                                      (Negotiate,NTLM)
+        r-ActiveSync/Proxy
+        Exchange Back        Require             True (128-bit)  False                           Windows
+        End/OAB                                                                                  (Negotiate,NTLM)
+        Exchange Back        Require             True (128-bit)  False                           Windows
+        End/owa                                                                                  (Negotiate,NTLM)
+                                                                                                 anonymous (default
+                                                                                                 setting)
+        Exchange Back        Require             True (128-bit)  False                           Windows
+        End/PowerShell                                                                           (Negotiate,NTLM)
+        Exchange Back        Require             True (128-bit)  False                           Windows
+        End/Rpc                                                                                  (Negotiate,NTLM)
+        Exchange Back        Require             True (128-bit)  False                           Windows
+        End/RpcWithCert                                                                          (Negotiate,NTLM)    // NEW: Shorten Wallet Address for Display
    shortenAddress(address) {
     return address || ''; // Keine Verkürzung mehr!
     }
