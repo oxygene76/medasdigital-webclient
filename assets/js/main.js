@@ -127,37 +127,90 @@ initializeWalletHeader() {
         }
 
         // ===================================
-        // EVENT LISTENERS - DESKTOP HEADER (WICHTIG!)
+        // EVENT LISTENERS - DESKTOP HEADER (ERWEITERT!)
         // ===================================
         if (this.headerWalletDisplayElement) {
+            // HAUPT-CONTAINER Click Handler
             this.headerWalletDisplayElement.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('🔗 Desktop Header Button clicked!');
-                this.handleWalletClick('desktop-header');
+                // Nur ausführen wenn es NICHT ein inneres Element war
+                if (e.target === this.headerWalletDisplayElement) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔗 Desktop Header Container clicked!');
+                    this.handleWalletClick('desktop-header');
+                }
             });
-            console.log('✅ Desktop Header Button click handler added');
+            console.log('✅ Desktop Header Container click handler added');
         } else {
             console.warn('⚠️ Desktop Header Button (.header-wallet-display) not found - this is normal on mobile');
         }
 
-        if (this.headerCopyButtonElement) {
-            this.headerCopyButtonElement.addEventListener('click', (e) => {
+        // DESKTOP HEADER WALLET STATUS Click Handler
+        if (this.headerWalletStatusElement) {
+            this.headerWalletStatusElement.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.copyWalletAddress();
+                console.log('🔗 Desktop Header Status clicked!');
+                this.handleWalletClick('desktop-status');
             });
+            console.log('✅ Desktop Header Status click handler added');
         }
 
+        // DESKTOP HEADER WALLET ADDRESS BEREICH Click Handler
+        if (this.headerWalletAddressElement) {
+            this.headerWalletAddressElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔗 Desktop Header Address Area clicked!');
+                
+                // Unterscheidung: Copy wenn connected, Connect wenn disconnected
+                if (this.connected && this.account && !this.headerWalletDisplayElement.classList.contains('disconnected')) {
+                    console.log('🔗 Desktop connected -> copying address');
+                    this.copyWalletAddress();
+                } else {
+                    console.log('🔗 Desktop disconnected -> starting connection');
+                    this.handleWalletClick('desktop-address');
+                }
+            });
+            console.log('✅ Desktop Header Address Area click handler added');
+        }
+
+        // DESKTOP HEADER ADDRESS TEXT Click Handler (WICHTIG: Der problematische Desktop Teil!)
         if (this.headerAddressTextElement) {
             this.headerAddressTextElement.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.copyWalletAddress();
+                console.log('🔗 Desktop Header Address Text clicked!');
+                
+                // IMMER CONNECT WENN DISCONNECTED (egal welcher Status)
+                if (this.headerWalletDisplayElement.classList.contains('disconnected')) {
+                    console.log('🔗 Desktop Disconnected -> Starting connection...');
+                    this.handleWalletClick('desktop-text-connect');
+                } 
+                // COPY WENN CONNECTED
+                else if (this.connected && this.account) {
+                    console.log('🔗 Desktop Connected -> Copying address...');
+                    this.copyWalletAddress();
+                }
+                // FALLBACK: IMMER VERSUCHEN ZU CONNECTEN
+                else {
+                    console.log('🔗 Desktop Fallback -> Starting connection...');
+                    this.handleWalletClick('desktop-text-fallback');
+                }
             });
+            console.log('✅ Desktop Header Address Text click handler added');
         }
 
-        
+        // DESKTOP HEADER COPY BUTTON Click Handler
+        if (this.headerCopyButtonElement) {
+            this.headerCopyButtonElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔗 Desktop Header Copy Button clicked!');
+                this.copyWalletAddress();
+            });
+            console.log('✅ Desktop Header Copy Button click handler added');
+        }        
         // ===================================
         // EVENT LISTENERS - MOBILE WALLET (ALLE INNEREN ELEMENTE!) - KORRIGIERT
         // ===================================
