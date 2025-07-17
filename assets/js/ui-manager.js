@@ -1074,6 +1074,33 @@ getValidatorName(validatorAddress) {
     }
 }
 
+    populateTransactionHistory() {
+        const transactionsContainer = document.getElementById('transaction-list');
+        if (!transactionsContainer || !window.MockData) return;
+        
+        transactionsContainer.innerHTML = window.MockData.transactions.map(tx => `
+            <div class="tx-item tx-${tx.type}">
+                <span class="tx-type">${tx.type.toUpperCase()}</span>
+                <span class="tx-amount">${tx.amount} MEDAS</span>
+                <span class="tx-time">${tx.time}</span>
+            </div>
+        `).join('');
+    }
+
+    filterTransactions(filterType) {
+        // Update filter button states
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        const activeBtn = document.querySelector(`[data-filter="${filterType}"]`);
+        if (activeBtn) activeBtn.classList.add('active');
+        
+        // Filter transactions (implement filtering logic)
+        this.populateTransactionHistory(); // For now, just refresh
+    }
+
+}
+    
 // ===================================
 // GLOBAL FUNKTION FÜR VALIDATOR SELECTION
 // ===================================
