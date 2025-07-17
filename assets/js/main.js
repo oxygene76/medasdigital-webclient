@@ -107,7 +107,7 @@ class MedasResearchTerminal {
 
     async fetchValidatorCount() {
         try {
-            const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://api.medas-digital.io:1317';
+            const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
             
             // Hole alle aktiven Validators
             const response = await fetch(`${restUrl}/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED&pagination.limit=1000`, {
@@ -139,7 +139,7 @@ class MedasResearchTerminal {
 
     async fetchBondedRatio() {
         try {
-            const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://api.medas-digital.io:1317';
+            const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
             
             // Hole Staking Pool Daten
             const response = await fetch(`${restUrl}/cosmos/staking/v1beta1/pool`, {
