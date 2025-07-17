@@ -525,31 +525,36 @@ body::before {
     letter-spacing: 1px;
 }
 
+/* ERSETZE den kompletten Desktop Header CSS Block in main.css (ca. Zeile 650-800): */
+
 /* =================================================================
-   HIER EINFÜGEN: Desktop Header Wallet Button 
-   (NACH dem bestehenden .wallet-display::before Block, ca. Zeile 625)
+   Desktop Header Wallet Button - VERBESSERTE VERSION MIT GROSSER ADRESSE
    ================================================================= */
 
-/* Desktop Header Connect Button - unterhalb von WALLET DATA */
+/* Desktop Header Connect Button */
 .header-wallet-section {
     margin-top: 16px;
     margin-bottom: 12px;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end; /* Rechts ausrichten wie andere Status-Elemente */
 }
 
 .header-wallet-display {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(0, 255, 127, 0.3);
     border-radius: 4px;
-    padding: 12px 16px;
+    padding: 18px 24px; /* MEHR Padding für bessere Lesbarkeit */
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px; /* MEHR Gap für bessere Verteilung */
     font-family: 'Share Tech Mono', monospace;
     transition: all 0.3s ease;
     cursor: pointer;
     position: relative;
-    max-width: 400px;
-    margin: 0 auto;
+    min-width: 380px; /* BREITER: Mindestbreite für vollständige Adresse */
+    max-width: 500px; /* BREITER: Maximale Breite */
+    width: fit-content; /* Nur so breit wie nötig */
 }
 
 .header-wallet-display::before {
@@ -579,7 +584,7 @@ body::before {
 
 .header-wallet-display.disconnected .wallet-status {
     color: #ffd700;
-    font-size: 13px;
+    font-size: 15px; /* GRÖSSER: war 13px */
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -590,7 +595,7 @@ body::before {
 }
 
 .header-wallet-display.disconnected .status-icon {
-    font-size: 16px;
+    font-size: 20px; /* GRÖSSER: war 16px */
     color: #ffd700;
     animation: pulse 2s infinite;
 }
@@ -599,7 +604,7 @@ body::before {
     background: rgba(255, 215, 0, 0.1);
     border: 1px solid rgba(255, 215, 0, 0.3);
     border-radius: 3px;
-    padding: 8px 12px;
+    padding: 12px 18px; /* MEHR Padding */
     text-align: center;
 }
 
@@ -608,7 +613,7 @@ body::before {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1px;
-    font-size: 12px;
+    font-size: 14px; /* GRÖSSER: war 12px */
     cursor: pointer;
 }
 
@@ -635,7 +640,7 @@ body::before {
 
 .header-wallet-display.connected .wallet-status {
     color: #00ff7f;
-    font-size: 13px;
+    font-size: 15px; /* GRÖSSER: war 13px */
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -646,7 +651,7 @@ body::before {
 }
 
 .header-wallet-display.connected .status-icon {
-    font-size: 16px;
+    font-size: 20px; /* GRÖSSER: war 16px */
     color: #00ff7f;
 }
 
@@ -654,46 +659,58 @@ body::before {
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(0, 255, 127, 0.3);
     border-radius: 3px;
-    padding: 8px 12px;
+    padding: 12px 18px; /* MEHR Padding */
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: 15px; /* MEHR Gap zwischen Adresse und Copy-Button */
 }
 
+/* WICHTIG: Viel größere Adresse mit perfekter Lesbarkeit */
 .header-wallet-display.connected .address-text {
     color: #00ff00;
-    font-size: 11px;
+    font-size: 15px; /* VIEL GRÖSSER: war 11px */
     font-family: 'Share Tech Mono', monospace;
     cursor: pointer;
     flex: 1;
-    text-align: center;
-    letter-spacing: 0.5px;
+    text-align: left; /* Links ausrichten für bessere Lesbarkeit */
+    letter-spacing: 0.8px; /* Mehr Letter-Spacing */
     transition: color 0.2s ease;
+    white-space: nowrap; /* Verhindert Umbruch */
+    overflow: visible; /* Zeigt die komplette Adresse */
+    min-width: 0; /* Erlaubt Flexbox-Shrinking */
+    
+    /* Perfekte Lesbarkeit */
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.9); /* Starker dunkler Schatten für Kontrast */
+    font-weight: 600; /* Etwas fetter für bessere Sichtbarkeit */
+    line-height: 1.2; /* Optimale Zeilenhöhe */
 }
 
 .header-wallet-display.connected .address-text:hover {
     color: #00ffff;
-    text-shadow: 0 0 4px rgba(0, 255, 0, 0.5);
+    text-shadow: 0 0 6px rgba(0, 255, 0, 0.7);
+    transform: scale(1.02); /* Leichte Vergrößerung beim Hover */
 }
 
 .header-wallet-display.connected .copy-btn {
     background: transparent;
     border: 1px solid rgba(0, 255, 127, 0.3);
-    border-radius: 3px;
-    padding: 4px 8px;
-    font-size: 9px;
+    border-radius: 4px;
+    padding: 8px 12px; /* GRÖSSERER Copy-Button */
+    font-size: 12px; /* GRÖSSER: war 9px */
     color: #00ff7f;
     cursor: pointer;
-    font-family: 'Share Tech Mono', monospace;
+    flex-shrink: 0;
     transition: all 0.3s ease;
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: 600;
 }
 
 .header-wallet-display.connected .copy-btn:hover {
     background: rgba(0, 255, 127, 0.2);
     border-color: rgba(0, 255, 127, 0.5);
-    transform: scale(1.05);
-    box-shadow: 0 0 5px rgba(0, 255, 127, 0.3);
+    transform: scale(1.08);
+    box-shadow: 0 0 8px rgba(0, 255, 127, 0.4);
 }
 
 /* Desktop Header Connecting State */
@@ -705,7 +722,7 @@ body::before {
 
 .header-wallet-display.connecting .wallet-status {
     color: #ffd700;
-    font-size: 13px;
+    font-size: 15px; /* GRÖSSER: war 13px */
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -716,7 +733,7 @@ body::before {
 }
 
 .header-wallet-display.connecting .status-icon {
-    font-size: 16px;
+    font-size: 20px; /* GRÖSSER: war 16px */
     color: #ffd700;
     animation: spin 1s linear infinite;
 }
@@ -725,13 +742,13 @@ body::before {
     background: rgba(255, 215, 0, 0.1);
     border: 1px solid rgba(255, 215, 0, 0.3);
     border-radius: 3px;
-    padding: 8px 12px;
+    padding: 12px 18px; /* MEHR Padding */
     text-align: center;
 }
 
 .header-wallet-display.connecting .address-text {
     color: #ffd700;
-    font-size: 12px;
+    font-size: 14px; /* GRÖSSER: war 12px */
     text-align: center;
 }
 
@@ -772,7 +789,7 @@ body::before {
 }
 
 /* =================================================================
-   ENDE: Desktop Header Wallet Button CSS
+   ENDE: Verbesserte Desktop Header Wallet Button CSS
    ================================================================= */
 
 .data-field {
