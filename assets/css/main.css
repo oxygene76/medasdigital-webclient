@@ -525,10 +525,8 @@ body::before {
     letter-spacing: 1px;
 }
 
-/* ERSETZE den kompletten Desktop Header CSS Block in main.css (ca. Zeile 650-800): */
-
 /* =================================================================
-   DESKTOP HEADER TEXT CLICK FIX - ERSETZE DEN DESKTOP CSS BLOCK IN main.css
+   DESKTOP HEADER WALLET BUTTON - 80ER RETRO STYLE OHNE MODERNE SYMBOLE
    ================================================================= */
 
 /* Desktop Header Connect Button */
@@ -537,24 +535,24 @@ body::before {
     margin-bottom: 12px;
     width: 100%;
     display: flex;
-    justify-content: flex-end; /* Rechts ausrichten wie andere Status-Elemente */
+    justify-content: flex-end;
 }
 
 .header-wallet-display {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid rgba(0, 255, 127, 0.3);
     border-radius: 4px;
-    padding: 18px 24px; /* MEHR Padding für bessere Lesbarkeit */
+    padding: 18px 24px;
     display: flex;
     flex-direction: column;
-    gap: 12px; /* MEHR Gap für bessere Verteilung */
+    gap: 12px;
     font-family: 'Share Tech Mono', monospace;
     transition: all 0.3s ease;
     cursor: pointer;
     position: relative;
-    min-width: 380px; /* BREITER: Mindestbreite für vollständige Adresse */
-    max-width: 500px; /* BREITER: Maximale Breite */
-    width: fit-content; /* Nur so breit wie nötig */
+    min-width: 380px;
+    max-width: 500px;
+    width: fit-content;
 }
 
 .header-wallet-display::before {
@@ -582,9 +580,10 @@ body::before {
     box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
 }
 
+/* 80er RETRO STATUS - OHNE KREDITKARTEN-SYMBOL */
 .header-wallet-display.disconnected .wallet-status {
     color: #ffd700;
-    font-size: 15px; /* GRÖSSER: war 13px */
+    font-size: 15px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -592,7 +591,7 @@ body::before {
     align-items: center;
     gap: 8px;
     justify-content: center;
-    cursor: pointer; /* KLICKBAR */
+    cursor: pointer;
     padding: 4px 8px;
     border-radius: 4px;
     transition: all 0.2s ease;
@@ -603,21 +602,39 @@ body::before {
     transform: scale(1.02);
 }
 
+/* 80er RETRO STATUS ICON - ASCII/TERMINAL STYLE */
 .header-wallet-display.disconnected .status-icon {
-    font-size: 20px; /* GRÖSSER: war 16px */
+    font-size: 20px;
     color: #ffd700;
     animation: pulse 2s infinite;
-    cursor: pointer; /* KLICKBAR */
+    cursor: pointer;
 }
 
+/* ÜBERSCHREIBE MODERNE SYMBOLE MIT 80ER ASCII/TERMINAL SYMBOLEN */
+.header-wallet-display.disconnected .status-icon::before {
+    content: '█▓▒░'; /* 80er Pixel/Block Pattern */
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 16px;
+    animation: retro-blink 1.5s infinite;
+}
+
+.header-wallet-display.disconnected .status-icon {
+    font-size: 0; /* Verstecke das ursprüngliche Symbol */
+}
+
+/* 80er RETRO ADRESS-BEREICH - OHNE COPY-BUTTON */
 .header-wallet-display.disconnected .wallet-address {
     background: rgba(255, 215, 0, 0.1);
     border: 1px solid rgba(255, 215, 0, 0.3);
     border-radius: 3px;
-    padding: 12px 18px; /* MEHR Padding */
+    padding: 12px 18px;
     text-align: center;
-    cursor: pointer; /* KLICKBAR */
+    cursor: pointer;
     transition: all 0.2s ease;
+    /* ENTFERNT: justify-content space-between für Copy-Button */
+    display: flex;
+    align-items: center;
+    justify-content: center; /* ZENTRIERT OHNE COPY-BUTTON */
 }
 
 .header-wallet-display.disconnected .wallet-address:hover {
@@ -626,26 +643,36 @@ body::before {
     transform: scale(1.01);
 }
 
+/* 80er RETRO ADDRESS TEXT - TERMINAL STYLE */
 .header-wallet-display.disconnected .address-text {
     color: #ffd700;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1px;
-    font-size: 14px; /* GRÖSSER: war 12px */
-    cursor: pointer; /* KLICKBAR */
+    font-size: 14px;
+    cursor: pointer;
     transition: all 0.2s ease;
-    padding: 4px 8px; /* GRÖSSERE CLICK-AREA */
+    padding: 4px 8px;
     border-radius: 3px;
     display: inline-block;
     position: relative;
-    z-index: 10; /* HOHE PRIORITÄT */
-    user-select: none; /* VERHINDERT TEXTAUSWAHL */
+    z-index: 10;
+    user-select: none;
+    /* 80er TERMINAL EFFECT */
+    text-shadow: 
+        0 0 5px currentColor,
+        0 0 10px currentColor,
+        0 0 15px currentColor;
+    animation: terminal-glow 2s ease-in-out infinite alternate;
 }
 
 .header-wallet-display.disconnected .address-text:hover {
     color: #ffffff;
     background: rgba(255, 215, 0, 0.15);
-    text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+    text-shadow: 
+        0 0 8px rgba(255, 215, 0, 0.8),
+        0 0 16px rgba(255, 215, 0, 0.6),
+        0 0 24px rgba(255, 215, 0, 0.4);
     transform: scale(1.02);
 }
 
@@ -654,11 +681,12 @@ body::before {
     background: rgba(255, 215, 0, 0.25);
 }
 
+/* VERSTECKE COPY-BUTTON IM DISCONNECTED STATE */
 .header-wallet-display.disconnected .copy-btn {
-    display: none;
+    display: none !important;
 }
 
-/* Desktop Header Connected State */
+/* Desktop Header Connected State - 80er RETRO */
 .header-wallet-display.connected {
     border-color: rgba(0, 255, 127, 0.5);
     background: rgba(0, 255, 127, 0.05);
@@ -670,9 +698,10 @@ body::before {
     box-shadow: 0 0 10px rgba(0, 255, 127, 0.2);
 }
 
+/* 80er CONNECTED STATUS - OHNE KREDITKARTEN-SYMBOL */
 .header-wallet-display.connected .wallet-status {
     color: #00ff7f;
-    font-size: 15px; /* GRÖSSER: war 13px */
+    font-size: 15px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -680,7 +709,7 @@ body::before {
     align-items: center;
     gap: 8px;
     justify-content: center;
-    cursor: pointer; /* KLICKBAR */
+    cursor: pointer;
     padding: 4px 8px;
     border-radius: 4px;
     transition: all 0.2s ease;
@@ -691,22 +720,34 @@ body::before {
     transform: scale(1.02);
 }
 
+/* 80er CONNECTED STATUS ICON - ASCII/TERMINAL STYLE */
 .header-wallet-display.connected .status-icon {
-    font-size: 20px; /* GRÖSSER: war 16px */
-    color: #00ff7f;
-    cursor: pointer; /* KLICKBAR */
+    font-size: 0; /* Verstecke das ursprüngliche Symbol */
+    cursor: pointer;
 }
 
+.header-wallet-display.connected .status-icon::before {
+    content: '████'; /* 80er Solid Block Pattern für Connected */
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 16px;
+    color: #00ff7f;
+    text-shadow: 
+        0 0 5px currentColor,
+        0 0 10px currentColor;
+    animation: connected-pulse 3s ease-in-out infinite;
+}
+
+/* 80er CONNECTED ADRESS-BEREICH - OHNE COPY-BUTTON */
 .header-wallet-display.connected .wallet-address {
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(0, 255, 127, 0.3);
     border-radius: 3px;
-    padding: 12px 18px; /* MEHR Padding */
+    padding: 12px 18px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 15px; /* MEHR Gap zwischen Adresse und Copy-Button */
-    cursor: pointer; /* KLICKBAR */
+    justify-content: center; /* ZENTRIERT OHNE COPY-BUTTON */
+    /* ENTFERNT: gap für Copy-Button */
+    cursor: pointer;
     transition: all 0.2s ease;
 }
 
@@ -715,36 +756,43 @@ body::before {
     border-color: rgba(0, 255, 127, 0.5);
 }
 
-/* WICHTIG: Viel größere Adresse mit perfekter Lesbarkeit UND KLICKBARKEIT */
+/* 80er CONNECTED ADDRESS TEXT - TERMINAL STYLE OHNE COPY */
 .header-wallet-display.connected .address-text {
     color: #00ff00;
-    font-size: 15px; /* VIEL GRÖSSER: war 11px */
+    font-size: 15px;
     font-family: 'Share Tech Mono', monospace;
-    cursor: pointer; /* KLICKBAR */
-    flex: 1;
-    text-align: left; /* Links ausrichten für bessere Lesbarkeit */
-    letter-spacing: 0.8px; /* Mehr Letter-Spacing */
+    cursor: pointer;
+    flex: 1; /* NIMMT KOMPLETTEN PLATZ OHNE COPY-BUTTON */
+    text-align: center; /* ZENTRIERT OHNE COPY-BUTTON */
+    letter-spacing: 0.8px;
     transition: all 0.2s ease;
-    white-space: nowrap; /* Verhindert Umbruch */
-    overflow: visible; /* Zeigt die komplette Adresse */
-    min-width: 0; /* Erlaubt Flexbox-Shrinking */
+    white-space: nowrap;
+    overflow: visible;
+    min-width: 0;
     
-    /* Perfekte Lesbarkeit UND KLICKBARKEIT */
-    text-shadow: 0 0 3px rgba(0, 0, 0, 0.9); /* Starker dunkler Schatten für Kontrast */
-    font-weight: 600; /* Etwas fetter für bessere Sichtbarkeit */
-    line-height: 1.2; /* Optimale Zeilenhöhe */
-    padding: 4px 8px; /* CLICK-AREA */
+    /* 80er TERMINAL EFFECT */
+    text-shadow: 
+        0 0 3px rgba(0, 0, 0, 0.9),
+        0 0 6px currentColor,
+        0 0 12px currentColor;
+    font-weight: 600;
+    line-height: 1.2;
+    padding: 4px 8px;
     border-radius: 3px;
     position: relative;
-    z-index: 10; /* HOHE PRIORITÄT */
-    user-select: none; /* VERHINDERT TEXTAUSWAHL */
+    z-index: 10;
+    user-select: none;
+    animation: terminal-glow 3s ease-in-out infinite alternate;
 }
 
 .header-wallet-display.connected .address-text:hover {
     color: #00ffff;
     background: rgba(0, 255, 127, 0.1);
-    text-shadow: 0 0 6px rgba(0, 255, 0, 0.7);
-    transform: scale(1.02); /* Leichte Vergrößerung beim Hover */
+    text-shadow: 
+        0 0 6px rgba(0, 255, 0, 0.7),
+        0 0 12px rgba(0, 255, 0, 0.5),
+        0 0 18px rgba(0, 255, 0, 0.3);
+    transform: scale(1.02);
 }
 
 .header-wallet-display.connected .address-text:active {
@@ -752,39 +800,22 @@ body::before {
     background: rgba(0, 255, 127, 0.2);
 }
 
+/* VERSTECKE COPY-BUTTON KOMPLETT */
 .header-wallet-display.connected .copy-btn {
-    background: transparent;
-    border: 1px solid rgba(0, 255, 127, 0.3);
-    border-radius: 4px;
-    padding: 8px 12px; /* GRÖSSERER Copy-Button */
-    font-size: 12px; /* GRÖSSER: war 9px */
-    color: #00ff7f;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: all 0.3s ease;
-    font-family: 'Share Tech Mono', monospace;
-    font-weight: 600;
-    position: relative;
-    z-index: 15; /* HÖCHSTE PRIORITÄT */
+    display: none !important;
 }
 
-.header-wallet-display.connected .copy-btn:hover {
-    background: rgba(0, 255, 127, 0.2);
-    border-color: rgba(0, 255, 127, 0.5);
-    transform: scale(1.08);
-    box-shadow: 0 0 8px rgba(0, 255, 127, 0.4);
-}
-
-/* Desktop Header Connecting State */
+/* Desktop Header Connecting State - 80er RETRO */
 .header-wallet-display.connecting {
     border-color: rgba(255, 215, 0, 0.5);
     background: rgba(255, 215, 0, 0.05);
     animation: pulse 1.5s ease-in-out infinite;
 }
 
+/* 80er CONNECTING STATUS - OHNE KREDITKARTEN-SYMBOL */
 .header-wallet-display.connecting .wallet-status {
     color: #ffd700;
-    font-size: 15px; /* GRÖSSER: war 13px */
+    font-size: 15px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -792,59 +823,137 @@ body::before {
     align-items: center;
     gap: 8px;
     justify-content: center;
-    cursor: wait; /* WAITING CURSOR */
+    cursor: wait;
 }
 
+/* 80er CONNECTING STATUS ICON - ANIMIERTER ASCII */
 .header-wallet-display.connecting .status-icon {
-    font-size: 20px; /* GRÖSSER: war 16px */
+    font-size: 0; /* Verstecke das ursprüngliche Symbol */
+    cursor: wait;
+}
+
+.header-wallet-display.connecting .status-icon::before {
+    content: '▓▒░█'; /* 80er Loading Pattern */
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 16px;
     color: #ffd700;
-    animation: spin 1s linear infinite;
-    cursor: wait; /* WAITING CURSOR */
+    animation: retro-loading 0.8s linear infinite;
 }
 
 .header-wallet-display.connecting .wallet-address {
     background: rgba(255, 215, 0, 0.1);
     border: 1px solid rgba(255, 215, 0, 0.3);
     border-radius: 3px;
-    padding: 12px 18px; /* MEHR Padding */
+    padding: 12px 18px;
     text-align: center;
-    cursor: wait; /* WAITING CURSOR */
+    cursor: wait;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .header-wallet-display.connecting .address-text {
     color: #ffd700;
-    font-size: 14px; /* GRÖSSER: war 12px */
+    font-size: 14px;
     text-align: center;
     font-weight: 600;
-    cursor: wait; /* WAITING CURSOR */
+    cursor: wait;
     user-select: none;
+    text-shadow: 
+        0 0 5px currentColor,
+        0 0 10px currentColor;
+    animation: terminal-glow 1s ease-in-out infinite alternate;
 }
 
 .header-wallet-display.connecting .copy-btn {
-    display: none;
+    display: none !important;
 }
 
-/* Desktop Header Copy Success Animation */
+/* 80er RETRO ANIMATIONEN */
+@keyframes terminal-glow {
+    0% { 
+        text-shadow: 
+            0 0 3px rgba(0, 0, 0, 0.9),
+            0 0 6px currentColor,
+            0 0 12px currentColor;
+    }
+    100% { 
+        text-shadow: 
+            0 0 3px rgba(0, 0, 0, 0.9),
+            0 0 8px currentColor,
+            0 0 16px currentColor,
+            0 0 24px currentColor;
+    }
+}
+
+@keyframes retro-blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
+@keyframes retro-loading {
+    0% { content: '█▓▒░'; }
+    25% { content: '░█▓▒'; }
+    50% { content: '▒░█▓'; }
+    75% { content: '▓▒░█'; }
+    100% { content: '█▓▒░'; }
+}
+
+@keyframes connected-pulse {
+    0%, 100% { 
+        text-shadow: 
+            0 0 5px currentColor,
+            0 0 10px currentColor;
+    }
+    50% { 
+        text-shadow: 
+            0 0 8px currentColor,
+            0 0 16px currentColor,
+            0 0 24px currentColor;
+    }
+}
+
+/* Desktop Header Copy Success Animation - 80er STYLE */
 .header-wallet-display.copy-success {
-    animation: copySuccessGreenHeader 0.6s ease;
+    animation: copySuccessRetro80s 0.8s ease;
 }
 
-@keyframes copySuccessGreenHeader {
+@keyframes copySuccessRetro80s {
     0% { 
         background: rgba(0, 255, 127, 0.05);
         border-color: rgba(0, 255, 127, 0.3);
         transform: scale(1);
+        box-shadow: none;
+    }
+    25% {
+        background: rgba(0, 255, 127, 0.15);
+        border-color: rgba(0, 255, 127, 0.6);
+        transform: scale(1.01);
+        box-shadow: 
+            0 0 10px rgba(0, 255, 127, 0.4),
+            inset 0 0 10px rgba(0, 255, 127, 0.2);
     }
     50% { 
-        background: rgba(0, 255, 127, 0.2);
-        border-color: rgba(0, 255, 127, 0.7);
+        background: rgba(0, 255, 127, 0.25);
+        border-color: rgba(0, 255, 127, 0.8);
         transform: scale(1.02);
-        box-shadow: 0 0 15px rgba(0, 255, 127, 0.4);
+        box-shadow: 
+            0 0 20px rgba(0, 255, 127, 0.6),
+            inset 0 0 20px rgba(0, 255, 127, 0.3);
+    }
+    75% {
+        background: rgba(0, 255, 127, 0.15);
+        border-color: rgba(0, 255, 127, 0.6);
+        transform: scale(1.01);
+        box-shadow: 
+            0 0 10px rgba(0, 255, 127, 0.4),
+            inset 0 0 10px rgba(0, 255, 127, 0.2);
     }
     100% { 
         background: rgba(0, 255, 127, 0.05);
         border-color: rgba(0, 255, 127, 0.3);
         transform: scale(1);
+        box-shadow: none;
     }
 }
 
@@ -855,7 +964,6 @@ body::before {
         display: none !important;
     }
     
-    /* Stelle sicher, dass .wallet-section auf Mobile sichtbar ist */
     .wallet-section {
         display: flex !important;
     }
@@ -872,6 +980,9 @@ body::before {
     }
 }
 
+/* =================================================================
+   ENDE: 80er Retro Desktop Header Wallet Button CSS
+   ================================================================= */
 /* =================================================================
    ENDE: Verbesserte Desktop Header Wallet Button CSS
    ================================================================= */
