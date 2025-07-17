@@ -179,99 +179,108 @@ class MedasResearchTerminal {
 }
 async fetchBondedRatio() {
     try {
-        // KORRIGIERT: Verwende die richtige URL
         const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
-        const apiUrl = `${restUrl}/cosmos/staking/v1beta1/pool`;
         
-        console.log(`🔍 DEBUG: Fetching staking pool from: ${apiUrl}`);
+        // STRATEGIE: Hole sowohl Pool-Daten als auch Total Supply
+        console.log(`🔍 DEBUG: Fetching bonded ratio from: ${restUrl}`);
         
-        const response = await fetch(apiUrl, {
+        // 1. HOLE STAKING POOL DATEN
+        const poolResponse = await fetch(`${restUrl}/cosmos/staking/v1beta1/pool`, {
             method: 'GET',
             signal: AbortSignal.timeout(5000)
         });
         
-        console.log(`📡 Pool Response Status: ${response.status}`);
-        
-        if (!response.ok) {
-            throw new Error(`Staking pool API failed: ${response.status} ${response.statusText}`);
+        if (!poolResponse.ok) {
+            throw new Error(`Staking pool API failed: ${poolResponse.status}`);
         }
         
-        const data = await response.json();
+        const poolData = await poolResponse.json();
+        console.log(`📊 Pool Response:`, poolData);
         
-        console.log(`📊 RAW Pool Response:`, data);
-        
-        if (data.pool && data.pool.bonded_tokens) {
-            const bondedTokens = parseInt(data.pool.bonded_tokens);
-            
-            // STRATEGIE 1: Verwende not_bonded_tokens wenn verfügbar
-            if (data.pool.not_bonded_tokens) {
-                const notBondedTokens = parseInt(data.pool.not_bonded_tokens);
-                const totalTokens = bondedTokens + notBondedTokens;
-                
-                if (totalTokens > 0) {
-                    const bondedRatio = ((bondedTokens / totalTokens) * 100).toFixed(1);
-                    
-                    console.log(`📊 Calculated bonded ratio from pool: ${bondedRatio}%`);
-                    console.log(`   Bonded: ${bondedTokens.toLocaleString()}`);
-                    console.log(`   Not Bonded: ${notBondedTokens.toLocaleString()}`);
-                    console.log(`   Total: ${totalTokens.toLocaleString()}`);
-                    
-                    return `${bondedRatio}%`;
-                }
-            }
-            
-            // STRATEGIE 2: Hole Total Supply
-            try {
-                const supplyUrl = `${restUrl}/cosmos/bank/v1beta1/supply/by_denom?denom=umedas`;
-                console.log(`🔍 DEBUG: Fetching supply from: ${supplyUrl}`);
-                
-                const supplyResponse = await fetch(supplyUrl, {
-                    method: 'GET',
-                    signal: AbortSignal.timeout(3000)
-                });
-                
-                if (supplyResponse.ok) {
-                    const supplyData = await supplyResponse.json();
-                    console.log(`📊 Supply Response:`, supplyData);
-                    
-                    const totalSupply = parseInt(supplyData.amount?.amount || '0');
-                    
-                    if (totalSupply > 0) {
-                        const bondedRatio = ((bondedTokens / totalSupply) * 100).toFixed(1);
-                        
-                        console.log(`📊 Calculated bonded ratio from supply: ${bondedRatio}%`);
-                        console.log(`   Bonded: ${bondedTokens.toLocaleString()}`);
-                        console.log(`   Total Supply: ${totalSupply.toLocaleString()}`);
-                        
-                        return `${bondedRatio}%`;
-                    }
-                }
-            } catch (supplyError) {
-                console.warn('⚠️ Supply endpoint also failed:', supplyError);
-            }
-            
-            // STRATEGIE 3: Schätze basierend auf typischen Cosmos-Werten
-            console.log(`📊 Using bonded tokens estimation method`);
-            console.log(`   Bonded tokens: ${bondedTokens.toLocaleString()}`);
-            
-            // Für Cosmos-Chains ist typischerweise 60-70% der Supply bonded
-            // Wenn wir nur bonded_tokens haben, schätzen wir das Total
-            const estimatedTotal = Math.round(bondedTokens / 0.67); // Annahme: 67% bonded
-            const estimatedRatio = ((bondedTokens / estimatedTotal) * 100).toFixed(1);
-            
-            console.log(`📊 Estimated bonded ratio: ${estimatedRatio}%`);
-            console.log(`   Estimated total: ${estimatedTotal.toLocaleString()}`);
-            
-            return `${estimatedRatio}%`;
-        } else {
-            throw new Error('Invalid pool data structure - no bonded_tokens found');
+        if (!poolData.pool || !poolData.pool.bonded_tokens) {
+            throw new Error('Invalid pool data - no bonded_tokens found');
         }
+        
+        // Bonded Tokens in umedas
+        const bondedTokens_umedas = parseInt(poolData.pool.bonded_tokens);
+        const bondedTokens_medas = bondedTokens_umedas / 1000000; // umedas -> MEDAS
+        
+        console.log(`📊 Bonded tokens: ${bondedTokens_medas.toLocaleString()} MEDAS`);
+        
+        // 2. HOLE TOTAL SUPPLY
+        const supplyUrl = `${restUrl}/cosmos/bank/v1beta1/supply/by_denom?denom=umedas`;
+        console.log(`🔍 DEBUG: Fetching total supply from: ${supplyUrl}`);
+        
+        const supplyResponse = await fetch(supplyUrl, {
+            method: 'GET',
+            signal: AbortSignal.timeout(5000)
+        });
+        
+        if (!supplyResponse.ok) {
+            throw new Error(`Supply API failed: ${supplyResponse.status}`);
+        }
+        
+        const supplyData = await supplyResponse.json();
+        console.log(`📊 Supply Response:`, supplyData);
+        
+        // Total Supply in umedas
+        const totalSupply_umedas = parseInt(supplyData.amount?.amount || '0');
+        const totalSupply_medas = totalSupply_umedas / 1000000; // umedas -> MEDAS
+        
+        console.log(`📊 Total supply: ${totalSupply_medas.toLocaleString()} MEDAS`);
+        
+        if (totalSupply_medas <= 0) {
+            throw new Error('Invalid total supply data');
+        }
+        
+        // 3. BERECHNE ECHTE BONDED RATIO
+        const bondedRatio = (bondedTokens_medas / totalSupply_medas) * 100;
+        
+        console.log(`📊 ECHTE BONDED RATIO BERECHNUNG:`);
+        console.log(`   Bonded: ${bondedTokens_medas.toLocaleString()} MEDAS`);
+        console.log(`   Total Supply: ${totalSupply_medas.toLocaleString()} MEDAS`);
+        console.log(`   Bonded Ratio: ${bondedRatio.toFixed(1)}%`);
+        
+        // VALIDIERUNG: Stelle sicher, dass der Wert sinnvoll ist
+        if (bondedRatio < 0 || bondedRatio > 100) {
+            console.warn(`⚠️ Bonded ratio ${bondedRatio.toFixed(1)}% seems invalid`);
+            throw new Error('Calculated bonded ratio is out of valid range');
+        }
+        
+        return `${bondedRatio.toFixed(1)}%`;
         
     } catch (error) {
         console.error('❌ Bonded ratio fetch failed:', error);
         
-        // Fallback: Standard-Wert für Cosmos-Chains
-        return '67.0%';
+        // FALLBACK: Verwende Pool-Only Berechnung wenn Total Supply fehlschlägt
+        try {
+            const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
+            const poolResponse = await fetch(`${restUrl}/cosmos/staking/v1beta1/pool`);
+            
+            if (poolResponse.ok) {
+                const poolData = await poolResponse.json();
+                
+                if (poolData.pool?.bonded_tokens && poolData.pool?.not_bonded_tokens) {
+                    const bondedTokens = parseInt(poolData.pool.bonded_tokens);
+                    const notBondedTokens = parseInt(poolData.pool.not_bonded_tokens);
+                    const totalStakingTokens = bondedTokens + notBondedTokens;
+                    
+                    // Pool-Only Ratio (als Fallback)
+                    const poolRatio = (bondedTokens / totalStakingTokens) * 100;
+                    
+                    console.warn(`⚠️ Using pool-only fallback ratio: ${poolRatio.toFixed(1)}%`);
+                    console.warn(`⚠️ This may be higher than the actual bonded ratio!`);
+                    
+                    return `${poolRatio.toFixed(1)}%`;
+                }
+            }
+        } catch (fallbackError) {
+            console.error('❌ Fallback calculation also failed:', fallbackError);
+        }
+        
+        // LETZTER FALLBACK: Standard-Wert
+        console.warn('⚠️ Using default bonded ratio value');
+        return '15.0%'; // Realistischer Standardwert für Cosmos-Chains
     }
 }
 
