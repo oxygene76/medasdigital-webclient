@@ -16,7 +16,7 @@
     
     <div class="container">
         <div class="header">
-            <!-- Solar System LINKS UNTEN positioniert -->
+            <!-- Solar System Background -->
             <div class="solar-system-bg">
                 <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
                     <defs>
@@ -120,9 +120,8 @@
                 </svg>
             </div>
             
-            <!-- NEUE GRID-STRUKTUR für Mobile Layout -->
             <div class="terminal-header">
-                <!-- TOP ROW: Logo und Titel zentriert (OHNE WALLET) -->
+                <!-- Logo und Titel -->
                 <div class="system-info">
                     <div class="logo-section">
                         <div class="logo-icon">
@@ -159,40 +158,28 @@
                     </div>
                 </div>
                 
-                <!-- MIDDLE ROW: Freier Raum (für eventuelle Erweiterungen) -->
+                <!-- Freier Raum -->
                 <div class="header-middle">
-                    <!-- Dieser Bereich ist für zukünftige Features reserviert -->
+                    <!-- Für zukünftige Features -->
                 </div>
                 
-                <!-- BOTTOM ROW: Status-Informationen rechts unten + WALLET RECHTS OBEN -->
+                <!-- Status Display - NUR NOCH EINE WALLET BOX -->
                 <div class="status-display">  
-                    <!-- NEW: Wallet Display Section - GANZ OBEN -->
-                    <div class="wallet-section">
-                        <div id="wallet-display" class="wallet-display">
-                            <div class="wallet-status" id="wallet-status">
-                                <span class="status-icon">💳</span>
-                                <span class="status-text">No Wallet</span>
-                            </div>
-                            <div class="wallet-address" id="wallet-address" style="display: none;">
-                                <span class="address-text" id="address-text">medas1...</span>
-                                <button class="copy-btn" id="copy-address" title="Copy Address">📋</button>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- WALLET CONNECTION - der einzige Wallet-Bereich -->
                     <div class="header-wallet-section">
-                    <div class="header-wallet-display disconnected">
-                        <div class="wallet-status">
-                            <span class="status-icon">⚡</span>
-                            NOT CONNECTED
-                        </div>
-                        <div class="wallet-address">
-                            <span class="address-text">CLICK TO CONNECT KEPLR WALLET</span>
-                            <button class="copy-btn" style="display: none;">📋</button>
+                        <div class="header-wallet-display disconnected">
+                            <div class="wallet-status">
+                                <span class="status-icon">⚡</span>
+                                NOT CONNECTED
+                            </div>
+                            <div class="wallet-address">
+                                <span class="address-text">CLICK TO CONNECT KEPLR WALLET</span>
+                                <button class="copy-btn" style="display: none;">📋</button>
+                            </div>
                         </div>
                     </div>
-                </div>
                     
-                    <!-- Network Status - DARUNTER -->
+                    <!-- Network Status -->
                     <div class="status-row">
                         <div class="network-info">
                             <div id="connection-status" class="connection-status status-disconnected">
@@ -205,7 +192,8 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Timestamp - GANZ UNTEN -->
+                    
+                    <!-- Timestamp -->
                     <div class="timestamp" id="current-time">Loading...</div>
                 </div>
             </div>
