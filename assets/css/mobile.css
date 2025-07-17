@@ -1516,3 +1516,307 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
 }
+/* Mobile Wallet Connect States - erweitert bestehende .wallet-display */
+@media only screen and (max-width: 768px) {
+    
+    /* Wallet Display - Connect Button Funktionalität */
+    .wallet-display {
+        cursor: pointer !important; /* Zeigt dass es klickbar ist */
+        transition: all 0.3s ease !important;
+        user-select: none; /* Verhindert Textauswahl */
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+    
+    /* Disconnected State - Connect Button Style */
+    .wallet-display.disconnected {
+        border-color: rgba(255, 215, 0, 0.4) !important;
+        background: rgba(255, 215, 0, 0.02) !important;
+    }
+    
+    .wallet-display.disconnected:hover,
+    .wallet-display.disconnected:active {
+        background: rgba(255, 215, 0, 0.1) !important;
+        border-color: rgba(255, 215, 0, 0.6) !important;
+        transform: scale(1.02) !important;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.3) !important;
+    }
+    
+    .wallet-display.disconnected .wallet-status {
+        color: #ffd700 !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1.5px !important;
+    }
+    
+    .wallet-display.disconnected .status-icon {
+        font-size: 18px !important;
+        color: #ffd700 !important;
+        animation: pulse 2s infinite !important;
+    }
+    
+    /* Connect Wallet Text statt Address */
+    .wallet-display.disconnected .wallet-address {
+        background: rgba(255, 215, 0, 0.1) !important;
+        border: 1px solid rgba(255, 215, 0, 0.3) !important;
+        justify-content: center !important;
+        padding: 10px 16px !important;
+        text-align: center !important;
+    }
+    
+    .wallet-display.disconnected .address-text {
+        color: #ffd700 !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        font-size: 12px !important;
+        text-align: center !important;
+        cursor: pointer !important;
+        word-break: normal !important; /* Überschreibt break-all */
+        white-space: nowrap !important;
+    }
+    
+    .wallet-display.disconnected .address-text:hover {
+        color: #ffffff !important;
+        text-shadow: 0 0 8px rgba(255, 215, 0, 0.8) !important;
+    }
+    
+    /* Copy Button verstecken wenn disconnected */
+    .wallet-display.disconnected .copy-btn {
+        display: none !important;
+    }
+    
+    /* Connected State - erweitert bestehende Styles */
+    .wallet-display.connected {
+        border-color: rgba(0, 255, 127, 0.5) !important;
+        background: rgba(0, 255, 127, 0.05) !important;
+        cursor: pointer !important;
+    }
+    
+    .wallet-display.connected:hover,
+    .wallet-display.connected:active {
+        background: rgba(0, 255, 127, 0.1) !important;
+        border-color: rgba(0, 255, 127, 0.7) !important;
+        box-shadow: 0 0 10px rgba(0, 255, 127, 0.2) !important;
+    }
+    
+    .wallet-display.connected .wallet-status {
+        color: #00ff7f !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        justify-content: center !important;
+    }
+    
+    .wallet-display.connected .status-icon {
+        font-size: 16px !important;
+        color: #00ff7f !important;
+    }
+    
+    .wallet-display.connected .wallet-address {
+        background: rgba(0, 0, 0, 0.4) !important;
+        border: 1px solid rgba(0, 255, 127, 0.3) !important;
+        border-radius: 6px !important;
+        padding: 8px 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 10px !important;
+    }
+    
+    .wallet-display.connected .address-text {
+        color: #00ff00 !important;
+        font-size: 11px !important;
+        font-family: 'Share Tech Mono', monospace !important;
+        cursor: pointer !important;
+        flex: 1 !important;
+        text-align: left !important;
+        letter-spacing: 0.5px !important;
+        transition: color 0.2s ease !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        text-shadow: 0 0 2px rgba(0, 0, 0, 0.8) !important;
+        font-weight: 500 !important;
+        word-break: normal !important; /* Überschreibt break-all */
+    }
+    
+    .wallet-display.connected .address-text:hover {
+        color: #00ffff !important;
+        text-shadow: 0 0 4px rgba(0, 255, 0, 0.7) !important;
+    }
+    
+    .wallet-display.connected .copy-btn {
+        background: rgba(0, 255, 127, 0.1) !important;
+        border: 1px solid rgba(0, 255, 127, 0.3) !important;
+        border-radius: 4px !important;
+        padding: 4px 8px !important;
+        font-size: 10px !important;
+        color: #00ff7f !important;
+        cursor: pointer !important;
+        flex-shrink: 0 !important;
+        transition: all 0.3s ease !important;
+        font-family: 'Share Tech Mono', monospace !important;
+        font-weight: 600 !important;
+        display: inline-block !important;
+    }
+    
+    .wallet-display.connected .copy-btn:hover {
+        background: rgba(0, 255, 127, 0.2) !important;
+        border-color: rgba(0, 255, 127, 0.5) !important;
+        transform: scale(1.05) !important;
+        box-shadow: 0 0 5px rgba(0, 255, 127, 0.3) !important;
+    }
+    
+    /* Connecting State */
+    .wallet-display.connecting {
+        border-color: rgba(255, 215, 0, 0.5) !important;
+        background: rgba(255, 215, 0, 0.05) !important;
+        animation: pulse 1.5s ease-in-out infinite !important;
+        cursor: wait !important;
+    }
+    
+    .wallet-display.connecting .wallet-status {
+        color: #ffd700 !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        justify-content: center !important;
+    }
+    
+    .wallet-display.connecting .status-icon {
+        font-size: 16px !important;
+        color: #ffd700 !important;
+        animation: spin 1s linear infinite !important;
+    }
+    
+    .wallet-display.connecting .wallet-address {
+        background: rgba(255, 215, 0, 0.1) !important;
+        border: 1px solid rgba(255, 215, 0, 0.3) !important;
+        border-radius: 6px !important;
+        padding: 8px 12px !important;
+        text-align: center !important;
+        justify-content: center !important;
+    }
+    
+    .wallet-display.connecting .address-text {
+        color: #ffd700 !important;
+        font-size: 12px !important;
+        text-align: center !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        white-space: nowrap !important;
+        word-break: normal !important; /* Überschreibt break-all */
+    }
+    
+    .wallet-display.connecting .copy-btn {
+        display: none !important;
+    }
+    
+    /* Copy Success Animation */
+    .wallet-display.copy-success {
+        animation: copySuccessGreenMobile 0.6s ease !important;
+    }
+    
+    @keyframes copySuccessGreenMobile {
+        0% { 
+            background: rgba(0, 255, 127, 0.05) !important;
+            border-color: rgba(0, 255, 127, 0.3) !important;
+            transform: scale(1) !important;
+        }
+        50% { 
+            background: rgba(0, 255, 127, 0.2) !important;
+            border-color: rgba(0, 255, 127, 0.7) !important;
+            transform: scale(1.02) !important;
+            box-shadow: 0 0 15px rgba(0, 255, 127, 0.4) !important;
+        }
+        100% { 
+            background: rgba(0, 255, 127, 0.05) !important;
+            border-color: rgba(0, 255, 127, 0.3) !important;
+            transform: scale(1) !important;
+        }
+    }
+    
+    /* Spin Animation für Connecting State */
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Wallet Section - nur auf Mobile anzeigen */
+    .wallet-section {
+        display: flex !important; /* Überschreibt eventuelle Desktop-Versteckung */
+        order: 2 !important; /* Platzierung zwischen Logo und Status */
+    }
+    
+    /* Desktop Header - auf Mobile verstecken */
+    .header-wallet-section,
+    .header-wallet-display {
+        display: none !important;
+    }
+    
+    /* Responsive Anpassungen */
+    @media (max-width: 480px) {
+        .wallet-display.disconnected .address-text,
+        .wallet-display.connecting .address-text {
+            font-size: 11px !important;
+        }
+        
+        .wallet-display.connected .address-text {
+            font-size: 10px !important;
+        }
+        
+        .wallet-display.connected .copy-btn {
+            font-size: 9px !important;
+            padding: 3px 6px !important;
+        }
+    }
+    
+    @media (max-width: 320px) {
+        .wallet-display.disconnected .address-text,
+        .wallet-display.connecting .address-text {
+            font-size: 10px !important;
+        }
+        
+        .wallet-display.connected .address-text {
+            font-size: 9px !important;
+        }
+        
+        .wallet-display.connected .copy-btn {
+            font-size: 8px !important;
+            padding: 2px 4px !important;
+        }
+    }
+}
+
+/* =================================================================
+   DESKTOP - Header Wallet Section anzeigen, Mobile Wallet verstecken
+   ================================================================= */
+
+@media only screen and (min-width: 769px) {
+    /* Desktop Header Wallet anzeigen */
+    .header-wallet-section {
+        display: flex !important;
+        justify-content: flex-end !important;
+    }
+    
+    /* Mobile Wallet verstecken */
+    .wallet-section {
+        display: none !important;
+    }
+}
+
+/* =================================================================
+   ENDE: Mobile Wallet Connect-Funktionalität
+   ================================================================= */
