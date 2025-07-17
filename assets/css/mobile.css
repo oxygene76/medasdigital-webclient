@@ -1820,3 +1820,217 @@
 /* =================================================================
    ENDE: Mobile Wallet Connect-Funktionalität
    ================================================================= */
+/* =================================================================
+   MOBILE WALLET KLICKBARKEIT - AM ENDE DER mobile.css HINZUFÜGEN
+   ================================================================= */
+
+/* Mobile Wallet - ALLE Inneren Elemente klickbar machen */
+@media only screen and (max-width: 768px) {
+    
+    /* Wallet Display - Haupt-Container */
+    .wallet-display {
+        cursor: pointer !important;
+        position: relative !important;
+    }
+    
+    /* Wallet Status - Klickbar */
+    .wallet-display .wallet-status {
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        padding: 4px 8px !important;
+        border-radius: 4px !important;
+        position: relative !important;
+        z-index: 1 !important;
+    }
+    
+    .wallet-display .wallet-status:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+        transform: scale(1.02) !important;
+    }
+    
+    /* Status Icon - Klickbar */
+    .wallet-display .status-icon {
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .wallet-display .status-icon:hover {
+        transform: scale(1.1) !important;
+    }
+    
+    /* Wallet Address Bereich - Klickbar */
+    .wallet-display .wallet-address {
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        position: relative !important;
+        z-index: 1 !important;
+    }
+    
+    .wallet-display .wallet-address:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+        transform: scale(1.01) !important;
+    }
+    
+    /* Address Text - Klickbar */
+    .wallet-display .address-text {
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        position: relative !important;
+        z-index: 1 !important;
+        padding: 2px 4px !important;
+        border-radius: 3px !important;
+    }
+    
+    .wallet-display .address-text:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    /* Copy Button - Klickbar (höchste Priorität) */
+    .wallet-display .copy-btn {
+        cursor: pointer !important;
+        position: relative !important;
+        z-index: 10 !important; /* Höchste Priorität */
+    }
+    
+    /* Disconnected State - Spezielle Klickbarkeit */
+    .wallet-display.disconnected .wallet-status,
+    .wallet-display.disconnected .wallet-address,
+    .wallet-display.disconnected .address-text {
+        cursor: pointer !important;
+    }
+    
+    .wallet-display.disconnected .wallet-status:hover {
+        background: rgba(255, 215, 0, 0.1) !important;
+    }
+    
+    .wallet-display.disconnected .wallet-address:hover {
+        background: rgba(255, 215, 0, 0.15) !important;
+        border-color: rgba(255, 215, 0, 0.5) !important;
+    }
+    
+    .wallet-display.disconnected .address-text:hover {
+        background: rgba(255, 215, 0, 0.2) !important;
+        color: #ffffff !important;
+        text-shadow: 0 0 8px rgba(255, 215, 0, 0.8) !important;
+    }
+    
+    /* Connected State - Spezielle Klickbarkeit */
+    .wallet-display.connected .wallet-status:hover {
+        background: rgba(0, 255, 127, 0.1) !important;
+    }
+    
+    .wallet-display.connected .wallet-address:hover {
+        background: rgba(0, 255, 127, 0.15) !important;
+        border-color: rgba(0, 255, 127, 0.5) !important;
+    }
+    
+    .wallet-display.connected .address-text:hover {
+        background: rgba(0, 255, 127, 0.1) !important;
+        color: #00ffff !important;
+        text-shadow: 0 0 4px rgba(0, 255, 0, 0.7) !important;
+    }
+    
+    /* Connecting State - Keine zusätzlichen Hover-Effekte */
+    .wallet-display.connecting .wallet-status,
+    .wallet-display.connecting .wallet-address,
+    .wallet-display.connecting .address-text {
+        cursor: wait !important;
+    }
+    
+    /* Active/Touch States für Mobile */
+    .wallet-display:active,
+    .wallet-display .wallet-status:active,
+    .wallet-display .wallet-address:active,
+    .wallet-display .address-text:active {
+        transform: scale(0.98) !important;
+    }
+    
+    /* Improved Touch Targets - Größere Klickbereiche */
+    .wallet-display .wallet-status,
+    .wallet-display .wallet-address {
+        min-height: 44px !important; /* iOS/Android empfohlene Touch-Größe */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .wallet-display .address-text {
+        min-height: 36px !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    
+    .wallet-display .copy-btn {
+        min-height: 36px !important;
+        min-width: 36px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    /* Visual Feedback für Klicks */
+    .wallet-display::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.1);
+        opacity: 0;
+        transition: opacity 0.1s ease;
+        pointer-events: none;
+        border-radius: inherit;
+        z-index: -1;
+    }
+    
+    .wallet-display:active::before {
+        opacity: 1;
+    }
+    
+    /* Zusätzliche Hover-Unterstützung für Touch-Geräte */
+    @media (hover: hover) {
+        .wallet-display:hover::before {
+            opacity: 0.5;
+        }
+    }
+    
+    /* Accessibility - Focus States */
+    .wallet-display:focus,
+    .wallet-display .wallet-status:focus,
+    .wallet-display .wallet-address:focus,
+    .wallet-display .address-text:focus,
+    .wallet-display .copy-btn:focus {
+        outline: 2px solid #00ff7f !important;
+        outline-offset: 2px !important;
+    }
+    
+    /* Prevent text selection during interaction */
+    .wallet-display,
+    .wallet-display * {
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        user-select: none !important;
+        -webkit-touch-callout: none !important;
+    }
+    
+    /* Ensure proper layering */
+    .wallet-display {
+        position: relative !important;
+        z-index: 1 !important;
+    }
+    
+    .wallet-display > * {
+        position: relative !important;
+        z-index: 2 !important;
+    }
+    
+    .wallet-display .copy-btn {
+        z-index: 10 !important; /* Höchste Priorität für Copy-Button */
+    }
+}
+
+/* =================================================================
+   ENDE: Mobile Wallet Klickbarkeit
+   ================================================================= */
