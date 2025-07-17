@@ -18,19 +18,32 @@ class MedasResearchTerminal {
         this.channels = new Map();
         this.blockchainStatusLogged = false;
         
-        // NEW: Wallet Header Elements
+        // Wallet Header Elements - Control Panel
         this.walletDisplayElement = null;
         this.walletStatusElement = null;
         this.walletAddressElement = null;
         this.addressTextElement = null;
         this.copyButtonElement = null;
         
+        // Wallet Header Elements - Desktop Header
+        this.headerWalletDisplayElement = null;
+        this.headerWalletStatusElement = null;
+        this.headerWalletAddressElement = null;
+        this.headerAddressTextElement = null;
+        this.headerCopyButtonElement = null;
+        
+        // Wallet Header Elements - Mobile
+        this.mobileWalletDisplayElement = null;
+        this.mobileWalletStatusElement = null;
+        this.mobileWalletAddressElement = null;
+        this.mobileAddressTextElement = null;
+        this.mobileCopyButtonElement = null;
+        
         // Initialize UI Manager
         this.ui = new UIManager();
         
         this.initializeTerminal();
         this.initializeEventListeners();
-        // NEW: Initialize Wallet Header
         this.initializeWalletHeader();
         this.checkKeplrAvailability();
         this.checkDaemonConnection();
@@ -38,492 +51,429 @@ class MedasResearchTerminal {
     }
 
     initializeTerminal() {
-        // UI Manager handles starfield, timestamp, and boot messages
         console.log('🚀 MedasDigital Research Terminal v0.9 initializing...');
     }
 
     initializeEventListeners() {
-        // Setup global action handlers
         window.delegateTokens = () => this.delegateTokens();
         window.setMaxStakeAmount = () => this.ui.setMaxStakeAmount();
         window.setMaxSendAmount = () => this.ui.setMaxSendAmount();
         window.sendTokens = () => this.sendTokens();
     }
 
-    // ERSETZE diese Funktion in main.js (ca. Zeile 50-100):
+    // ===================================
+    // WALLET HEADER INITIALIZATION - COMPLETE
+    // ===================================
+    initializeWalletHeader() {
+        try {
+            // Control Panel Elements (bestehend)
+            this.walletDisplayElement = document.getElementById('wallet-display');
+            this.walletStatusElement = document.getElementById('wallet-status');
+            this.walletAddressElement = document.getElementById('wallet-address');
+            this.addressTextElement = document.getElementById('address-text');
+            this.copyButtonElement = document.getElementById('copy-address');
 
-// ERSETZE die initializeWalletHeader() Funktion in main.js mit dieser VOLLSTÄNDIGEN Version:
+            // Desktop Header Elements
+            this.headerWalletDisplayElement = document.querySelector('.header-wallet-display');
+            this.headerWalletStatusElement = this.headerWalletDisplayElement?.querySelector('.wallet-status');
+            this.headerWalletAddressElement = this.headerWalletDisplayElement?.querySelector('.wallet-address');
+            this.headerAddressTextElement = this.headerWalletDisplayElement?.querySelector('.address-text');
+            this.headerCopyButtonElement = this.headerWalletDisplayElement?.querySelector('.copy-btn');
 
-// Initialize Wallet Header Display - DESKTOP + MOBILE VOLLSTÄNDIG
-initializeWalletHeader() {
-    try {
-        // ===================================
-        // CONTROL PANEL ELEMENTS (bestehend)
-        // ===================================
-        this.walletDisplayElement = document.getElementById('wallet-display');
-        this.walletStatusElement = document.getElementById('wallet-status');
-        this.walletAddressElement = document.getElementById('wallet-address');
-        this.addressTextElement = document.getElementById('address-text');
-        this.copyButtonElement = document.getElementById('copy-address');
+            // Mobile Wallet Elements
+            this.mobileWalletDisplayElement = document.querySelector('.wallet-section .wallet-display');
+            this.mobileWalletStatusElement = this.mobileWalletDisplayElement?.querySelector('.wallet-status');
+            this.mobileWalletAddressElement = this.mobileWalletDisplayElement?.querySelector('.wallet-address');
+            this.mobileAddressTextElement = this.mobileWalletDisplayElement?.querySelector('.address-text');
+            this.mobileCopyButtonElement = this.mobileWalletDisplayElement?.querySelector('.copy-btn');
 
-        // ===================================
-        // DESKTOP HEADER ELEMENTS
-        // ===================================
-        this.headerWalletDisplayElement = document.querySelector('.header-wallet-display');
-        this.headerWalletStatusElement = this.headerWalletDisplayElement?.querySelector('.wallet-status');
-        this.headerWalletAddressElement = this.headerWalletDisplayElement?.querySelector('.wallet-address');
-        this.headerAddressTextElement = this.headerWalletDisplayElement?.querySelector('.address-text');
-        this.headerCopyButtonElement = this.headerWalletDisplayElement?.querySelector('.copy-btn');
+            console.log('🔍 DEBUG - Wallet Elements Found:');
+            console.log('  Control Panel:', !!this.walletDisplayElement);
+            console.log('  Desktop Header:', !!this.headerWalletDisplayElement);
+            console.log('  Mobile:', !!this.mobileWalletDisplayElement);
 
-        // ===================================
-        // MOBILE WALLET ELEMENTS (NEU!)
-        // ===================================
-        // Suche nach dem Mobile Wallet Element in der Wallet-Section
-        this.mobileWalletDisplayElement = document.querySelector('.wallet-section .wallet-display');
-        this.mobileWalletStatusElement = this.mobileWalletDisplayElement?.querySelector('.wallet-status');
-        this.mobileWalletAddressElement = this.mobileWalletDisplayElement?.querySelector('.wallet-address');
-        this.mobileAddressTextElement = this.mobileWalletDisplayElement?.querySelector('.address-text');
-        this.mobileCopyButtonElement = this.mobileWalletDisplayElement?.querySelector('.copy-btn');
+            // Event Listeners - Control Panel
+            if (this.copyButtonElement) {
+                this.copyButtonElement.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.copyWalletAddress();
+                });
+            }
 
-        // ===================================
-        // DEBUG LOGGING
-        // ===================================
-        console.log('🔍 DEBUG - Wallet Elements Found:');
-        console.log('  Control Panel Elements:');
-        console.log('    walletDisplayElement:', this.walletDisplayElement);
-        console.log('    walletStatusElement:', this.walletStatusElement);
-        console.log('    walletAddressElement:', this.walletAddressElement);
-        console.log('    addressTextElement:', this.addressTextElement);
-        console.log('    copyButtonElement:', this.copyButtonElement);
-        console.log('  Desktop Header Elements:');
-        console.log('    headerWalletDisplayElement:', this.headerWalletDisplayElement);
-        console.log('    headerWalletStatusElement:', this.headerWalletStatusElement);
-        console.log('    headerWalletAddressElement:', this.headerWalletAddressElement);
-        console.log('    headerAddressTextElement:', this.headerAddressTextElement);
-        console.log('    headerCopyButtonElement:', this.headerCopyButtonElement);
-        console.log('  Mobile Elements (NEU):');
-        console.log('    mobileWalletDisplayElement:', this.mobileWalletDisplayElement);
-        console.log('    mobileWalletStatusElement:', this.mobileWalletStatusElement);
-        console.log('    mobileWalletAddressElement:', this.mobileWalletAddressElement);
-        console.log('    mobileAddressTextElement:', this.mobileAddressTextElement);
-        console.log('    mobileCopyButtonElement:', this.mobileCopyButtonElement);
+            if (this.addressTextElement) {
+                this.addressTextElement.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.copyWalletAddress();
+                });
+            }
 
-        // ===================================
-        // EVENT LISTENERS - CONTROL PANEL
-        // ===================================
-        if (this.copyButtonElement) {
-            this.copyButtonElement.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.copyWalletAddress();
-            });
+            // Event Listeners - Desktop Header
+            if (this.headerWalletDisplayElement) {
+                this.headerWalletDisplayElement.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔗 Desktop Header Button clicked!');
+                    this.handleWalletClick('desktop-header');
+                });
+                console.log('✅ Desktop Header Button click handler added');
+            }
+
+            if (this.headerCopyButtonElement) {
+                this.headerCopyButtonElement.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.copyWalletAddress();
+                });
+            }
+
+            if (this.headerAddressTextElement) {
+                this.headerAddressTextElement.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.copyWalletAddress();
+                });
+            }
+
+            // Event Listeners - Mobile Wallet
+            if (this.mobileWalletDisplayElement) {
+                this.mobileWalletDisplayElement.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('📱 Mobile Wallet Button clicked!');
+                    this.handleWalletClick('mobile');
+                });
+                console.log('✅ Mobile Wallet Button click handler added');
+            }
+
+            if (this.mobileCopyButtonElement) {
+                this.mobileCopyButtonElement.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.copyWalletAddress();
+                });
+            }
+
+            if (this.mobileAddressTextElement) {
+                this.mobileAddressTextElement.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.copyWalletAddress();
+                });
+            }
+
+            console.log('✅ Wallet header initialized successfully');
+            this.updateWalletHeader();
+            
+        } catch (error) {
+            console.error('❌ Wallet header initialization failed:', error);
+        }
+    }
+
+    // ===================================
+    // WALLET CLICK HANDLER
+    // ===================================
+    handleWalletClick(source) {
+        console.log(`🔗 Wallet clicked from: ${source}`);
+        
+        if (this.connected && this.account) {
+            console.log('📱 Already connected, showing wallet options');
+            this.showWalletOptions();
+        } else {
+            console.log('🔗 Not connected, starting connection...');
+            this.connectWallet();
+        }
+    }
+
+    // ===================================
+    // UPDATE WALLET HEADER - ALL ELEMENTS
+    // ===================================
+    updateWalletHeader() {
+        // Control Panel Display
+        if (this.walletDisplayElement) {
+            try {
+                if (this.connected && this.account) {
+                    this.walletDisplayElement.className = 'wallet-display connected';
+                    
+                    if (this.walletStatusElement) {
+                        this.walletStatusElement.innerHTML = `
+                            <span class="status-icon">💳</span>
+                            <span class="status-text">Connected</span>
+                        `;
+                    }
+
+                    if (this.walletAddressElement && this.addressTextElement) {
+                        const fullAddress = this.account.address;
+                        this.walletAddressElement.style.display = 'flex';
+                        this.walletAddressElement.style.visibility = 'visible';
+                        this.addressTextElement.textContent = fullAddress;
+                        this.addressTextElement.title = fullAddress;
+                    }
+                } else {
+                    this.walletDisplayElement.className = 'wallet-display disconnected';
+                    
+                    if (this.walletStatusElement) {
+                        this.walletStatusElement.innerHTML = `
+                            <span class="status-icon">💳</span>
+                            <span class="status-text">No Wallet</span>
+                        `;
+                    }
+
+                    if (this.walletAddressElement) {
+                        this.walletAddressElement.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Control Panel update failed:', error);
+            }
         }
 
-        if (this.addressTextElement) {
-            this.addressTextElement.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.copyWalletAddress();
-            });
-        }
-
-        // ===================================
-        // EVENT LISTENERS - DESKTOP HEADER
-        // ===================================
+        // Desktop Header Display
         if (this.headerWalletDisplayElement) {
-            this.headerWalletDisplayElement.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                console.log('🔗 Desktop Header Button clicked!');
-                this.handleWalletClick('desktop-header');
-            });
-            
-            console.log('✅ Desktop Header Button click handler added');
-        } else {
-            console.warn('⚠️ Desktop Header Button (.header-wallet-display) not found in DOM');
+            try {
+                if (this.connected && this.account) {
+                    this.headerWalletDisplayElement.className = 'header-wallet-display connected';
+                    
+                    if (this.headerWalletStatusElement) {
+                        this.headerWalletStatusElement.innerHTML = `
+                            <span class="status-icon">💳</span>
+                            CONNECTED
+                        `;
+                    }
+
+                    if (this.headerWalletAddressElement && this.headerAddressTextElement) {
+                        const fullAddress = this.account.address;
+                        const shortenedAddress = fullAddress.length > 20 ? 
+                            fullAddress.substring(0, 12) + '...' + fullAddress.substring(fullAddress.length - 8) : 
+                            fullAddress;
+                        
+                        this.headerWalletAddressElement.style.display = 'flex';
+                        this.headerWalletAddressElement.style.visibility = 'visible';
+                        this.headerAddressTextElement.textContent = shortenedAddress;
+                        this.headerAddressTextElement.title = fullAddress;
+                    }
+
+                    if (this.headerCopyButtonElement) {
+                        this.headerCopyButtonElement.style.display = 'inline-block';
+                    }
+                } else {
+                    this.headerWalletDisplayElement.className = 'header-wallet-display disconnected';
+                    
+                    if (this.headerWalletStatusElement) {
+                        this.headerWalletStatusElement.innerHTML = `
+                            <span class="status-icon">⚡</span>
+                            NOT CONNECTED
+                        `;
+                    }
+
+                    if (this.headerWalletAddressElement && this.headerAddressTextElement) {
+                        this.headerWalletAddressElement.style.display = 'flex';
+                        this.headerWalletAddressElement.style.visibility = 'visible';
+                        this.headerAddressTextElement.textContent = 'CLICK TO CONNECT KEPLR WALLET';
+                        this.headerAddressTextElement.title = '';
+                    }
+
+                    if (this.headerCopyButtonElement) {
+                        this.headerCopyButtonElement.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Desktop Header update failed:', error);
+            }
         }
 
-        if (this.headerCopyButtonElement) {
-            this.headerCopyButtonElement.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.copyWalletAddress();
-            });
-        }
-
-        if (this.headerAddressTextElement) {
-            this.headerAddressTextElement.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.copyWalletAddress();
-            });
-        }
-
-        // ===================================
-        // EVENT LISTENERS - MOBILE WALLET (NEU!)
-        // ===================================
+        // Mobile Wallet Display
         if (this.mobileWalletDisplayElement) {
-            this.mobileWalletDisplayElement.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                console.log('📱 Mobile Wallet Button clicked!');
-                this.handleWalletClick('mobile');
-            });
-            
-            console.log('✅ Mobile Wallet Button click handler added');
-        } else {
-            console.warn('⚠️ Mobile Wallet Button (.wallet-section .wallet-display) not found in DOM');
-        }
+            try {
+                if (this.connected && this.account) {
+                    this.mobileWalletDisplayElement.className = 'wallet-display connected';
+                    
+                    if (this.mobileWalletStatusElement) {
+                        this.mobileWalletStatusElement.innerHTML = `
+                            <span class="status-icon">💳</span>
+                            Connected
+                        `;
+                    }
 
-        if (this.mobileCopyButtonElement) {
-            this.mobileCopyButtonElement.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.copyWalletAddress();
-            });
-        }
+                    if (this.mobileWalletAddressElement && this.mobileAddressTextElement) {
+                        const fullAddress = this.account.address;
+                        const shortenedAddress = fullAddress.length > 14 ? 
+                            fullAddress.substring(0, 8) + '...' + fullAddress.substring(fullAddress.length - 6) : 
+                            fullAddress;
+                        
+                        this.mobileWalletAddressElement.style.display = 'flex';
+                        this.mobileWalletAddressElement.style.visibility = 'visible';
+                        this.mobileAddressTextElement.textContent = shortenedAddress;
+                        this.mobileAddressTextElement.title = fullAddress;
+                    }
 
-        if (this.mobileAddressTextElement) {
-            this.mobileAddressTextElement.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.copyWalletAddress();
-            });
-        }
+                    if (this.mobileCopyButtonElement) {
+                        this.mobileCopyButtonElement.style.display = 'inline-block';
+                    }
+                } else {
+                    this.mobileWalletDisplayElement.className = 'wallet-display disconnected';
+                    
+                    if (this.mobileWalletStatusElement) {
+                        this.mobileWalletStatusElement.innerHTML = `
+                            <span class="status-icon">⚡</span>
+                            NOT CONNECTED
+                        `;
+                    }
 
-        console.log('✅ Wallet header initialized successfully');
-        
-        // Update initial state
-        this.updateWalletHeader();
-        
-    } catch (error) {
-        console.error('❌ Wallet header initialization failed:', error);
+                    if (this.mobileWalletAddressElement && this.mobileAddressTextElement) {
+                        this.mobileWalletAddressElement.style.display = 'flex';
+                        this.mobileWalletAddressElement.style.visibility = 'visible';
+                        this.mobileAddressTextElement.textContent = 'CLICK TO CONNECT KEPLR WALLET';
+                        this.mobileAddressTextElement.title = '';
+                    }
+
+                    if (this.mobileCopyButtonElement) {
+                        this.mobileCopyButtonElement.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Mobile Wallet update failed:', error);
+            }
+        }
     }
-}
 
-// ===================================
-// WALLET CLICK HANDLER (NEU!)
-// ===================================
-handleWalletClick(source) {
-    console.log(`🔗 Wallet clicked from: ${source}`);
-    
-    if (this.connected && this.account) {
-        console.log('📱 Already connected, showing wallet options');
-        this.showWalletOptions();
-    } else {
-        console.log('🔗 Not connected, starting connection...');
-        this.connectWallet();
-    }
-}
+    // ===================================
+    // SET CONNECTING STATE - ALL ELEMENTS
+    // ===================================
+    setWalletConnecting(isConnecting = true) {
+        if (isConnecting) {
+            // Control Panel
+            if (this.walletDisplayElement) {
+                this.walletDisplayElement.className = 'wallet-display connecting';
+                if (this.walletStatusElement) {
+                    this.walletStatusElement.innerHTML = `
+                        <span class="status-icon">💳</span>
+                        <span class="status-text">Connecting...</span>
+                    `;
+                }
+            }
 
-// ===================================
-// WALLET OPTIONS DIALOG
-// ===================================
-showWalletOptions() {
-    const options = [
-        {
-            text: '📋 Copy Address',
-            action: () => this.copyWalletAddress()
-        },
-        {
-            text: '💰 View Balance',
-            action: () => this.showBalanceDetails()
-        },
-        {
-            text: '🔌 Disconnect',
-            action: () => this.disconnectWallet()
+            // Desktop Header
+            if (this.headerWalletDisplayElement) {
+                this.headerWalletDisplayElement.className = 'header-wallet-display connecting';
+                if (this.headerWalletStatusElement) {
+                    this.headerWalletStatusElement.innerHTML = `
+                        <span class="status-icon">⚡</span>
+                        CONNECTING...
+                    `;
+                }
+                if (this.headerAddressTextElement) {
+                    this.headerAddressTextElement.textContent = 'CONNECTING TO KEPLR WALLET...';
+                }
+            }
+
+            // Mobile
+            if (this.mobileWalletDisplayElement) {
+                this.mobileWalletDisplayElement.className = 'wallet-display connecting';
+                if (this.mobileWalletStatusElement) {
+                    this.mobileWalletStatusElement.innerHTML = `
+                        <span class="status-icon">⚡</span>
+                        Connecting...
+                    `;
+                }
+                if (this.mobileAddressTextElement) {
+                    this.mobileAddressTextElement.textContent = 'CONNECTING TO KEPLR WALLET...';
+                }
+            }
         }
-    ];
+    }
 
-    this.showOptionsDialog('Wallet Options', options);
-}
+    // ===================================
+    // WALLET OPTIONS DIALOG
+    // ===================================
+    showWalletOptions() {
+        const options = [
+            {
+                text: '📋 Copy Address',
+                action: () => this.copyWalletAddress()
+            },
+            {
+                text: '💰 View Balance',
+                action: () => this.showBalanceDetails()
+            },
+            {
+                text: '🔌 Disconnect',
+                action: () => this.disconnectWallet()
+            }
+        ];
 
-// ===================================
-// OPTIONS DIALOG HELPER
-// ===================================
-showOptionsDialog(title, options) {
-    const dialog = document.createElement('div');
-    dialog.className = 'wallet-options-dialog';
-    dialog.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.8);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-        padding: 20px;
-    `;
+        this.showOptionsDialog('Wallet Options', options);
+    }
 
-    const content = document.createElement('div');
-    content.style.cssText = `
-        background: #1a1a1a;
-        border: 1px solid #00ffff;
-        border-radius: 8px;
-        padding: 20px;
-        max-width: 300px;
-        width: 100%;
-        color: #ffffff;
-        font-family: 'Orbitron', monospace;
-    `;
+    showOptionsDialog(title, options) {
+        const dialog = document.createElement('div');
+        dialog.className = 'wallet-options-dialog';
+        dialog.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+        `;
 
-    content.innerHTML = `
-        <div style="margin-bottom: 20px; font-size: 16px; color: #00ffff; text-align: center;">
-            ${title}
-        </div>
-        <div class="option-buttons" style="display: flex; flex-direction: column; gap: 10px;">
-            ${options.map((option, index) => `
-                <button onclick="this.parentElement.parentElement.parentElement.handleOption(${index})" 
-                        style="background: transparent; color: #00ffff; border: 1px solid #00ffff; padding: 10px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: all 0.3s ease;">
-                    ${option.text}
+        const content = document.createElement('div');
+        content.style.cssText = `
+            background: #1a1a1a;
+            border: 1px solid #00ffff;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 300px;
+            width: 100%;
+            color: #ffffff;
+            font-family: 'Orbitron', monospace;
+        `;
+
+        content.innerHTML = `
+            <div style="margin-bottom: 20px; font-size: 16px; color: #00ffff; text-align: center;">
+                ${title}
+            </div>
+            <div class="option-buttons" style="display: flex; flex-direction: column; gap: 10px;">
+                ${options.map((option, index) => `
+                    <button onclick="this.parentElement.parentElement.parentElement.handleOption(${index})" 
+                            style="background: transparent; color: #00ffff; border: 1px solid #00ffff; padding: 10px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: all 0.3s ease;">
+                        ${option.text}
+                    </button>
+                `).join('')}
+                <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                        style="background: transparent; color: #999; border: 1px solid #666; padding: 10px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-top: 10px;">
+                    Cancel
                 </button>
-            `).join('')}
-            <button onclick="this.parentElement.parentElement.parentElement.remove()" 
-                    style="background: transparent; color: #999; border: 1px solid #666; padding: 10px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-top: 10px;">
-                Cancel
-            </button>
-        </div>
-    `;
+            </div>
+        `;
 
-    dialog.appendChild(content);
-    
-    // Add option handler
-    dialog.handleOption = (index) => {
-        options[index].action();
-        dialog.remove();
-    };
+        dialog.appendChild(content);
+        
+        dialog.handleOption = (index) => {
+            options[index].action();
+            dialog.remove();
+        };
 
-    document.body.appendChild(dialog);
-}
-
-// ===================================
-// BALANCE DETAILS
-// ===================================
-showBalanceDetails() {
-    if (!this.account) return;
-    
-    this.getBalance().then(balance => {
-        alert(`💰 Wallet Balance\n\nAddress: ${this.account.address}\nBalance: ${balance} MEDAS`);
-    });
-}
-
-// NEU: Wallet Options Dialog für Connected State
-showWalletOptions() {
-    const options = [
-        {
-            text: '📋 Copy Address',
-            action: () => this.copyWalletAddress()
-        },
-        {
-            text: '💰 View Balance',
-            action: () => this.showBalanceDetails()
-        },
-        {
-            text: '🔌 Disconnect',
-            action: () => this.disconnectWallet()
-        }
-    ];
-
-    this.showOptionsDialog('Wallet Options', options);
-}
-
-// NEU: Options Dialog Helper
-showOptionsDialog(title, options) {
-    const dialog = document.createElement('div');
-    dialog.className = 'wallet-options-dialog';
-    dialog.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.8);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-        padding: 20px;
-    `;
-
-    const content = document.createElement('div');
-    content.style.cssText = `
-        background: #1a1a1a;
-        border: 1px solid #00ffff;
-        border-radius: 8px;
-        padding: 20px;
-        max-width: 300px;
-        width: 100%;
-        color: #ffffff;
-        font-family: 'Orbitron', monospace;
-    `;
-
-    content.innerHTML = `
-        <div style="margin-bottom: 20px; font-size: 16px; color: #00ffff; text-align: center;">
-            ${title}
-        </div>
-        <div class="option-buttons" style="display: flex; flex-direction: column; gap: 10px;">
-            ${options.map((option, index) => `
-                <button onclick="this.parentElement.parentElement.parentElement.handleOption(${index})" 
-                        style="background: transparent; color: #00ffff; border: 1px solid #00ffff; padding: 10px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: all 0.3s ease;">
-                    ${option.text}
-                </button>
-            `).join('')}
-            <button onclick="this.parentElement.parentElement.parentElement.remove()" 
-                    style="background: transparent; color: #999; border: 1px solid #666; padding: 10px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-top: 10px;">
-                Cancel
-            </button>
-        </div>
-    `;
-
-    dialog.appendChild(content);
-    
-    // Add option handler
-    dialog.handleOption = (index) => {
-        options[index].action();
-        dialog.remove();
-    };
-
-    document.body.appendChild(dialog);
-}
-
-// NEU: Balance Details anzeigen
-showBalanceDetails() {
-    if (!this.account) return;
-    
-    this.getBalance().then(balance => {
-        alert(`💰 Wallet Balance\n\nAddress: ${this.account.address}\nBalance: ${balance} MEDAS`);
-    });
-}
-
-
-Security Vulnerability
-----------------------
-        IIS module anomalies detected: False
-        Security Vulnerability: Download Domains are not configured. You should configure them to be protected against C
-VE-2021-1730.
-                Configuration instructions: https://aka.ms/HC-DownloadDomains
-
-Exchange IIS Information
-------------------------
-
-        Name               State    HSTS Enabled  Protocol - Bindings - Certificate
-        ----               -----    ------------  ---------------------------------
-        Default Web Site   Started  False         http  - *:80:          - NULL
-                                                  https - :443:          - 51F481DC19DB6E95FE834EA3B179BBD4ACD210AF
-                                                  http  - 127.0.0.1:80:  - NULL
-                                                  https - 127.0.0.1:443: - 51F481DC19DB6E95FE834EA3B179BBD4ACD210AF
-        Exchange Back End  Started  False         http  - *:81:  - NULL
-                                                  https - *:444: - BA35BDBAE2CEF27F97A75360D53357D31C8419A0
-
-
-        AppPoolName                          State    GCServerEnabled  RestartConditionSet
-        -----------                          -----    ---------------  -------------------
-        MSExchangeMapiFrontEndAppPool        Started  True             False
-        MSExchangeOWAAppPool                 Started  False            False
-        MSExchangeECPAppPool                 Started  False            False
-        MSExchangeRestAppPool                Started  False            False
-        MSExchangeMapiAddressBookAppPool     Started  False            False
-        MSExchangeRpcProxyFrontEndAppPool    Started  False            False
-        MSExchangePowerShellAppPool          Started  False            False
-        MSExchangePowerShellFrontEndAppPool  Started  False            False
-        MSExchangeRestFrontEndAppPool        Started  False            False
-        MSExchangeMapiMailboxAppPool         Started  False            False
-        MSExchangeOABAppPool                 Started  False            False
-        MSExchangePushNotificationsAppPool   Started  False            False
-        MSExchangeOWACalendarAppPool         Started  False            False
-        MSExchangeAutodiscoverAppPool        Started  False            False
-        MSExchangeServicesAppPool            Started  False            False
-        MSExchangeSyncAppPool                Started  True             False
-        MSExchangeRpcProxyAppPool            Started  False            False
-
-
-        Name                 ExtendedProtection  SslFlags        IPFilteringEnabled  URLRewrite  Authentication
-        ----                 ------------------  --------        ------------------  ----------  --------------
-        Default Web Site     None                False           False                           anonymous (default
-                                                                                                 setting)
-        Default Web          Require             True (128-bit)  False                           Windows
-        Site/API                                                                                 (Negotiate,NTLM)
-                                                                                                 anonymous (default
-                                                                                                 setting)
-        Default Web          None                True (128-bit)  False                           Windows
-        Site/Autodiscover                                                                        (Negotiate,NTLM)
-                                                                                                 anonymous (default
-                                                                                                 setting)
-                                                                                                 basic
-        Default Web          Require             True (128-bit)  False                           anonymous (default
-        Site/ecp                                                                                 setting)
-                                                                                                 basic
-        Default Web          Allow               True (128-bit)  False                           Windows
-        Site/EWS                                                                                 (Negotiate,NTLM)
-                                                                                                 anonymous (default
-                                                                                                 setting)
-        Default Web          Require             True (128-bit)  False                           Windows
-        Site/mapi                                                                                (Negotiate,NTLM)
-        Default Web          Allow               True (128-bit)  False                           basic
-        Site/Microsoft-Serv
-        er-ActiveSync
-        Default Web          Allow               True (128-bit)  False                           Windows
-        Site/Microsoft-Serv                                                                      (Negotiate,NTLM)
-        er-ActiveSync/Proxy
-        Default Web          Allow               True (128-bit)  False                           Windows
-        Site/OAB                                                                                 (Negotiate,NTLM)
-        Default Web          Require             True (128-bit)  False                           basic
-        Site/owa
-        Default Web          None                False           False
-        Site/PowerShell                          Cert(Accept)
-        Default Web          Require             True (128-bit)  False                           Windows
-        Site/Rpc                                                                                 (Negotiate,NTLM)
-                                                                                                 basic
-        Exchange Back End    None                False           False                           anonymous (default
-                                                                                                 setting)
-        Exchange Back        Require             True (128-bit)  False                           Windows
-        End/API                                                                                  (Negotiate,NTLM)
-                                                                                                 anonymous (default
-                                                                                                 setting)
-        Exchange Back        None                True (128-bit)  False                           Windows
-        End/Autodiscover                                                                         (Negotiate,NTLM)
-                                                                                                 anonymous (default
-                                                                                                 setting)
-        Exchange Back        Require             True (128-bit)  False                           Windows
-        End/ecp                                                                                  (Negotiate,NTLM)
-                                                                                                 anonymous (default
-                                                                                                 setting)
-        Exchange Back        Require             True (128-bit)  False                           Windows
-        End/EWS                                                                                  (Negotiate,NTLM)
-                                                                                                 anonymous (default
-                                                                                                 setting)
-        Exchange Back        Require             True            False                           Windows
-        End/mapi/emsmdb                                                                          (Negotiate,NTLM)
-        Exchange Back        Require             True            False                           Windows
-        End/mapi/nspi                                                                            (Negotiate,NTLM)
-        Exchange Back        Require             True (128-bit)  False                           basic
-        End/Microsoft-Serve
-        r-ActiveSync
-        Exchange Back        Require             True (128-bit)  False                           Windows
-        End/Microsoft-Serve                                                                      (Negotiate,NTLM)
-        r-ActiveSync/Proxy
-        Exchange Back        Require             True (128-bit)  False                           Windows
-        End/OAB                                                                                  (Negotiate,NTLM)
-        Exchange Back        Require             True (128-bit)  False                           Windows
-        End/owa                                                                                  (Negotiate,NTLM)
-                                                                                                 anonymous (default
-                                                                                                 setting)
-        Exchange Back        Require             True (128-bit)  False                           Windows
-        End/PowerShell                                                                           (Negotiate,NTLM)
-        Exchange Back        Require             True (128-bit)  False                           Windows
-        End/Rpc                                                                                  (Negotiate,NTLM)
-        Exchange Back        Require             True (128-bit)  False                           Windows
-        End/RpcWithCert                                                                          (Negotiate,NTLM)    // NEW: Shorten Wallet Address for Display
-   shortenAddress(address) {
-    return address || ''; // Keine Verkürzung mehr!
+        document.body.appendChild(dialog);
     }
 
-    // NEW: Copy Wallet Address to Clipboard
+    showBalanceDetails() {
+        if (!this.account) return;
+        
+        this.getBalance().then(balance => {
+            alert(`💰 Wallet Balance\n\nAddress: ${this.account.address}\nBalance: ${balance} MEDAS`);
+        });
+    }
+
+    // ===================================
+    // COPY WALLET ADDRESS
+    // ===================================
     async copyWalletAddress() {
         if (!this.account || !this.account.address) {
             console.warn('⚠️ No wallet address to copy');
@@ -534,13 +484,13 @@ Exchange IIS Information
         try {
             await navigator.clipboard.writeText(this.account.address);
             
-            // Visual feedback
-            if (this.walletDisplayElement) {
-                this.walletDisplayElement.classList.add('copy-success');
-                setTimeout(() => {
-                    this.walletDisplayElement.classList.remove('copy-success');
-                }, 600);
-            }
+            // Visual feedback for all elements
+            [this.walletDisplayElement, this.headerWalletDisplayElement, this.mobileWalletDisplayElement]
+                .filter(el => el)
+                .forEach(el => {
+                    el.classList.add('copy-success');
+                    setTimeout(() => el.classList.remove('copy-success'), 600);
+                });
 
             console.log('📋 Wallet address copied to clipboard:', this.account.address);
             this.ui.addSystemMessage('Wallet address copied to clipboard');
@@ -549,7 +499,6 @@ Exchange IIS Information
             console.error('❌ Failed to copy address:', error);
             this.ui.showSystemMessage('Failed to copy address', 'error');
             
-            // Fallback: Show the address in a prompt
             try {
                 prompt('Copy wallet address:', this.account.address);
             } catch (promptError) {
@@ -558,7 +507,10 @@ Exchange IIS Information
         }
     }
 
-    // Daemon Connection Management
+    // ===================================
+    // REMAINING METHODS (unchanged)
+    // ===================================
+    
     async checkDaemonConnection() {
         const config = API_CONFIG?.daemon || DAEMON_CONFIG;
         const urls = config.urls || config.fallbackUrls || ['http://localhost:8080'];
@@ -582,7 +534,6 @@ Exchange IIS Information
                     return;
                 }
             } catch (error) {
-                // Try next URL
                 console.warn(`Daemon connection failed for ${url}:`, error);
             }
         }
@@ -615,7 +566,6 @@ Current mode: Blockchain-only (no chat)`,
         }, 2000);
     }
 
-    // WebSocket Connection for Real-time Messages
     connectWebSocket() {
         if (!this.daemonUrl) return;
 
@@ -649,7 +599,6 @@ Current mode: Blockchain-only (no chat)`,
     }
 
     handleIncomingMessage(message) {
-        // Add message to appropriate conversation
         if (!this.messageHistory.has(message.from)) {
             this.messageHistory.set(message.from, []);
         }
@@ -659,7 +608,6 @@ Current mode: Blockchain-only (no chat)`,
             type: 'received'
         });
 
-        // Update UI if chat tab is active
         if (this.activeTab === 'comm') {
             this.ui.addMessageToUI({
                 from: message.from,
@@ -670,7 +618,6 @@ Current mode: Blockchain-only (no chat)`,
             });
         }
 
-        // Add notification
         this.ui.showNotification(`New message from ${this.getContactName(message.from)}`);
     }
 
@@ -691,7 +638,6 @@ Current mode: Blockchain-only (no chat)`,
         }
     }
 
-    // Contact Management
     async loadContacts() {
         if (!this.daemonConnected) return;
 
@@ -708,7 +654,6 @@ Current mode: Blockchain-only (no chat)`,
             }
         } catch (error) {
             console.warn('Failed to load contacts:', error);
-            // Use mock data as fallback
             if (window.MockData) {
                 window.MockData.contacts.forEach(contact => {
                     this.contacts.set(contact.address, contact);
@@ -728,7 +673,6 @@ Current mode: Blockchain-only (no chat)`,
             if (response.ok) {
                 const messages = await response.json();
                 
-                // Group messages by conversation
                 messages.forEach(message => {
                     const contactAddress = message.from === this.account?.address ? message.to : message.from;
                     
@@ -739,12 +683,10 @@ Current mode: Blockchain-only (no chat)`,
                     this.messageHistory.get(contactAddress).push(message);
                 });
                 
-                // Update UI with recent messages
                 this.updateChatDisplay();
             }
         } catch (error) {
             console.warn('Failed to load message history:', error);
-            // Use mock data as fallback
             if (window.MockData) {
                 this.loadMockMessages();
             }
@@ -771,16 +713,13 @@ Current mode: Blockchain-only (no chat)`,
         const messagesContainer = document.getElementById('message-display');
         messagesContainer.innerHTML = '';
 
-        // Show messages from all conversations
         const allMessages = [];
         this.messageHistory.forEach((messages, contact) => {
             allMessages.push(...messages);
         });
 
-        // Sort by timestamp
         allMessages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-        // Display recent messages
         allMessages.slice(-20).forEach(message => {
             this.ui.addMessageToUI({
                 from: message.from,
@@ -792,17 +731,13 @@ Current mode: Blockchain-only (no chat)`,
         });
     }
 
-    // Blockchain Monitoring
     startBlockchainMonitoring() {
-        // Check blockchain status immediately
         this.checkBlockchainStatus();
         
-        // Then check every 10 seconds
         setInterval(() => {
             this.checkBlockchainStatus();
         }, 10000);
         
-        // Check block height every 30 seconds when online
         setInterval(() => {
             if (this.blockchainOnline) {
                 this.updateBlockHeight();
@@ -864,8 +799,7 @@ Current mode: Blockchain-only (no chat)`,
                     this.currentBlock = newBlock;
                     this.ui.updateBlockchainUI(true, this.currentBlock);
                     
-                    // Occasionally show block updates
-                    if (Math.random() < 0.1) { // 10% chance
+                    if (Math.random() < 0.1) {
                         this.ui.addSystemMessage(`New block mined: #${this.currentBlock}`);
                     }
                 }
@@ -875,22 +809,17 @@ Current mode: Blockchain-only (no chat)`,
         }
     }
 
-    // Wallet Connection
     async connectWallet() {
         try {
-            // NEW: Set connecting state
             this.setWalletConnecting(true);
             
-            // Use improved Keplr Detection
             const connected = await this.keplrManager.connect();
             if (!connected) {
                 this.ui.showSystemMessage('Keplr not found - Install extension', 'error');
-                // NEW: Reset to disconnected state
                 this.updateWalletHeader();
                 return;
             }
 
-            // Chain suggestion
             try {
                 await window.keplr.experimentalSuggestChain(MEDAS_CHAIN_CONFIG);
                 console.log('✅ Chain suggestion successful');
@@ -898,11 +827,9 @@ Current mode: Blockchain-only (no chat)`,
                 console.log('Chain already exists or user rejected:', error);
             }
 
-            // Enable chain
             const chainId = MEDAS_CHAIN_CONFIG?.chainId || "medasdigital-2";
             await window.keplr.enable(chainId);
             
-            // Get accounts
             const offlineSigner = window.getOfflineSigner(chainId);
             const accounts = await offlineSigner.getAccounts();
             
@@ -912,27 +839,22 @@ Current mode: Blockchain-only (no chat)`,
                 };
                 this.connected = true;
                 
-                // NEW: Update wallet header
                 this.updateWalletHeader();
                 
-                // Update UI
                 this.ui.addSystemMessage(`Wallet connected: ${this.account.address}`);
                 this.ui.updateConnectionStatus(true);
                 
-                // Get balance
                 const balance = await this.getBalance();
                 if (balance !== 'ERROR') {
                     this.ui.updateUIAfterConnection(this.account, balance);
                 }
                 
-                // Enable message input
                 const messageInput = document.getElementById('message-input');
                 if (messageInput) {
                     messageInput.disabled = false;
                     messageInput.placeholder = "Enter transmission data...";
                 }
                 
-                // Account change listener
                 window.addEventListener('keplr_keystorechange', () => {
                     console.log('Keplr account changed, reconnecting...');
                     this.connectWallet();
@@ -943,7 +865,6 @@ Current mode: Blockchain-only (no chat)`,
         } catch (error) {
             console.error('❌ Wallet connection failed:', error);
             this.ui.showSystemMessage('Connection failed - Check Keplr', 'error');
-            // NEW: Reset to disconnected state
             this.connected = false;
             this.account = null;
             this.updateWalletHeader();
@@ -970,7 +891,6 @@ Current mode: Blockchain-only (no chat)`,
         }
     }
 
-    // Message Handling
     async sendMessage() {
         const input = document.getElementById('message-input');
         const message = input.value.trim();
@@ -983,7 +903,6 @@ Current mode: Blockchain-only (no chat)`,
         }
 
         try {
-            // Add message to UI immediately
             this.ui.addMessageToUI({
                 from: this.account?.address,
                 content: message,
@@ -994,7 +913,6 @@ Current mode: Blockchain-only (no chat)`,
 
             input.value = '';
 
-            // Send to daemon
             const config = API_CONFIG?.daemon || DAEMON_CONFIG;
             const endpoint = config.endpoints?.messages || '/api/v1/messages';
             const response = await fetch(`${this.daemonUrl}${endpoint}/send`, {
@@ -1003,7 +921,7 @@ Current mode: Blockchain-only (no chat)`,
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    to: 'broadcast', // Could be enhanced for specific recipients
+                    to: 'broadcast',
                     content: message,
                     from: this.account?.address,
                     type: 'text'
@@ -1021,7 +939,6 @@ Current mode: Blockchain-only (no chat)`,
             console.error('Message send failed:', error);
             this.ui.showSystemMessage('Message send failed - check daemon connection', 'error');
             
-            // Remove the message from UI on failure
             const messages = document.querySelectorAll('.message-sent');
             if (messages.length > 0) {
                 messages[messages.length - 1].style.opacity = '0.5';
@@ -1030,12 +947,10 @@ Current mode: Blockchain-only (no chat)`,
         }
     }
 
-    // Wallet Disconnection
     disconnectWallet() {
         this.account = null;
         this.connected = false;
         
-        // NEW: Update wallet header
         this.updateWalletHeader();
         
         this.ui.updateConnectionStatus(false);
@@ -1050,7 +965,6 @@ Current mode: Blockchain-only (no chat)`,
         }
     }
 
-    // Staking Functions
     delegateTokens() {
         const validator = document.getElementById('validator-select')?.value;
         const amount = document.getElementById('stake-amount')?.value;
@@ -1066,11 +980,9 @@ Current mode: Blockchain-only (no chat)`,
         }
         
         this.ui.addSystemMessage(`Delegating ${amount} MEDAS to ${validator}`);
-        // TODO: Implement actual delegation logic here
         this.ui.showSystemMessage('Delegation feature will be implemented with transaction signing', 'info');
     }
 
-    // Token Transfer Functions
     sendTokens() {
         const address = document.getElementById('send-address')?.value;
         const amount = document.getElementById('send-amount')?.value;
@@ -1087,11 +999,9 @@ Current mode: Blockchain-only (no chat)`,
         }
         
         this.ui.addSystemMessage(`Sending ${amount} MEDAS to ${address.substring(0, 20)}...`);
-        // TODO: Implement actual send logic here
         this.ui.showSystemMessage('Send feature will be implemented with transaction signing', 'info');
     }
 
-    // Transaction Signing (Future Implementation)
     async signAndBroadcastTransaction(messages, fee, memo = '') {
         if (!this.connected || !this.account) {
             throw new Error('Wallet not connected');
@@ -1101,7 +1011,6 @@ Current mode: Blockchain-only (no chat)`,
             const chainId = MEDAS_CHAIN_CONFIG?.chainId || "medasdigital-2";
             const offlineSigner = window.getOfflineSigner(chainId);
             
-            // Get account info
             const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://api.medas-digital.io:1317';
             const accountResponse = await fetch(
                 `${restUrl}/cosmos/auth/v1beta1/accounts/${this.account.address}`
@@ -1115,7 +1024,6 @@ Current mode: Blockchain-only (no chat)`,
             const accountNumber = accountData.account.account_number;
             const sequence = accountData.account.sequence;
 
-            // Create transaction document
             const txDoc = {
                 chain_id: chainId,
                 account_number: accountNumber.toString(),
@@ -1125,14 +1033,12 @@ Current mode: Blockchain-only (no chat)`,
                 memo: memo
             };
 
-            // Sign with Keplr
             const signature = await window.keplr.signAmino(
                 chainId,
                 this.account.address,
                 txDoc
             );
 
-            // Broadcast transaction
             const txBytes = this.encodeTxForBroadcast(signature, txDoc);
             
             const broadcastResponse = await fetch(`${restUrl}/cosmos/tx/v1beta1/txs`, {
@@ -1169,8 +1075,6 @@ Current mode: Blockchain-only (no chat)`,
     }
 
     encodeTxForBroadcast(signature, txDoc) {
-        // Simplified encoding - real implementation would use protobuf
-        // This is a placeholder that would need proper implementation
         const encoded = btoa(JSON.stringify({
             signature: signature,
             transaction: txDoc
@@ -1179,7 +1083,6 @@ Current mode: Blockchain-only (no chat)`,
         return encoded;
     }
 
-    // Utility Methods
     switchTab(tabName) {
         this.ui.switchTab(tabName);
         this.activeTab = tabName;
@@ -1193,7 +1096,6 @@ Current mode: Blockchain-only (no chat)`,
         this.ui.showSystemMessage(message, type);
     }
 
-    // Getters for external access
     get isConnected() {
         return this.connected;
     }
@@ -1217,20 +1119,16 @@ Current mode: Blockchain-only (no chat)`,
 
 // Initialize the research terminal when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    // Make terminal globally accessible
     window.terminal = new MedasResearchTerminal();
     
-    // Add to global scope for debugging
     if (DEBUG_CONFIG?.logging?.enabled) {
         console.log('🌌 MedasDigital Research Terminal v0.9 initialized');
         console.log('Terminal instance available as window.terminal');
         
-        // Log environment info
         if (window.Environment) {
             console.log('🌍 Environment:', window.Environment.getDeviceInfo());
         }
         
-        // Log feature flags
         if (window.FEATURE_FLAGS) {
             console.log('🏁 Active Features:', Object.entries(window.FEATURE_FLAGS)
                 .filter(([key, value]) => value === true)
