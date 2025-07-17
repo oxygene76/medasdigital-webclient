@@ -743,7 +743,88 @@ updateNetworkOverviewData(networkData) {
         this.updateBalanceOverviewFallback();
     }
 }
+populateValidatorsFallback() {
+    const validatorsContainer = document.getElementById('validators-list');
+    if (!validatorsContainer || !window.MockData) return;
 
+    console.warn('⚠️ Using fallback validator data (MockData)');
+    
+    validatorsContainer.innerHTML = window.MockData.validators.map(validator => `
+        <div class="delegation-item">
+            <div class="validator-info">
+                <div class="validator-name">${validator.name}</div>
+                <div class="validator-details">
+                    Commission: ${validator.commission} | APY: ${validator.apy} | Status: ${validator.status}
+                </div>
+            </div>
+            <div class="stake-actions">
+                <button class="btn-small btn-primary" style="border-color: #00ffff; color: #00ffff;" 
+                        onclick="selectValidator('${validator.name}', '${validator.name}')">
+                    Select
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Fallback für User Delegations wenn API fehlschlägt
+populateUserDelegationsFallback() {
+    const delegationsContainer = document.getElementById('current-delegations');
+    if (!delegationsContainer || !window.MockData) return;
+
+    console.warn('⚠️ Using fallback delegation data (MockData)');
+    
+    delegationsContainer.innerHTML = window.MockData.delegations.map(delegation => `
+        <div class="delegation-item">
+            <div class="validator-info">
+                <div class="validator-name">${delegation.validator}</div>
+                <div class="validator-details">Delegated: ${delegation.amount} MEDAS</div>
+            </div>
+            <div class="delegation-amount">
+                <div style="color: #00ff00;">+${delegation.rewards} MEDAS</div>
+                <div style="font-size: 10px; color: #999;">Pending Rewards</div>
+            </div>
+            <div class="stake-actions">
+                <button class="btn-small" style="border-color: #ff00ff; color: #ff00ff;">
+                    Claim
+                </button>
+                <button class="btn-small" style="border-color: #ffaa00; color: #ffaa00;">
+                    Undelegate
+                </button>
+            </div>
+        </div>
+    `).join('');
+
+    // Update total rewards with mock data
+    const totalRewards = window.MockData.delegations.reduce((sum, d) => {
+        return sum + parseFloat(d.rewards.replace(' MEDAS', ''));
+    }, 0);
+    
+    const totalRewardsEl = document.getElementById('total-rewards');
+    if (totalRewardsEl) {
+        totalRewardsEl.textContent = `${totalRewards.toFixed(6)} MEDAS`;
+    }
+}
+
+// Fallback für Balance Overview wenn API fehlschlägt
+updateBalanceOverviewFallback() {
+    console.warn('⚠️ Using fallback balance data (MockData)');
+    
+    const availableEl = document.getElementById('available-balance');
+    if (availableEl) availableEl.textContent = '1,245.670000';
+    
+    const delegatedEl = document.getElementById('delegated-balance');
+    if (delegatedEl) delegatedEl.textContent = '2,050.000000';
+    
+    const rewardsEl = document.getElementById('rewards-balance');
+    if (rewardsEl) rewardsEl.textContent = '45.230000';
+    
+    const totalEl = document.getElementById('total-balance');
+    if (totalEl) totalEl.textContent = '3,340.900000';
+}
+
+
+    
     async fetchRealValidators() {
     try {
         const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
@@ -765,13 +846,14 @@ updateNetworkOverviewData(networkData) {
                 commission: `${(parseFloat(validator.commission?.commission_rates?.rate || 0) * 100).toFixed(1)}%`,
                 voting_power: this.formatTokenAmount(validator.tokens),
                 status: 'Active',
-                jailed: validator.jailed
+                jailed: validator.jailed,
+                tokens: validator.tokens // Für Sortierung
             }))
             .sort((a, b) => {
-                // Sortiere nach Voting Power (tokens)
-                const aTokens = parseInt(validator.tokens || 0);
-                const bTokens = parseInt(validator.tokens || 0);
-                return bTokens - aTokens;
+                // KORREKTUR: Sortiere nach Voting Power (tokens)
+                const aTokens = parseInt(a.tokens || 0);
+                const bTokens = parseInt(b.tokens || 0);
+                return bTokens - aTokens; // Größte zuerst
             })
             .slice(0, 20); // Top 20 Validators
     } catch (error) {
@@ -910,37 +992,38 @@ formatTokenAmount(amount, decimals = 6) {
     return value.toFixed(6);
 }
 
-// Get Validator Name (mit Cache)
 getValidatorName(validatorAddress) {
-    // Implementiere einen einfachen Cache oder hole den Namen aus der Validators-Liste
-    // Für jetzt return nur die gekürzte Adresse
-    return validatorAddress.substring(0, 20) + '...';
+    // Einfacher Cache für Validator Namen
+    if (!this.validatorNameCache) {
+        this.validatorNameCache = new Map();
+    }
+    
+    // Rückgabe aus Cache wenn vorhanden
+    if (this.validatorNameCache.has(validatorAddress)) {
+        return this.validatorNameCache.get(validatorAddress);
+    }
+    
+    // Versuche aus der aktuellen Validator-Liste zu holen
+    const validatorsList = document.getElementById('validators-list');
+    if (validatorsList) {
+        const validatorItems = validatorsList.querySelectorAll('.delegation-item');
+        for (const item of validatorItems) {
+            const button = item.querySelector('button[onclick*="selectValidator"]');
+            if (button && button.onclick.toString().includes(validatorAddress)) {
+                const name = item.querySelector('.validator-name')?.textContent;
+                if (name) {
+                    this.validatorNameCache.set(validatorAddress, name);
+                    return name;
+                }
+            }
+        }
+    }
+    
+    // Fallback: Gekürzte Adresse
+    const shortAddress = validatorAddress.substring(0, 20) + '...';
+    this.validatorNameCache.set(validatorAddress, shortAddress);
+    return shortAddress;
 }
-
-    populateTransactionHistory() {
-        const transactionsContainer = document.getElementById('transaction-list');
-        if (!transactionsContainer || !window.MockData) return;
-        
-        transactionsContainer.innerHTML = window.MockData.transactions.map(tx => `
-            <div class="tx-item tx-${tx.type}">
-                <span class="tx-type">${tx.type.toUpperCase()}</span>
-                <span class="tx-amount">${tx.amount} MEDAS</span>
-                <span class="tx-time">${tx.time}</span>
-            </div>
-        `).join('');
-    }
-
-    filterTransactions(filterType) {
-        // Update filter button states
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        const activeBtn = document.querySelector(`[data-filter="${filterType}"]`);
-        if (activeBtn) activeBtn.classList.add('active');
-        
-        // Filter transactions (implement filtering logic)
-        this.populateTransactionHistory(); // For now, just refresh
-    }
 
     async setMaxStakeAmount() {
     const stakeInput = document.getElementById('stake-amount');
@@ -983,14 +1066,30 @@ window.selectValidator = function(validatorAddress, validatorName) {
         console.log(`📊 Selected validator: ${validatorName} (${validatorAddress})`);
     }
 };
-    setMaxSendAmount() {
-        const sendInput = document.getElementById('send-amount');
-        if (sendInput) {
-            sendInput.value = '1245.670000';
+async setMaxSendAmount() {
+    const sendInput = document.getElementById('send-amount');
+    if (!sendInput) return;
+    
+    try {
+        if (window.terminal?.connected && window.terminal?.account?.address) {
+            // Hole echte verfügbare Balance
+            const balances = await this.fetchUserBalances(window.terminal.account.address);
+            if (balances && balances.available) {
+                sendInput.value = balances.available;
+                console.log(`📊 Set max send amount: ${balances.available} MEDAS`);
+                return;
+            }
         }
+        
+        // Fallback: Verwende Dummy-Wert wenn nicht connected
+        console.warn('⚠️ Using fallback max send amount');
+        sendInput.value = '1245.670000';
+    } catch (error) {
+        console.error('❌ Failed to get max send amount:', error);
+        // Fallback bei Fehler
+        sendInput.value = '0.000000';
     }
 }
-
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = UIManager;
