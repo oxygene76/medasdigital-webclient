@@ -1099,7 +1099,7 @@ getValidatorName(validatorAddress) {
         this.populateTransactionHistory(); // For now, just refresh
     }
 
-}
+
     
 // ===================================
 // GLOBAL FUNKTION FÜR VALIDATOR SELECTION
@@ -1125,4 +1125,5 @@ if (typeof module !== 'undefined' && module.exports) {
 } else {
     window.UIManager = UIManager;
     console.log('🎨 UIManager loaded');
+}
 }
