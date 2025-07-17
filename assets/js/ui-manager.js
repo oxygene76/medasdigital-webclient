@@ -1025,54 +1025,53 @@ getValidatorName(validatorAddress) {
     return shortAddress;
 }
 
-    async setMaxSendAmount() {
-    const sendInput = document.getElementById('send-amount');
-    if (!sendInput) return;
-    
-    try {
-        if (window.terminal?.connected && window.terminal?.account?.address) {
-            // Hole echte verfügbare Balance
-            const balances = await this.fetchUserBalances(window.terminal.account.address);
-            if (balances && balances.available) {
-                sendInput.value = balances.available;
-                console.log(`📊 Set max send amount: ${balances.available} MEDAS`);
-                return;
-            }
-        }
+ async setMaxSendAmount() {
+        const sendInput = document.getElementById('send-amount');
+        if (!sendInput) return;
         
-        // Fallback: Verwende Dummy-Wert wenn nicht connected
-        console.warn('⚠️ Using fallback max send amount');
-        sendInput.value = '1245.670000';
-    } catch (error) {
-        console.error('❌ Failed to get max send amount:', error);
-        // Fallback bei Fehler
-        sendInput.value = '0.000000';
-    }
-}
-
-    
+        try {
+            if (window.terminal?.connected && window.terminal?.account?.address) {
+                // Hole echte verfügbare Balance
+                const balances = await this.fetchUserBalances(window.terminal.account.address);
+                if (balances && balances.available) {
+                    sendInput.value = balances.available;
+                    console.log(`📊 Set max send amount: ${balances.available} MEDAS`);
+                    return;
+                }
+            }
+            
+            // Fallback: Verwende Dummy-Wert wenn nicht connected
+            console.warn('⚠️ Using fallback max send amount');
+            sendInput.value = '1245.670000';
+        } catch (error) {
+            console.error('❌ Failed to get max send amount:', error);
+            // Fallback bei Fehler
+            sendInput.value = '0.000000';
+        }
+    } // ← WICHTIG: Schließende Klammer für setMaxSendAmount
+        
     async setMaxStakeAmount() {
-    const stakeInput = document.getElementById('stake-amount');
-    if (!stakeInput) return;
-    
-    try {
-        if (window.terminal?.connected && window.terminal?.account?.address) {
-            // Hole echte verfügbare Balance
-            const balances = await this.fetchUserBalances(window.terminal.account.address);
-            if (balances && balances.available) {
-                stakeInput.value = balances.available;
-                console.log(`📊 Set max stake amount: ${balances.available} MEDAS`);
-                return;
-            }
-        }
+        const stakeInput = document.getElementById('stake-amount');
+        if (!stakeInput) return;
         
-        // Fallback
-        stakeInput.value = '0.000000';
-    } catch (error) {
-        console.error('❌ Failed to get max stake amount:', error);
-        stakeInput.value = '0.000000';
-    }
-}
+        try {
+            if (window.terminal?.connected && window.terminal?.account?.address) {
+                // Hole echte verfügbare Balance
+                const balances = await this.fetchUserBalances(window.terminal.account.address);
+                if (balances && balances.available) {
+                    stakeInput.value = balances.available;
+                    console.log(`📊 Set max stake amount: ${balances.available} MEDAS`);
+                    return;
+                }
+            }
+            
+            // Fallback
+            stakeInput.value = '0.000000';
+        } catch (error) {
+            console.error('❌ Failed to get max stake amount:', error);
+            stakeInput.value = '0.000000';
+        }
+    } // ← WICHTIG: Schließende Klammer für setMaxStakeAmount
 
     populateTransactionHistory() {
         const transactionsContainer = document.getElementById('transaction-list');
@@ -1085,7 +1084,7 @@ getValidatorName(validatorAddress) {
                 <span class="tx-time">${tx.time}</span>
             </div>
         `).join('');
-    }
+    } // ← WICHTIG: Schließende Klammer für populateTransactionHistory
 
     filterTransactions(filterType) {
         // Update filter button states
@@ -1097,9 +1096,9 @@ getValidatorName(validatorAddress) {
         
         // Filter transactions (implement filtering logic)
         this.populateTransactionHistory(); // For now, just refresh
-    }
+    } // ← WICHTIG: Schließende Klammer für filterTransactions
 
-
+}
     
 // ===================================
 // GLOBAL FUNKTION FÜR VALIDATOR SELECTION
