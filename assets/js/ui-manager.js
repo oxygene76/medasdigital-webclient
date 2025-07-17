@@ -1025,6 +1025,32 @@ getValidatorName(validatorAddress) {
     return shortAddress;
 }
 
+    async setMaxSendAmount() {
+    const sendInput = document.getElementById('send-amount');
+    if (!sendInput) return;
+    
+    try {
+        if (window.terminal?.connected && window.terminal?.account?.address) {
+            // Hole echte verfügbare Balance
+            const balances = await this.fetchUserBalances(window.terminal.account.address);
+            if (balances && balances.available) {
+                sendInput.value = balances.available;
+                console.log(`📊 Set max send amount: ${balances.available} MEDAS`);
+                return;
+            }
+        }
+        
+        // Fallback: Verwende Dummy-Wert wenn nicht connected
+        console.warn('⚠️ Using fallback max send amount');
+        sendInput.value = '1245.670000';
+    } catch (error) {
+        console.error('❌ Failed to get max send amount:', error);
+        // Fallback bei Fehler
+        sendInput.value = '0.000000';
+    }
+}
+
+    
     async setMaxStakeAmount() {
     const stakeInput = document.getElementById('stake-amount');
     if (!stakeInput) return;
@@ -1066,30 +1092,6 @@ window.selectValidator = function(validatorAddress, validatorName) {
         console.log(`📊 Selected validator: ${validatorName} (${validatorAddress})`);
     }
 };
-async setMaxSendAmount() {
-    const sendInput = document.getElementById('send-amount');
-    if (!sendInput) return;
-    
-    try {
-        if (window.terminal?.connected && window.terminal?.account?.address) {
-            // Hole echte verfügbare Balance
-            const balances = await this.fetchUserBalances(window.terminal.account.address);
-            if (balances && balances.available) {
-                sendInput.value = balances.available;
-                console.log(`📊 Set max send amount: ${balances.available} MEDAS`);
-                return;
-            }
-        }
-        
-        // Fallback: Verwende Dummy-Wert wenn nicht connected
-        console.warn('⚠️ Using fallback max send amount');
-        sendInput.value = '1245.670000';
-    } catch (error) {
-        console.error('❌ Failed to get max send amount:', error);
-        // Fallback bei Fehler
-        sendInput.value = '0.000000';
-    }
-}
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = UIManager;
