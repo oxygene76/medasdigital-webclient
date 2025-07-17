@@ -105,70 +105,105 @@ class MedasResearchTerminal {
         });
     }
 
-    async fetchValidatorCount() {
+   async fetchValidatorCount() {
     try {
+        // KORRIGIERT: Verwende die richtige URL
         const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
+        const apiUrl = `${restUrl}/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED&pagination.limit=1000`;
         
-        // KORRIGIERT: Hole nur BONDED (aktive) Validators mit korrektem Parameter
-        const response = await fetch(`${restUrl}/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED&pagination.limit=500`, {
+        console.log(`🔍 DEBUG: Fetching validators from: ${apiUrl}`);
+        
+        const response = await fetch(apiUrl, {
             method: 'GET',
-            signal: AbortSignal.timeout(5000)
+            signal: AbortSignal.timeout(10000) // Längere Timeout für große Antworten
         });
         
+        console.log(`📡 Response Status: ${response.status}`);
+        
         if (!response.ok) {
-            throw new Error(`Validators API failed: ${response.status}`);
+            throw new Error(`Validators API failed: ${response.status} ${response.statusText}`);
         }
         
         const data = await response.json();
         
+        console.log(`📊 RAW API Response:`, {
+            total_validators: data.validators?.length || 0,
+            pagination: data.pagination,
+            first_validator: data.validators?.[0] ? {
+                moniker: data.validators[0].description?.moniker,
+                status: data.validators[0].status,
+                jailed: data.validators[0].jailed
+            } : null
+        });
+        
         // FILTER: Nur wirklich aktive, nicht gejailte Validators zählen
-        const activeValidators = data.validators?.filter(validator => 
-            validator.status === 'BOND_STATUS_BONDED' && 
-            validator.jailed === false
-        ) || [];
+        const activeValidators = data.validators?.filter(validator => {
+            const isActive = validator.status === 'BOND_STATUS_BONDED' && validator.jailed === false;
+            if (!isActive) {
+                console.log(`🔍 Filtered out validator: ${validator.description?.moniker} (status: ${validator.status}, jailed: ${validator.jailed})`);
+            }
+            return isActive;
+        }) || [];
         
         const count = activeValidators.length;
         
-        console.log(`📊 Fetched active validator count: ${count}`);
-        console.log(`   Total returned validators: ${data.validators?.length || 0}`);
-        console.log(`   Filtered active validators: ${count}`);
+        console.log(`📊 FINAL VALIDATOR COUNT: ${count}`);
+        console.log(`   Total returned from API: ${data.validators?.length || 0}`);
+        console.log(`   Active (bonded + not jailed): ${count}`);
+        
+        // EXTRA DEBUG: Zeige erste 5 aktive Validators
+        if (activeValidators.length > 0) {
+            console.log(`📋 First 5 active validators:`, 
+                activeValidators.slice(0, 5).map(v => ({
+                    moniker: v.description?.moniker,
+                    tokens: v.tokens,
+                    status: v.status,
+                    jailed: v.jailed
+                }))
+            );
+        }
         
         return count.toString();
         
     } catch (error) {
-        console.warn('⚠️ Validator count fetch failed:', error);
+        console.error('❌ Validator count fetch failed:', error);
         
         // Fallback: Verwende Mock-Data wenn verfügbar
         if (window.MockData?.validators) {
+            console.log('🔄 Using fallback mock data');
             return window.MockData.validators.length.toString();
         }
         
         throw error; // Wird zu Promise.allSettled Fallback
     }
 }
-
-
-    async fetchBondedRatio() {
+async fetchBondedRatio() {
     try {
-        const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://api.medas-digital.io:1317';
+        // KORRIGIERT: Verwende die richtige URL
+        const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
+        const apiUrl = `${restUrl}/cosmos/staking/v1beta1/pool`;
         
-        // KORRIGIERT: Verwende den offiziellen Pool-Endpoint
-        const response = await fetch(`${restUrl}/cosmos/staking/v1beta1/pool`, {
+        console.log(`🔍 DEBUG: Fetching staking pool from: ${apiUrl}`);
+        
+        const response = await fetch(apiUrl, {
             method: 'GET',
             signal: AbortSignal.timeout(5000)
         });
         
+        console.log(`📡 Pool Response Status: ${response.status}`);
+        
         if (!response.ok) {
-            throw new Error(`Staking pool API failed: ${response.status}`);
+            throw new Error(`Staking pool API failed: ${response.status} ${response.statusText}`);
         }
         
         const data = await response.json();
         
-        // KORRIGIERT: Verwende die korrekte Datenstruktur
+        console.log(`📊 RAW Pool Response:`, data);
+        
         if (data.pool && data.pool.bonded_tokens) {
             const bondedTokens = parseInt(data.pool.bonded_tokens);
             
-            // ALTERNATIVE 1: Wenn not_bonded_tokens verfügbar ist
+            // STRATEGIE 1: Verwende not_bonded_tokens wenn verfügbar
             if (data.pool.not_bonded_tokens) {
                 const notBondedTokens = parseInt(data.pool.not_bonded_tokens);
                 const totalTokens = bondedTokens + notBondedTokens;
@@ -185,15 +220,20 @@ class MedasResearchTerminal {
                 }
             }
             
-            // ALTERNATIVE 2: Hole Total Supply falls not_bonded_tokens fehlt
+            // STRATEGIE 2: Hole Total Supply
             try {
-                const supplyResponse = await fetch(`${restUrl}/cosmos/bank/v1beta1/supply/by_denom?denom=umedas`, {
+                const supplyUrl = `${restUrl}/cosmos/bank/v1beta1/supply/by_denom?denom=umedas`;
+                console.log(`🔍 DEBUG: Fetching supply from: ${supplyUrl}`);
+                
+                const supplyResponse = await fetch(supplyUrl, {
                     method: 'GET',
                     signal: AbortSignal.timeout(3000)
                 });
                 
                 if (supplyResponse.ok) {
                     const supplyData = await supplyResponse.json();
+                    console.log(`📊 Supply Response:`, supplyData);
+                    
                     const totalSupply = parseInt(supplyData.amount?.amount || '0');
                     
                     if (totalSupply > 0) {
@@ -207,15 +247,20 @@ class MedasResearchTerminal {
                     }
                 }
             } catch (supplyError) {
-                console.warn('Supply endpoint also failed:', supplyError);
+                console.warn('⚠️ Supply endpoint also failed:', supplyError);
             }
             
-            // ALTERNATIVE 3: Schätze basierend auf typischen Werten
-            // Cosmos-Chains haben typischerweise 60-70% bonded ratio
-            const estimatedTotal = bondedTokens * 1.5; // Schätze 67% bonded
+            // STRATEGIE 3: Schätze basierend auf typischen Cosmos-Werten
+            console.log(`📊 Using bonded tokens estimation method`);
+            console.log(`   Bonded tokens: ${bondedTokens.toLocaleString()}`);
+            
+            // Für Cosmos-Chains ist typischerweise 60-70% der Supply bonded
+            // Wenn wir nur bonded_tokens haben, schätzen wir das Total
+            const estimatedTotal = Math.round(bondedTokens / 0.67); // Annahme: 67% bonded
             const estimatedRatio = ((bondedTokens / estimatedTotal) * 100).toFixed(1);
             
-            console.log(`📊 Estimated bonded ratio: ${estimatedRatio}% (based on bonded tokens: ${bondedTokens.toLocaleString()})`);
+            console.log(`📊 Estimated bonded ratio: ${estimatedRatio}%`);
+            console.log(`   Estimated total: ${estimatedTotal.toLocaleString()}`);
             
             return `${estimatedRatio}%`;
         } else {
@@ -223,18 +268,12 @@ class MedasResearchTerminal {
         }
         
     } catch (error) {
-        console.warn('⚠️ Bonded ratio fetch failed:', error);
+        console.error('❌ Bonded ratio fetch failed:', error);
         
-        // Fallback: Verwende Mock-Data oder Standard-Wert
-        if (window.MockData?.networkStats?.bondedRatio) {
-            return window.MockData.networkStats.bondedRatio;
-        }
-        
-        // Standard-Fallback für Cosmos-Chains
+        // Fallback: Standard-Wert für Cosmos-Chains
         return '67.0%';
     }
 }
-
 
     async fetchAverageBlockTime() {
         try {
