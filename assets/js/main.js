@@ -61,283 +61,296 @@ class MedasResearchTerminal {
         window.sendTokens = () => this.sendTokens();
     }
 
-    // ===================================
-    // WALLET HEADER INITIALIZATION - COMPLETE
-    // ===================================
-    initializeWalletHeader() {
-        try {
-            // Control Panel Elements (bestehend)
-            this.walletDisplayElement = document.getElementById('wallet-display');
-            this.walletStatusElement = document.getElementById('wallet-status');
-            this.walletAddressElement = document.getElementById('wallet-address');
-            this.addressTextElement = document.getElementById('address-text');
-            this.copyButtonElement = document.getElementById('copy-address');
+  // ERSETZE nur die initializeWalletHeader() Funktion in main.js:
 
-            // Desktop Header Elements
-            this.headerWalletDisplayElement = document.querySelector('.header-wallet-display');
-            this.headerWalletStatusElement = this.headerWalletDisplayElement?.querySelector('.wallet-status');
-            this.headerWalletAddressElement = this.headerWalletDisplayElement?.querySelector('.wallet-address');
-            this.headerAddressTextElement = this.headerWalletDisplayElement?.querySelector('.address-text');
-            this.headerCopyButtonElement = this.headerWalletDisplayElement?.querySelector('.copy-btn');
+initializeWalletHeader() {
+    try {
+        // ===================================
+        // CONTROL PANEL ELEMENTS (im Control Panel Sidebar)
+        // ===================================
+        this.walletDisplayElement = document.getElementById('wallet-display');
+        this.walletStatusElement = document.getElementById('wallet-status');
+        this.walletAddressElement = document.getElementById('wallet-address');
+        this.addressTextElement = document.getElementById('address-text');
+        this.copyButtonElement = document.getElementById('copy-address');
 
-            // Mobile Wallet Elements
-            this.mobileWalletDisplayElement = document.querySelector('.wallet-section .wallet-display');
-            this.mobileWalletStatusElement = this.mobileWalletDisplayElement?.querySelector('.wallet-status');
-            this.mobileWalletAddressElement = this.mobileWalletDisplayElement?.querySelector('.wallet-address');
-            this.mobileAddressTextElement = this.mobileWalletDisplayElement?.querySelector('.address-text');
-            this.mobileCopyButtonElement = this.mobileWalletDisplayElement?.querySelector('.copy-btn');
+        // ===================================
+        // DESKTOP HEADER ELEMENTS (der neue Connect Button im Header)
+        // ===================================
+        this.headerWalletDisplayElement = document.querySelector('.header-wallet-display');
+        this.headerWalletStatusElement = this.headerWalletDisplayElement?.querySelector('.wallet-status');
+        this.headerWalletAddressElement = this.headerWalletDisplayElement?.querySelector('.wallet-address');
+        this.headerAddressTextElement = this.headerWalletDisplayElement?.querySelector('.address-text');
+        this.headerCopyButtonElement = this.headerWalletDisplayElement?.querySelector('.copy-btn');
 
-            console.log('🔍 DEBUG - Wallet Elements Found:');
-            console.log('  Control Panel:', !!this.walletDisplayElement);
-            console.log('  Desktop Header:', !!this.headerWalletDisplayElement);
-            console.log('  Mobile:', !!this.mobileWalletDisplayElement);
+        // ===================================
+        // MOBILE WALLET ELEMENTS (Mobile Version im Header)
+        // ===================================
+        this.mobileWalletDisplayElement = document.querySelector('.wallet-section .wallet-display');
+        this.mobileWalletStatusElement = this.mobileWalletDisplayElement?.querySelector('.wallet-status');
+        this.mobileWalletAddressElement = this.mobileWalletDisplayElement?.querySelector('.wallet-address');
+        this.mobileAddressTextElement = this.mobileWalletDisplayElement?.querySelector('.address-text');
+        this.mobileCopyButtonElement = this.mobileWalletDisplayElement?.querySelector('.copy-btn');
 
-            // Event Listeners - Control Panel
-            if (this.copyButtonElement) {
-                this.copyButtonElement.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.copyWalletAddress();
-                });
-            }
+        // ===================================
+        // DEBUG LOGGING
+        // ===================================
+        console.log('🔍 DEBUG - Wallet Elements Found:');
+        console.log('  Control Panel (Sidebar):', !!this.walletDisplayElement);
+        console.log('  Desktop Header (NEU):', !!this.headerWalletDisplayElement);
+        console.log('  Mobile Header:', !!this.mobileWalletDisplayElement);
 
-            if (this.addressTextElement) {
-                this.addressTextElement.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.copyWalletAddress();
-                });
-            }
-
-            // Event Listeners - Desktop Header
-            if (this.headerWalletDisplayElement) {
-                this.headerWalletDisplayElement.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('🔗 Desktop Header Button clicked!');
-                    this.handleWalletClick('desktop-header');
-                });
-                console.log('✅ Desktop Header Button click handler added');
-            }
-
-            if (this.headerCopyButtonElement) {
-                this.headerCopyButtonElement.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.copyWalletAddress();
-                });
-            }
-
-            if (this.headerAddressTextElement) {
-                this.headerAddressTextElement.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.copyWalletAddress();
-                });
-            }
-
-            // Event Listeners - Mobile Wallet
-            if (this.mobileWalletDisplayElement) {
-                this.mobileWalletDisplayElement.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log('📱 Mobile Wallet Button clicked!');
-                    this.handleWalletClick('mobile');
-                });
-                console.log('✅ Mobile Wallet Button click handler added');
-            }
-
-            if (this.mobileCopyButtonElement) {
-                this.mobileCopyButtonElement.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.copyWalletAddress();
-                });
-            }
-
-            if (this.mobileAddressTextElement) {
-                this.mobileAddressTextElement.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.copyWalletAddress();
-                });
-            }
-
-            console.log('✅ Wallet header initialized successfully');
-            this.updateWalletHeader();
-            
-        } catch (error) {
-            console.error('❌ Wallet header initialization failed:', error);
-        }
-    }
-
-    // ===================================
-    // WALLET CLICK HANDLER
-    // ===================================
-    handleWalletClick(source) {
-        console.log(`🔗 Wallet clicked from: ${source}`);
-        
-        if (this.connected && this.account) {
-            console.log('📱 Already connected, showing wallet options');
-            this.showWalletOptions();
-        } else {
-            console.log('🔗 Not connected, starting connection...');
-            this.connectWallet();
-        }
-    }
-
-    // ===================================
-    // UPDATE WALLET HEADER - ALL ELEMENTS
-    // ===================================
-    updateWalletHeader() {
-        // Control Panel Display
-        if (this.walletDisplayElement) {
-            try {
-                if (this.connected && this.account) {
-                    this.walletDisplayElement.className = 'wallet-display connected';
-                    
-                    if (this.walletStatusElement) {
-                        this.walletStatusElement.innerHTML = `
-                            <span class="status-icon">💳</span>
-                            <span class="status-text">Connected</span>
-                        `;
-                    }
-
-                    if (this.walletAddressElement && this.addressTextElement) {
-                        const fullAddress = this.account.address;
-                        this.walletAddressElement.style.display = 'flex';
-                        this.walletAddressElement.style.visibility = 'visible';
-                        this.addressTextElement.textContent = fullAddress;
-                        this.addressTextElement.title = fullAddress;
-                    }
-                } else {
-                    this.walletDisplayElement.className = 'wallet-display disconnected';
-                    
-                    if (this.walletStatusElement) {
-                        this.walletStatusElement.innerHTML = `
-                            <span class="status-icon">💳</span>
-                            <span class="status-text">No Wallet</span>
-                        `;
-                    }
-
-                    if (this.walletAddressElement) {
-                        this.walletAddressElement.style.display = 'none';
-                    }
-                }
-            } catch (error) {
-                console.error('❌ Control Panel update failed:', error);
-            }
+        // WARNUNG: Falls Control Panel Elemente fehlen (weil wir sie entfernt haben)
+        if (!this.walletDisplayElement) {
+            console.warn('⚠️ Control Panel wallet elements not found - this is expected if you removed the duplicate wallet box');
         }
 
-        // Desktop Header Display
+        // ===================================
+        // EVENT LISTENERS - CONTROL PANEL (falls vorhanden)
+        // ===================================
+        if (this.copyButtonElement) {
+            this.copyButtonElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.copyWalletAddress();
+            });
+        }
+
+        if (this.addressTextElement) {
+            this.addressTextElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.copyWalletAddress();
+            });
+        }
+
+        // ===================================
+        // EVENT LISTENERS - DESKTOP HEADER (WICHTIG!)
+        // ===================================
         if (this.headerWalletDisplayElement) {
-            try {
-                if (this.connected && this.account) {
-                    this.headerWalletDisplayElement.className = 'header-wallet-display connected';
-                    
-                    if (this.headerWalletStatusElement) {
-                        this.headerWalletStatusElement.innerHTML = `
-                            <span class="status-icon">💳</span>
-                            CONNECTED
-                        `;
-                    }
-
-                    if (this.headerWalletAddressElement && this.headerAddressTextElement) {
-                        const fullAddress = this.account.address;
-                        const shortenedAddress = fullAddress.length > 20 ? 
-                            fullAddress.substring(0, 12) + '...' + fullAddress.substring(fullAddress.length - 8) : 
-                            fullAddress;
-                        
-                        this.headerWalletAddressElement.style.display = 'flex';
-                        this.headerWalletAddressElement.style.visibility = 'visible';
-                        this.headerAddressTextElement.textContent = shortenedAddress;
-                        this.headerAddressTextElement.title = fullAddress;
-                    }
-
-                    if (this.headerCopyButtonElement) {
-                        this.headerCopyButtonElement.style.display = 'inline-block';
-                    }
-                } else {
-                    this.headerWalletDisplayElement.className = 'header-wallet-display disconnected';
-                    
-                    if (this.headerWalletStatusElement) {
-                        this.headerWalletStatusElement.innerHTML = `
-                            <span class="status-icon">⚡</span>
-                            NOT CONNECTED
-                        `;
-                    }
-
-                    if (this.headerWalletAddressElement && this.headerAddressTextElement) {
-                        this.headerWalletAddressElement.style.display = 'flex';
-                        this.headerWalletAddressElement.style.visibility = 'visible';
-                        this.headerAddressTextElement.textContent = 'CLICK TO CONNECT KEPLR WALLET';
-                        this.headerAddressTextElement.title = '';
-                    }
-
-                    if (this.headerCopyButtonElement) {
-                        this.headerCopyButtonElement.style.display = 'none';
-                    }
-                }
-            } catch (error) {
-                console.error('❌ Desktop Header update failed:', error);
-            }
+            this.headerWalletDisplayElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔗 Desktop Header Button clicked!');
+                this.handleWalletClick('desktop-header');
+            });
+            console.log('✅ Desktop Header Button click handler added');
+        } else {
+            console.error('❌ Desktop Header Button (.header-wallet-display) not found in DOM! Check HTML structure.');
         }
 
-        // Mobile Wallet Display
+        if (this.headerCopyButtonElement) {
+            this.headerCopyButtonElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.copyWalletAddress();
+            });
+        }
+
+        if (this.headerAddressTextElement) {
+            this.headerAddressTextElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.copyWalletAddress();
+            });
+        }
+
+        // ===================================
+        // EVENT LISTENERS - MOBILE WALLET
+        // ===================================
         if (this.mobileWalletDisplayElement) {
-            try {
-                if (this.connected && this.account) {
-                    this.mobileWalletDisplayElement.className = 'wallet-display connected';
-                    
-                    if (this.mobileWalletStatusElement) {
-                        this.mobileWalletStatusElement.innerHTML = `
-                            <span class="status-icon">💳</span>
-                            Connected
-                        `;
-                    }
+            this.mobileWalletDisplayElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('📱 Mobile Wallet Button clicked!');
+                this.handleWalletClick('mobile');
+            });
+            console.log('✅ Mobile Wallet Button click handler added');
+        } else {
+            console.warn('⚠️ Mobile Wallet Button not found - this is normal on desktop');
+        }
 
-                    if (this.mobileWalletAddressElement && this.mobileAddressTextElement) {
-                        const fullAddress = this.account.address;
-                        const shortenedAddress = fullAddress.length > 14 ? 
-                            fullAddress.substring(0, 8) + '...' + fullAddress.substring(fullAddress.length - 6) : 
-                            fullAddress;
-                        
-                        this.mobileWalletAddressElement.style.display = 'flex';
-                        this.mobileWalletAddressElement.style.visibility = 'visible';
-                        this.mobileAddressTextElement.textContent = shortenedAddress;
-                        this.mobileAddressTextElement.title = fullAddress;
-                    }
+        if (this.mobileCopyButtonElement) {
+            this.mobileCopyButtonElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.copyWalletAddress();
+            });
+        }
 
-                    if (this.mobileCopyButtonElement) {
-                        this.mobileCopyButtonElement.style.display = 'inline-block';
-                    }
-                } else {
-                    this.mobileWalletDisplayElement.className = 'wallet-display disconnected';
-                    
-                    if (this.mobileWalletStatusElement) {
-                        this.mobileWalletStatusElement.innerHTML = `
-                            <span class="status-icon">⚡</span>
-                            NOT CONNECTED
-                        `;
-                    }
+        if (this.mobileAddressTextElement) {
+            this.mobileAddressTextElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.copyWalletAddress();
+            });
+        }
 
-                    if (this.mobileWalletAddressElement && this.mobileAddressTextElement) {
-                        this.mobileWalletAddressElement.style.display = 'flex';
-                        this.mobileWalletAddressElement.style.visibility = 'visible';
-                        this.mobileAddressTextElement.textContent = 'CLICK TO CONNECT KEPLR WALLET';
-                        this.mobileAddressTextElement.title = '';
-                    }
-
-                    if (this.mobileCopyButtonElement) {
-                        this.mobileCopyButtonElement.style.display = 'none';
-                    }
+        console.log('✅ Wallet header initialized successfully');
+        this.updateWalletHeader();
+        
+    } catch (error) {
+        console.error('❌ Wallet header initialization failed:', error);
+    }
+}
+ updateWalletHeader() {
+    // ===================================
+    // CONTROL PANEL DISPLAY (optional - falls vorhanden)
+    // ===================================
+    if (this.walletDisplayElement) {
+        try {
+            if (this.connected && this.account) {
+                this.walletDisplayElement.className = 'wallet-display connected';
+                
+                if (this.walletStatusElement) {
+                    this.walletStatusElement.innerHTML = `
+                        <span class="status-icon">💳</span>
+                        <span class="status-text">Connected</span>
+                    `;
                 }
-            } catch (error) {
-                console.error('❌ Mobile Wallet update failed:', error);
+
+                if (this.walletAddressElement && this.addressTextElement) {
+                    const fullAddress = this.account.address;
+                    this.walletAddressElement.style.display = 'flex';
+                    this.walletAddressElement.style.visibility = 'visible';
+                    this.addressTextElement.textContent = fullAddress;
+                    this.addressTextElement.title = fullAddress;
+                }
+            } else {
+                this.walletDisplayElement.className = 'wallet-display disconnected';
+                
+                if (this.walletStatusElement) {
+                    this.walletStatusElement.innerHTML = `
+                        <span class="status-icon">💳</span>
+                        <span class="status-text">No Wallet</span>
+                    `;
+                }
+
+                if (this.walletAddressElement) {
+                    this.walletAddressElement.style.display = 'none';
+                }
             }
+        } catch (error) {
+            console.error('❌ Control Panel update failed:', error);
         }
     }
 
+    // ===================================
+    // DESKTOP HEADER DISPLAY (HAUPTFUNKTION)
+    // ===================================
+    if (this.headerWalletDisplayElement) {
+        try {
+            if (this.connected && this.account) {
+                this.headerWalletDisplayElement.className = 'header-wallet-display connected';
+                
+                if (this.headerWalletStatusElement) {
+                    this.headerWalletStatusElement.innerHTML = `
+                        <span class="status-icon">💳</span>
+                        CONNECTED
+                    `;
+                }
+
+                if (this.headerWalletAddressElement && this.headerAddressTextElement) {
+                    const fullAddress = this.account.address;
+                    // VOLLSTÄNDIGE ADRESSE für Desktop Header (bessere Lesbarkeit)
+                    
+                    this.headerWalletAddressElement.style.display = 'flex';
+                    this.headerWalletAddressElement.style.visibility = 'visible';
+                    this.headerAddressTextElement.textContent = fullAddress; // VOLLSTÄNDIGE ADRESSE
+                    this.headerAddressTextElement.title = fullAddress;
+                }
+
+                if (this.headerCopyButtonElement) {
+                    this.headerCopyButtonElement.style.display = 'inline-block';
+                }
+
+                console.log('🔄 Desktop Header updated: Connected with full address');
+            } else {
+                this.headerWalletDisplayElement.className = 'header-wallet-display disconnected';
+                
+                if (this.headerWalletStatusElement) {
+                    this.headerWalletStatusElement.innerHTML = `
+                        <span class="status-icon">⚡</span>
+                        NOT CONNECTED
+                    `;
+                }
+
+                if (this.headerWalletAddressElement && this.headerAddressTextElement) {
+                    this.headerWalletAddressElement.style.display = 'flex';
+                    this.headerWalletAddressElement.style.visibility = 'visible';
+                    this.headerAddressTextElement.textContent = 'CLICK TO CONNECT KEPLR WALLET';
+                    this.headerAddressTextElement.title = '';
+                }
+
+                if (this.headerCopyButtonElement) {
+                    this.headerCopyButtonElement.style.display = 'none';
+                }
+
+                console.log('🔄 Desktop Header updated: Disconnected');
+            }
+        } catch (error) {
+            console.error('❌ Desktop Header update failed:', error);
+        }
+    } else {
+        console.error('❌ Desktop Header element not found! Check if .header-wallet-display exists in HTML.');
+    }
+
+    // ===================================
+    // MOBILE WALLET DISPLAY (falls vorhanden)
+    // ===================================
+    if (this.mobileWalletDisplayElement) {
+        try {
+            if (this.connected && this.account) {
+                this.mobileWalletDisplayElement.className = 'wallet-display connected';
+                
+                if (this.mobileWalletStatusElement) {
+                    this.mobileWalletStatusElement.innerHTML = `
+                        <span class="status-icon">💳</span>
+                        Connected
+                    `;
+                }
+
+                if (this.mobileWalletAddressElement && this.mobileAddressTextElement) {
+                    const fullAddress = this.account.address;
+                    const shortenedAddress = fullAddress.length > 14 ? 
+                        fullAddress.substring(0, 8) + '...' + fullAddress.substring(fullAddress.length - 6) : 
+                        fullAddress;
+                    
+                    this.mobileWalletAddressElement.style.display = 'flex';
+                    this.mobileWalletAddressElement.style.visibility = 'visible';
+                    this.mobileAddressTextElement.textContent = shortenedAddress;
+                    this.mobileAddressTextElement.title = fullAddress;
+                }
+
+                if (this.mobileCopyButtonElement) {
+                    this.mobileCopyButtonElement.style.display = 'inline-block';
+                }
+            } else {
+                this.mobileWalletDisplayElement.className = 'wallet-display disconnected';
+                
+                if (this.mobileWalletStatusElement) {
+                    this.mobileWalletStatusElement.innerHTML = `
+                        <span class="status-icon">⚡</span>
+                        NOT CONNECTED
+                    `;
+                }
+
+                if (this.mobileWalletAddressElement && this.mobileAddressTextElement) {
+                    this.mobileWalletAddressElement.style.display = 'flex';
+                    this.mobileWalletAddressElement.style.visibility = 'visible';
+                    this.mobileAddressTextElement.textContent = 'CLICK TO CONNECT KEPLR WALLET';
+                    this.mobileAddressTextElement.title = '';
+                }
+
+                if (this.mobileCopyButtonElement) {
+                    this.mobileCopyButtonElement.style.display = 'none';
+                }
+            }
+        } catch (error) {
+            console.error('❌ Mobile Wallet update failed:', error);
+        }
+    }
+}
     // ===================================
     // SET CONNECTING STATE - ALL ELEMENTS
     // ===================================
