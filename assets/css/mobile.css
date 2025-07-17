@@ -2034,3 +2034,163 @@
 /* =================================================================
    ENDE: Mobile Wallet Klickbarkeit
    ================================================================= */
+/* =================================================================
+   MOBILE TEXT CLICK FIX - AM ENDE DER mobile.css HINZUFÜGEN
+   ================================================================= */
+
+/* Mobile Wallet Text - Verbesserte Click-Detection */
+@media only screen and (max-width: 768px) {
+    
+    /* Address Text - FORCIERE KLICKBARKEIT */
+    .wallet-display .address-text {
+        cursor: pointer !important;
+        pointer-events: auto !important; /* Stelle sicher dass Pointer Events funktionieren */
+        position: relative !important;
+        z-index: 100 !important; /* Sehr hohe Priorität */
+        display: block !important; /* Block-Element für bessere Click-Area */
+        padding: 8px 12px !important; /* Größere Click-Area */
+        margin: -4px -8px !important; /* Negative Margins für größere Click-Area */
+        border-radius: 4px !important;
+        transition: all 0.2s ease !important;
+        touch-action: manipulation !important; /* Optimiert für Touch */
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        user-select: none !important;
+        background: transparent !important; /* Transparent um Click-Bereich zu sehen */
+    }
+    
+    /* Disconnected State - Spezielle Text-Styles */
+    .wallet-display.disconnected .address-text {
+        color: #ffd700 !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        font-size: 12px !important;
+        text-align: center !important;
+        word-break: normal !important; /* Überschreibt break-all */
+        white-space: normal !important; /* Erlaubt Zeilenumbruch falls nötig */
+        line-height: 1.3 !important;
+        min-height: 44px !important; /* iOS/Android Touch-Standard */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    /* Hover/Active States für Text */
+    .wallet-display.disconnected .address-text:hover {
+        color: #ffffff !important;
+        background: rgba(255, 215, 0, 0.15) !important;
+        text-shadow: 0 0 8px rgba(255, 215, 0, 0.8) !important;
+        transform: scale(1.02) !important;
+    }
+    
+    .wallet-display.disconnected .address-text:active {
+        background: rgba(255, 215, 0, 0.25) !important;
+        transform: scale(0.98) !important;
+        color: #ffffff !important;
+    }
+    
+    /* Touch States */
+    .wallet-display.disconnected .address-text:focus {
+        outline: 2px solid #ffd700 !important;
+        outline-offset: 2px !important;
+        background: rgba(255, 215, 0, 0.2) !important;
+    }
+    
+    /* Connected State Text */
+    .wallet-display.connected .address-text {
+        min-height: 36px !important;
+        display: flex !important;
+        align-items: center !important;
+        padding: 6px 10px !important;
+        margin: -2px -6px !important;
+    }
+    
+    .wallet-display.connected .address-text:hover {
+        background: rgba(0, 255, 127, 0.1) !important;
+        color: #00ffff !important;
+        text-shadow: 0 0 4px rgba(0, 255, 0, 0.7) !important;
+    }
+    
+    .wallet-display.connected .address-text:active {
+        background: rgba(0, 255, 127, 0.2) !important;
+        transform: scale(0.98) !important;
+    }
+    
+    /* Connecting State Text */
+    .wallet-display.connecting .address-text {
+        cursor: wait !important;
+        animation: pulse 1.5s ease-in-out infinite !important;
+        min-height: 44px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    /* Prevent interference from parent elements */
+    .wallet-display .wallet-address {
+        pointer-events: auto !important;
+        position: relative !important;
+        overflow: visible !important; /* Erlaubt negative Margins des Texts */
+    }
+    
+    /* Debug Styles - entfernen nach dem Test */
+    .wallet-display.disconnected .address-text::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 1px dashed rgba(255, 0, 0, 0.3); /* Rote gestrichelte Linie um Click-Area zu zeigen */
+        pointer-events: none;
+        border-radius: inherit;
+        /* ENTFERNEN SIE DIESE REGEL NACH DEM TEST */
+    }
+    
+    /* Force Hardware Acceleration für bessere Touch-Performance */
+    .wallet-display .address-text {
+        will-change: transform, background-color !important;
+        transform: translateZ(0) !important;
+        backface-visibility: hidden !important;
+    }
+    
+    /* Extra spezifische Regeln für verschiedene Browser */
+    @supports (-webkit-touch-callout: none) {
+        /* iOS Safari spezifisch */
+        .wallet-display .address-text {
+            -webkit-tap-highlight-color: rgba(255, 215, 0, 0.3) !important;
+            -webkit-touch-callout: none !important;
+        }
+    }
+    
+    @supports (-moz-appearance: none) {
+        /* Firefox spezifisch */
+        .wallet-display .address-text {
+            -moz-user-select: none !important;
+        }
+    }
+    
+    /* Responsive Anpassungen */
+    @media (max-width: 480px) {
+        .wallet-display.disconnected .address-text {
+            font-size: 11px !important;
+            padding: 10px 14px !important;
+            margin: -6px -10px !important;
+        }
+    }
+    
+    @media (max-width: 320px) {
+        .wallet-display.disconnected .address-text {
+            font-size: 10px !important;
+            padding: 12px 16px !important;
+            margin: -8px -12px !important;
+        }
+    }
+}
+
+/* =================================================================
+   ENDE: Mobile Text Click Detection Fix
+   ================================================================= */
