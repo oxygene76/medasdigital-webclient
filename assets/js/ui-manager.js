@@ -437,19 +437,23 @@ class UIManager {
         }, 4500);
     }
 
-    // Explorer Tab Data
-    updateExplorerData() {
-        this.populateRecentBlocks();
-        this.updateNetworkStats();
-        
-        if (window.terminal?.connected) {
-            const walletSection = document.getElementById('wallet-history-section');
-            if (walletSection) {
-                walletSection.style.display = 'block';
-                this.populateWalletTransactions();
-            }
+updateExplorerData() {
+    this.populateRecentBlocks();
+    
+    // WICHTIG: Rufe updateNetworkStats() OHNE Parameter auf
+    // Das verhindert, dass Dummy-Werte die echten Daten überschreiben
+    this.updateNetworkStats(); // Kein realData Parameter = behält existierende Werte
+    
+    if (window.terminal?.connected) {
+        const walletSection = document.getElementById('wallet-history-section');
+        if (walletSection) {
+            walletSection.style.display = 'block';
+            this.populateWalletTransactions();
         }
     }
+    
+    console.log('🔍 Explorer data updated (preserved real blockchain data)');
+}
 
     populateRecentBlocks() {
         const blocksContainer = document.getElementById('recent-blocks-list');
@@ -475,23 +479,90 @@ class UIManager {
         `).join('');
     }
 
-    updateNetworkStats() {
-        const currentBlock = window.terminal?.currentBlock || 2847392;
-        const latestBlockEl = document.getElementById('latest-block');
-        if (latestBlockEl) {
-            latestBlockEl.textContent = currentBlock.toLocaleString();
-        }
-        
-        // Simulated data - replace with real API calls
-        const validatorCountEl = document.getElementById('validator-count');
-        if (validatorCountEl) validatorCountEl.textContent = '147';
-        
-        const bondedRatioEl = document.getElementById('bonded-ratio');
-        if (bondedRatioEl) bondedRatioEl.textContent = '68.4%';
-        
-        const blockTimeEl = document.getElementById('block-time');
-        if (blockTimeEl) blockTimeEl.textContent = '6.2s';
+    updateNetworkStats(realData = null) {
+    // Verwende echte Daten wenn verfügbar, sonst Fallback zu aktuellen Werten
+    const currentBlock = realData?.latestBlock || window.terminal?.currentBlock || 2847392;
+    const validatorCount = realData?.validatorCount || document.getElementById('validator-count')?.textContent || '147';
+    const bondedRatio = realData?.bondedRatio || document.getElementById('bonded-ratio')?.textContent || '68.4%';
+    const blockTime = realData?.averageBlockTime || document.getElementById('block-time')?.textContent || '6.2s';
+    
+    // Update Latest Block
+    const latestBlockEl = document.getElementById('latest-block');
+    if (latestBlockEl) {
+        latestBlockEl.textContent = currentBlock.toLocaleString();
     }
+    
+    // Update Validator Count - NUR wenn echte Daten verfügbar
+    const validatorCountEl = document.getElementById('validator-count');
+    if (validatorCountEl && realData?.validatorCount) {
+        validatorCountEl.textContent = validatorCount;
+        console.log('✅ UI-Manager updated validator count:', validatorCount);
+    } else if (validatorCountEl && !realData) {
+        // Behalte existierenden Wert, überschreibe nicht mit Dummy
+        console.log('🔄 UI-Manager keeping existing validator count:', validatorCountEl.textContent);
+    }
+    
+    // Update Bonded Ratio - NUR wenn echte Daten verfügbar
+    const bondedRatioEl = document.getElementById('bonded-ratio');
+    if (bondedRatioEl && realData?.bondedRatio) {
+        bondedRatioEl.textContent = bondedRatio;
+        console.log('✅ UI-Manager updated bonded ratio:', bondedRatio);
+    } else if (bondedRatioEl && !realData) {
+        // Behalte existierenden Wert, überschreibe nicht mit Dummy
+        console.log('🔄 UI-Manager keeping existing bonded ratio:', bondedRatioEl.textContent);
+    }
+    
+    // Update Block Time - NUR wenn echte Daten verfügbar
+    const blockTimeEl = document.getElementById('block-time');
+    if (blockTimeEl && realData?.averageBlockTime) {
+        blockTimeEl.textContent = blockTime;
+        console.log('✅ UI-Manager updated block time:', blockTime);
+    } else if (blockTimeEl && !realData) {
+        // Behalte existierenden Wert, überschreibe nicht mit Dummy
+        console.log('🔄 UI-Manager keeping existing block time:', blockTimeEl.textContent);
+    }
+    
+    // Debug-Ausgabe
+    if (realData) {
+        console.log('📊 UI-Manager received real blockchain data:');
+        console.log(`   Block: ${currentBlock}`);
+        console.log(`   Validators: ${validatorCount}`);
+        console.log(`   Bonded Ratio: ${bondedRatio}`);
+        console.log(`   Block Time: ${blockTime}`);
+    } else {
+        console.log('🔄 UI-Manager refresh without overwriting existing data');
+    }
+}
+updateNetworkOverviewData(networkData) {
+    console.log('📊 UI-Manager received network overview update:', networkData);
+    
+    // Update Latest Block
+    const latestBlockEl = document.getElementById('latest-block');
+    if (latestBlockEl && networkData.latestBlock) {
+        latestBlockEl.textContent = networkData.latestBlock.toLocaleString();
+    }
+    
+    // Update Validator Count
+    const validatorCountEl = document.getElementById('validator-count');
+    if (validatorCountEl && networkData.validatorCount) {
+        validatorCountEl.textContent = networkData.validatorCount;
+    }
+    
+    // Update Bonded Ratio
+    const bondedRatioEl = document.getElementById('bonded-ratio');
+    if (bondedRatioEl && networkData.bondedRatio) {
+        bondedRatioEl.textContent = networkData.bondedRatio;
+    }
+    
+    // Update Average Block Time
+    const blockTimeEl = document.getElementById('block-time');
+    if (blockTimeEl && networkData.averageBlockTime) {
+        blockTimeEl.textContent = networkData.averageBlockTime;
+    }
+    
+    console.log('✅ Network Overview UI updated with real data');
+}
+
 
     populateWalletTransactions() {
         const walletContainer = document.getElementById('wallet-transactions');
