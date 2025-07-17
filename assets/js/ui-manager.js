@@ -593,64 +593,101 @@ updateNetworkOverviewData(networkData) {
         }
     }
 
-    populateValidators() {
-        const validatorsContainer = document.getElementById('validators-list');
-        if (!validatorsContainer || !window.MockData) return;
+    async populateValidators() {
+    const validatorsContainer = document.getElementById('validators-list');
+    if (!validatorsContainer) return;
+
+    try {
+        // Hole echte Validators von der API
+        const validators = await this.fetchRealValidators();
         
-        validatorsContainer.innerHTML = window.MockData.validators.map(validator => `
-            <div class="delegation-item">
-                <div class="validator-info">
-                    <div class="validator-name">${validator.name}</div>
-                    <div class="validator-details">
-                        Commission: ${validator.commission} | APY: ${validator.apy} | Power: ${validator.voting_power}
+        if (validators && validators.length > 0) {
+            console.log(`📊 Loaded ${validators.length} real validators`);
+            
+            validatorsContainer.innerHTML = validators.map(validator => `
+                <div class="delegation-item">
+                    <div class="validator-info">
+                        <div class="validator-name">${validator.name}</div>
+                        <div class="validator-details">
+                            Commission: ${validator.commission} | Voting Power: ${validator.voting_power}
+                        </div>
+                    </div>
+                    <div class="stake-actions">
+                        <button class="btn-small btn-primary" style="border-color: #00ffff; color: #00ffff;" 
+                                onclick="selectValidator('${validator.address}', '${validator.name}')">
+                            Select
+                        </button>
                     </div>
                 </div>
-                <div class="stake-actions">
-                    <button class="btn-small btn-primary" style="border-color: #00ffff; color: #00ffff;">
-                        Select
-                    </button>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    populateUserDelegations() {
-        const delegations = [
-            { validator: 'Observatory Node Alpha', amount: '1,250.000000', rewards: '12.450000' },
-            { validator: 'Quantum Research Pool', amount: '800.000000', rewards: '8.120000' }
-        ];
-
-        const delegationsContainer = document.getElementById('current-delegations');
-        if (!delegationsContainer) return;
-
-        delegationsContainer.innerHTML = delegations.map(delegation => `
-            <div class="delegation-item">
-                <div class="validator-info">
-                    <div class="validator-name">${delegation.validator}</div>
-                    <div class="validator-details">Delegated: ${delegation.amount} MEDAS</div>
-                </div>
-                <div class="delegation-amount">
-                    <div style="color: #00ff00;">+${delegation.rewards} MEDAS</div>
-                    <div style="font-size: 10px; color: #999;">Pending Rewards</div>
-                </div>
-                <div class="stake-actions">
-                    <button class="btn-small" style="border-color: #ff00ff; color: #ff00ff;">
-                        Claim
-                    </button>
-                    <button class="btn-small" style="border-color: #ffaa00; color: #ffaa00;">
-                        Undelegate
-                    </button>
-                </div>
-            </div>
-        `).join('');
-
-        // Update total rewards
-        const totalRewards = delegations.reduce((sum, d) => sum + parseFloat(d.rewards), 0);
-        const totalRewardsEl = document.getElementById('total-rewards');
-        if (totalRewardsEl) {
-            totalRewardsEl.textContent = `${totalRewards.toFixed(6)} MEDAS`;
+            `).join('');
+        } else {
+            // Fallback zu Mock-Data
+            console.warn('⚠️ No real validators found, using mock data');
+            this.populateValidatorsFallback();
         }
+    } catch (error) {
+        console.error('❌ Failed to load real validators:', error);
+        this.populateValidatorsFallback();
     }
+}
+
+ async populateUserDelegations() {
+    const delegationsContainer = document.getElementById('current-delegations');
+    if (!delegationsContainer) return;
+
+    try {
+        // Hole echte Delegations wenn Wallet connected
+        if (window.terminal?.connected && window.terminal?.account?.address) {
+            const delegations = await this.fetchUserDelegations(window.terminal.account.address);
+            
+            if (delegations && delegations.length > 0) {
+                console.log(`📊 Loaded ${delegations.length} real delegations`);
+                
+                delegationsContainer.innerHTML = delegations.map(delegation => `
+                    <div class="delegation-item">
+                        <div class="validator-info">
+                            <div class="validator-name">${delegation.validator_name || delegation.validator_address}</div>
+                            <div class="validator-details">Delegated: ${delegation.amount} MEDAS</div>
+                        </div>
+                        <div class="delegation-amount">
+                            <div style="color: #00ff00;">+${delegation.rewards} MEDAS</div>
+                            <div style="font-size: 10px; color: #999;">Pending Rewards</div>
+                        </div>
+                        <div class="stake-actions">
+                            <button class="btn-small" style="border-color: #ff00ff; color: #ff00ff;">
+                                Claim
+                            </button>
+                            <button class="btn-small" style="border-color: #ffaa00; color: #ffaa00;">
+                                Undelegate
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Update total rewards
+                const totalRewards = delegations.reduce((sum, d) => sum + parseFloat(d.rewards || 0), 0);
+                const totalRewardsEl = document.getElementById('total-rewards');
+                if (totalRewardsEl) {
+                    totalRewardsEl.textContent = `${totalRewards.toFixed(6)} MEDAS`;
+                }
+                
+                return;
+            }
+        }
+        
+        // Fallback: Zeige Placeholder
+        delegationsContainer.innerHTML = `
+            <div style="text-align: center; color: #666; padding: 40px;">
+                <p>No delegations found</p>
+                <p style="font-size: 11px; margin-top: 8px;">Connect wallet to view your delegations</p>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('❌ Failed to load user delegations:', error);
+        this.populateUserDelegationsFallback();
+    }
+}
 
     updateValidatorSelect() {
         const select = document.getElementById('validator-select');
@@ -674,26 +711,211 @@ updateNetworkOverviewData(networkData) {
         }
     }
 
-    updateBalanceOverview() {
-        const balances = {
-            available: '1,245.670000',
-            delegated: '2,050.000000',
-            rewards: '20.570000',
-            total: '3,316.240000'
-        };
-
-        const availableEl = document.getElementById('available-balance');
-        if (availableEl) availableEl.textContent = balances.available;
+  async updateBalanceOverview() {
+    try {
+        if (window.terminal?.connected && window.terminal?.account?.address) {
+            const balances = await this.fetchUserBalances(window.terminal.account.address);
+            
+            if (balances) {
+                console.log('📊 Loaded real balances:', balances);
+                
+                const availableEl = document.getElementById('available-balance');
+                if (availableEl) availableEl.textContent = balances.available;
+                
+                const delegatedEl = document.getElementById('delegated-balance');
+                if (delegatedEl) delegatedEl.textContent = balances.delegated;
+                
+                const rewardsEl = document.getElementById('rewards-balance');
+                if (rewardsEl) rewardsEl.textContent = balances.rewards;
+                
+                const totalEl = document.getElementById('total-balance');
+                if (totalEl) totalEl.textContent = balances.total;
+                
+                return;
+            }
+        }
         
-        const delegatedEl = document.getElementById('delegated-balance');
-        if (delegatedEl) delegatedEl.textContent = balances.delegated;
+        // Fallback zu Dummy-Werten
+        this.updateBalanceOverviewFallback();
         
-        const rewardsEl = document.getElementById('rewards-balance');
-        if (rewardsEl) rewardsEl.textContent = balances.rewards;
-        
-        const totalEl = document.getElementById('total-balance');
-        if (totalEl) totalEl.textContent = balances.total;
+    } catch (error) {
+        console.error('❌ Failed to load real balances:', error);
+        this.updateBalanceOverviewFallback();
     }
+}
+
+    async fetchRealValidators() {
+    try {
+        const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
+        const response = await fetch(`${restUrl}/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED&pagination.limit=100`, {
+            method: 'GET',
+            signal: AbortSignal.timeout(10000)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Validators API failed: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        return data.validators?.filter(v => v.status === 'BOND_STATUS_BONDED' && !v.jailed)
+            .map(validator => ({
+                name: validator.description?.moniker || 'Unknown Validator',
+                address: validator.operator_address,
+                commission: `${(parseFloat(validator.commission?.commission_rates?.rate || 0) * 100).toFixed(1)}%`,
+                voting_power: this.formatTokenAmount(validator.tokens),
+                status: 'Active',
+                jailed: validator.jailed
+            }))
+            .sort((a, b) => {
+                // Sortiere nach Voting Power (tokens)
+                const aTokens = parseInt(validator.tokens || 0);
+                const bTokens = parseInt(validator.tokens || 0);
+                return bTokens - aTokens;
+            })
+            .slice(0, 20); // Top 20 Validators
+    } catch (error) {
+        console.error('❌ Failed to fetch real validators:', error);
+        return null;
+    }
+}
+async fetchUserDelegations(delegatorAddress) {
+    try {
+        const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
+        
+        // Hole Delegations
+        const delegationsResponse = await fetch(`${restUrl}/cosmos/staking/v1beta1/delegations/${delegatorAddress}`, {
+            method: 'GET',
+            signal: AbortSignal.timeout(5000)
+        });
+        
+        if (!delegationsResponse.ok) {
+            throw new Error(`Delegations API failed: ${delegationsResponse.status}`);
+        }
+        
+        const delegationsData = await delegationsResponse.json();
+        
+        // Hole Rewards
+        const rewardsResponse = await fetch(`${restUrl}/cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards`, {
+            method: 'GET',
+            signal: AbortSignal.timeout(5000)
+        });
+        
+        let rewardsData = null;
+        if (rewardsResponse.ok) {
+            rewardsData = await rewardsResponse.json();
+        }
+        
+        // Kombiniere Delegations mit Rewards
+        return delegationsData.delegation_responses?.map(delegation => {
+            const validatorAddress = delegation.delegation.validator_address;
+            const amount = this.formatTokenAmount(delegation.balance.amount, 6);
+            
+            // Finde Rewards für diesen Validator
+            let rewards = '0.000000';
+            if (rewardsData?.rewards) {
+                const validatorRewards = rewardsData.rewards.find(r => r.validator_address === validatorAddress);
+                if (validatorRewards?.reward?.length > 0) {
+                    const rewardAmount = validatorRewards.reward.find(r => r.denom === 'umedas')?.amount || '0';
+                    rewards = this.formatTokenAmount(rewardAmount, 6);
+                }
+            }
+            
+            return {
+                validator_address: validatorAddress,
+                validator_name: this.getValidatorName(validatorAddress),
+                amount: amount,
+                rewards: rewards,
+                shares: delegation.delegation.shares
+            };
+        }) || [];
+    } catch (error) {
+        console.error('❌ Failed to fetch user delegations:', error);
+        return null;
+    }
+}
+
+// Hole User Balances
+async fetchUserBalances(address) {
+    try {
+        const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
+        
+        // Hole Available Balance
+        const balanceResponse = await fetch(`${restUrl}/cosmos/bank/v1beta1/balances/${address}`, {
+            method: 'GET',
+            signal: AbortSignal.timeout(5000)
+        });
+        
+        let available = '0.000000';
+        if (balanceResponse.ok) {
+            const balanceData = await balanceResponse.json();
+            const medasBalance = balanceData.balances?.find(b => b.denom === 'umedas');
+            if (medasBalance) {
+                available = this.formatTokenAmount(medasBalance.amount, 6);
+            }
+        }
+        
+        // Hole Delegated Balance
+        const delegationsResponse = await fetch(`${restUrl}/cosmos/staking/v1beta1/delegations/${address}`, {
+            method: 'GET',
+            signal: AbortSignal.timeout(5000)
+        });
+        
+        let delegated = '0.000000';
+        if (delegationsResponse.ok) {
+            const delegationsData = await delegationsResponse.json();
+            const totalDelegated = delegationsData.delegation_responses?.reduce((sum, del) => {
+                return sum + parseInt(del.balance.amount || 0);
+            }, 0) || 0;
+            delegated = this.formatTokenAmount(totalDelegated.toString(), 6);
+        }
+        
+        // Hole Rewards
+        const rewardsResponse = await fetch(`${restUrl}/cosmos/distribution/v1beta1/delegators/${address}/rewards`, {
+            method: 'GET',
+            signal: AbortSignal.timeout(5000)
+        });
+        
+        let rewards = '0.000000';
+        if (rewardsResponse.ok) {
+            const rewardsData = await rewardsResponse.json();
+            const totalRewards = rewardsData.total?.find(r => r.denom === 'umedas')?.amount || '0';
+            rewards = this.formatTokenAmount(totalRewards, 6);
+        }
+        
+        // Berechne Total
+        const totalAmount = parseFloat(available) + parseFloat(delegated) + parseFloat(rewards);
+        const total = totalAmount.toFixed(6);
+        
+        return {
+            available: available,
+            delegated: delegated,
+            rewards: rewards,
+            total: total
+        };
+    } catch (error) {
+        console.error('❌ Failed to fetch user balances:', error);
+        return null;
+    }
+}
+
+// ===================================
+// UTILITY FUNKTIONEN
+// ===================================
+
+// Format Token Amount (umedas -> MEDAS)
+formatTokenAmount(amount, decimals = 6) {
+    if (!amount || amount === '0') return '0.000000';
+    const value = parseInt(amount) / Math.pow(10, decimals);
+    return value.toFixed(6);
+}
+
+// Get Validator Name (mit Cache)
+getValidatorName(validatorAddress) {
+    // Implementiere einen einfachen Cache oder hole den Namen aus der Validators-Liste
+    // Für jetzt return nur die gekürzte Adresse
+    return validatorAddress.substring(0, 20) + '...';
+}
 
     populateTransactionHistory() {
         const transactionsContainer = document.getElementById('transaction-list');
@@ -720,14 +942,47 @@ updateNetworkOverviewData(networkData) {
         this.populateTransactionHistory(); // For now, just refresh
     }
 
-    // Global Action Handlers
-    setMaxStakeAmount() {
-        const stakeInput = document.getElementById('stake-amount');
-        if (stakeInput) {
-            stakeInput.value = '1245.670000';
+    async setMaxStakeAmount() {
+    const stakeInput = document.getElementById('stake-amount');
+    if (!stakeInput) return;
+    
+    try {
+        if (window.terminal?.connected && window.terminal?.account?.address) {
+            // Hole echte verfügbare Balance
+            const balances = await this.fetchUserBalances(window.terminal.account.address);
+            if (balances && balances.available) {
+                stakeInput.value = balances.available;
+                console.log(`📊 Set max stake amount: ${balances.available} MEDAS`);
+                return;
+            }
         }
+        
+        // Fallback
+        stakeInput.value = '0.000000';
+    } catch (error) {
+        console.error('❌ Failed to get max stake amount:', error);
+        stakeInput.value = '0.000000';
     }
+}
 
+// ===================================
+// GLOBAL FUNKTION FÜR VALIDATOR SELECTION
+// ===================================
+
+// Füge diese Funktion außerhalb der UIManager Klasse hinzu:
+window.selectValidator = function(validatorAddress, validatorName) {
+    const validatorSelect = document.getElementById('validator-select');
+    if (validatorSelect) {
+        // Füge Option hinzu falls nicht vorhanden
+        let option = Array.from(validatorSelect.options).find(opt => opt.value === validatorAddress);
+        if (!option) {
+            option = new Option(validatorName, validatorAddress);
+            validatorSelect.add(option);
+        }
+        validatorSelect.value = validatorAddress;
+        console.log(`📊 Selected validator: ${validatorName} (${validatorAddress})`);
+    }
+};
     setMaxSendAmount() {
         const sendInput = document.getElementById('send-amount');
         if (sendInput) {
