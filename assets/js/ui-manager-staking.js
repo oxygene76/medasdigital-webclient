@@ -7,7 +7,7 @@
 // Erweitere UIManager um Staking-Funktionen
 if (typeof UIManager !== 'undefined' && UIManager.prototype) {
     
-// DELEGATE TOKENS (Staking) - FUNKTIONIERENDE BROADCAST-LÖSUNG
+/ DELEGATE TOKENS (Staking) - MODERNE PROTOBUF LÖSUNG
 UIManager.prototype.performStaking = async function() {
     const validatorSelect = document.getElementById('validator-select');
     const stakeAmountInput = document.getElementById('stake-amount');
@@ -47,41 +47,22 @@ UIManager.prototype.performStaking = async function() {
         
         await window.keplr.enable(chainId);
         
-        // ✅ METHODE 1: VERWENDE KEPLR'S SENDTX MIT KORREKTEM FORMAT
+        // ✅ METHODE 1: VERWENDE KEPLR'S EXPERIMENTALSIGNTX (PROTOBUF)
         try {
-            const offlineSigner = window.getOfflineSigner(chainId);
-            const accounts = await offlineSigner.getAccounts();
+            console.log('📝 Using modern Keplr experimentalSignTx...');
             
-            if (!accounts.length) {
-                throw new Error('No accounts found');
-            }
-            
-            // Hole Account Info
-            const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
-            const accountResponse = await fetch(`${restUrl}/cosmos/auth/v1beta1/accounts/${delegatorAddress}`);
-            
-            if (!accountResponse.ok) {
-                throw new Error(`Account fetch failed: ${accountResponse.status}`);
-            }
-            
-            const accountData = await accountResponse.json();
-            const accountNumber = accountData.account?.account_number || '0';
-            const sequence = accountData.account?.sequence || '0';
-            
-            console.log('📋 Account details:', { accountNumber, sequence });
-            
-            // Erstelle Standard Cosmos Message
-            const msg = {
-                type: "cosmos-sdk/MsgDelegate",
+            // Erstelle Protobuf-kompatible Message
+            const msgs = [{
+                typeUrl: "/cosmos.staking.v1beta1.MsgDelegate",
                 value: {
-                    delegator_address: delegatorAddress,
-                    validator_address: validatorAddress,
+                    delegatorAddress: delegatorAddress,
+                    validatorAddress: validatorAddress,
                     amount: {
                         denom: "umedas",
                         amount: amountInUmedas
                     }
                 }
-            };
+            }];
             
             const fee = {
                 amount: [{
@@ -91,25 +72,24 @@ UIManager.prototype.performStaking = async function() {
                 gas: "250000"
             };
             
-            // ✅ VERWENDE KEPLR'S SENDTX MIT STANDARD COSMOS FORMAT
-            console.log('📡 Broadcasting via Keplr sendTx...');
-            
-            const txResult = await window.keplr.sendTx(
+            // Verwende experimentalSignTx für moderne Keplr
+            const result = await window.keplr.experimentalSignTx(
                 chainId,
+                delegatorAddress,
+                msgs,
+                fee,
+                "", // memo
                 {
-                    msg: [msg],
-                    fee: fee,
-                    memo: "",
-                    account_number: accountNumber,
-                    sequence: sequence
-                },
-                "block" // Warte auf Block-Bestätigung
+                    preferNoSetFee: false,
+                    preferNoSetMemo: true,
+                    disableBalanceCheck: false
+                }
             );
             
-            console.log('✅ Keplr sendTx successful:', txResult);
+            console.log('✅ Modern Keplr transaction successful:', result);
             
             // Erfolg!
-            const txHash = txResult.txhash || txResult.transactionHash || txResult;
+            const txHash = result.txHash || result.transactionHash || result;
             this.showNotification(`✅ Delegation successful! TX: ${txHash}`, 'success');
             
             // Update UI
@@ -118,7 +98,7 @@ UIManager.prototype.performStaking = async function() {
                 if (this.updateBalanceOverview) {
                     this.updateBalanceOverview();
                 }
-            }, 3000); // Kürzere Wartezeit da "block" mode
+            }, 6000);
             
             // Reset Form
             stakeAmountInput.value = '';
@@ -126,94 +106,77 @@ UIManager.prototype.performStaking = async function() {
             
             return; // Erfolg!
             
-        } catch (sendTxError) {
-            console.warn('❌ Keplr sendTx failed:', sendTxError);
+        } catch (experimentalError) {
+            console.warn('❌ experimentalSignTx not available or failed:', experimentalError);
             
             // Fall through zu Methode 2
         }
         
-        // ✅ METHODE 2: AMINO SIGNIERUNG + MANUELLES BROADCASTING
+        // ✅ METHODE 2: COSMOS CLIENT MIT PROTOBUF (FALLS COSMJS VERFÜGBAR)
         try {
-            const offlineSigner = window.getOfflineSigner(chainId);
-            const accounts = await offlineSigner.getAccounts();
-            
-            // Account Details holen
-            const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
-            const accountResponse = await fetch(`${restUrl}/cosmos/auth/v1beta1/accounts/${delegatorAddress}`);
-            
-            if (!accountResponse.ok) {
-                throw new Error(`Account fetch failed: ${accountResponse.status}`);
-            }
-            
-            const accountData = await accountResponse.json();
-            const accountNumber = accountData.account?.account_number || '0';
-            const sequence = accountData.account?.sequence || '0';
-            
-            // Erstelle TX Document
-            const aminoMsg = {
-                type: "cosmos-sdk/MsgDelegate",
-                value: {
-                    delegator_address: delegatorAddress,
-                    validator_address: validatorAddress,
-                    amount: {
-                        denom: "umedas",
-                        amount: amountInUmedas
-                    }
+            if (typeof window.cosmjs !== 'undefined' || typeof window.StargateCo nnectClient !== 'undefined') {
+                console.log('📝 Using CosmJS client...');
+                
+                const result = await this.performStakingWithCosmJS(
+                    delegatorAddress, 
+                    validatorAddress, 
+                    amountInUmedas, 
+                    chainId
+                );
+                
+                if (result.success) {
+                    this.showNotification(`✅ Delegation successful! TX: ${result.txHash}`, 'success');
+                    
+                    setTimeout(() => {
+                        this.populateUserDelegations(delegatorAddress);
+                        if (this.updateBalanceOverview) {
+                            this.updateBalanceOverview();
+                        }
+                    }, 6000);
+                    
+                    // Reset Form
+                    stakeAmountInput.value = '';
+                    validatorSelect.value = 'Select a validator...';
+                    
+                    return;
+                } else {
+                    throw new Error(result.error);
                 }
-            };
-            
-            const fee = {
-                amount: [{
-                    denom: "umedas", 
-                    amount: "6250"
-                }],
-                gas: "250000"
-            };
-            
-            const txDoc = {
-                chain_id: chainId,
-                account_number: accountNumber.toString(),
-                sequence: sequence.toString(),
-                fee: fee,
-                msgs: [aminoMsg],
-                memo: ""
-            };
-            
-            console.log('📝 Signing with Amino...');
-            
-            const signature = await window.keplr.signAmino(
-                chainId,
-                delegatorAddress,
-                txDoc
-            );
-            
-            console.log('✅ Amino signature successful');
-            
-            // ✅ VERSUCHE VERSCHIEDENE BROADCASTING-METHODEN
-            const broadcastResult = await this.tryMultipleBroadcastMethods(signature, txDoc, chainId);
-            
-            if (broadcastResult.success) {
-                this.showNotification(`✅ Delegation successful! TX: ${broadcastResult.txHash}`, 'success');
-                
-                setTimeout(() => {
-                    this.populateUserDelegations(delegatorAddress);
-                    if (this.updateBalanceOverview) {
-                        this.updateBalanceOverview();
-                    }
-                }, 6000);
-                
-                // Reset Form
-                stakeAmountInput.value = '';
-                validatorSelect.value = 'Select a validator...';
-                
-            } else {
-                throw new Error(broadcastResult.error || 'Broadcasting failed');
             }
             
-        } catch (aminoError) {
-            console.error('❌ Amino method also failed:', aminoError);
-            throw aminoError;
+        } catch (cosmjsError) {
+            console.warn('❌ CosmJS method failed:', cosmjsError);
+            
+            // Fall through zu Methode 3
         }
+        
+        // ✅ METHODE 3: KEPLR DASHBOARD REDIRECT (IMMER FUNKTIONIERT)
+        console.log('📱 Redirecting to Keplr Dashboard...');
+        
+        this.showNotification('🔄 Redirecting to Keplr Dashboard for staking...', 'info');
+        
+        // Erstelle Keplr Dashboard URL mit Parametern
+        const keplrDashboardUrl = this.createKeplrDashboardUrl(
+            chainId, 
+            delegatorAddress, 
+            validatorAddress, 
+            amount
+        );
+        
+        // Öffne Keplr Dashboard
+        window.open(keplrDashboardUrl, '_blank');
+        
+        // Zeige Anweisungen
+        this.showNotification(`🎯 Complete delegation in Keplr Dashboard`, 'info');
+        this.showNotification(`💰 Delegate ${amount} MEDAS to validator`, 'info');
+        this.showNotification(`🔗 Validator: ${validatorAddress.slice(-8)}`, 'info');
+        
+        // Reset Form
+        stakeAmountInput.value = '';
+        validatorSelect.value = 'Select a validator...';
+        
+        // Überwache Balance-Änderungen
+        this.monitorBalanceChanges(delegatorAddress);
         
     } catch (error) {
         console.error('❌ All staking methods failed:', error);
@@ -229,10 +192,144 @@ UIManager.prototype.performStaking = async function() {
         
         this.showNotification(`❌ Staking failed: ${errorMessage}`, 'error');
         
-        // Fallback: Manuelle Anweisungen
-        this.showManualStakingInstructions(amount, validatorAddress, validatorSelect);
+        // Letzte Option: Manuelle Anweisungen
+        this.showFinalStakingFallback(amount, validatorAddress, validatorSelect);
     }
 };
+
+// ✅ HELPER: COSMJS STAKING (FALLS VERFÜGBAR)
+UIManager.prototype.performStakingWithCosmJS = async function(delegatorAddress, validatorAddress, amountInUmedas, chainId) {
+    try {
+        // Vereinfachte CosmJS Implementation
+        const rpcUrl = MEDAS_CHAIN_CONFIG?.rpc || 'https://rpc.medas-digital.io:26657';
+        
+        // Diese würde echte CosmJS verwenden:
+        // const client = await SigningStargateClient.connectWithSigner(rpcUrl, signer);
+        // const msg = { typeUrl: "/cosmos.staking.v1beta1.MsgDelegate", value: {...} };
+        // const result = await client.signAndBroadcast(delegatorAddress, [msg], fee);
+        
+        // Für jetzt: Simulation
+        return {
+            success: false,
+            error: 'CosmJS not properly integrated yet'
+        };
+        
+    } catch (error) {
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+};
+
+// ✅ HELPER: ERSTELLE KEPLR DASHBOARD URL
+UIManager.prototype.createKeplrDashboardUrl = function(chainId, delegatorAddress, validatorAddress, amount) {
+    const baseUrl = 'https://wallet.keplr.app';
+    
+    // Erstelle URL mit Parametern für Auto-Fill
+    const params = new URLSearchParams({
+        chain: chainId,
+        validator: validatorAddress,
+        amount: amount.toString(),
+        action: 'delegate'
+    });
+    
+    return `${baseUrl}/chains/${chainId}/stake?${params.toString()}`;
+};
+
+// ✅ HELPER: ÜBERWACHE BALANCE-ÄNDERUNGEN
+UIManager.prototype.monitorBalanceChanges = function(delegatorAddress) {
+    let checkCount = 0;
+    const maxChecks = 24; // 2 Minuten bei 5-Sekunden-Intervallen
+    
+    this.showNotification('🔍 Monitoring for balance changes...', 'info');
+    
+    const checkInterval = setInterval(async () => {
+        checkCount++;
+        
+        try {
+            // Prüfe Balance-Änderungen
+            const newBalances = await this.fetchUserBalances(delegatorAddress);
+            const currentDelegated = parseFloat(newBalances?.delegated || '0');
+            
+            // Prüfe ob sich Delegation geändert hat
+            if (currentDelegated > 0) {
+                clearInterval(checkInterval);
+                
+                this.showNotification('✅ Delegation detected! Updating UI...', 'success');
+                
+                // Update UI
+                await this.populateUserDelegations(delegatorAddress);
+                if (this.updateBalanceOverview) {
+                    await this.updateBalanceOverview();
+                }
+                
+                this.showNotification('🎉 Staking completed successfully!', 'success');
+                return;
+            }
+            
+            // Stop nach maxChecks
+            if (checkCount >= maxChecks) {
+                clearInterval(checkInterval);
+                this.showNotification('⏰ Monitoring timeout - please check Keplr manually', 'warning');
+            }
+            
+        } catch (error) {
+            console.log('Balance check failed:', error);
+        }
+    }, 5000); // Alle 5 Sekunden prüfen
+};
+
+// ✅ HELPER: FINALE FALLBACK-ANWEISUNGEN
+UIManager.prototype.showFinalStakingFallback = function(amount, validatorAddress, validatorSelect) {
+    const validatorName = validatorSelect.options[validatorSelect.selectedIndex]?.text || `Validator ${validatorAddress.slice(-8)}`;
+    
+    this.showNotification('💡 Please complete staking manually:', 'info');
+    this.showNotification('📱 Steps:', 'info');
+    this.showNotification('1. Open Keplr extension', 'info');
+    this.showNotification('2. Go to Stake tab', 'info');
+    this.showNotification('3. Select MedasDigital chain', 'info');
+    this.showNotification(`4. Find validator: ${validatorName}`, 'info');
+    this.showNotification(`5. Delegate ${amount} MEDAS`, 'info');
+    
+    // Reset form
+    const stakeAmountInput = document.getElementById('stake-amount');
+    if (stakeAmountInput) stakeAmountInput.value = '';
+    if (validatorSelect) validatorSelect.value = 'Select a validator...';
+};
+
+// ✅ ALTERNATIVE: ULTRA-EINFACHE VERSION
+UIManager.prototype.performStakingSimple = async function() {
+    const validatorSelect = document.getElementById('validator-select');
+    const stakeAmountInput = document.getElementById('stake-amount');
+    
+    const amount = parseFloat(stakeAmountInput?.value || '0');
+    const validatorAddress = validatorSelect?.value;
+    
+    if (!validatorAddress || validatorAddress === 'Select a validator...' || amount <= 0) {
+        this.showNotification('❌ Please select validator and enter amount', 'error');
+        return;
+    }
+    
+    // Direkt zu Keplr Dashboard
+    const chainId = MEDAS_CHAIN_CONFIG?.chainId || "medasdigital-2";
+    const keplrUrl = this.createKeplrDashboardUrl(chainId, '', validatorAddress, amount);
+    
+    window.open(keplrUrl, '_blank');
+    
+    this.showNotification('🚀 Opened Keplr Dashboard for staking', 'success');
+    this.showNotification(`🎯 Delegate ${amount} MEDAS manually`, 'info');
+    
+    // Start monitoring
+    if (window.terminal?.connected && window.terminal?.account?.address) {
+        this.monitorBalanceChanges(window.terminal.account.address);
+    }
+    
+    // Reset form
+    stakeAmountInput.value = '';
+    validatorSelect.value = 'Select a validator...';
+};
+
 
 // ✅ HELPER: VERSUCHE MULTIPLE BROADCASTING-METHODEN
 UIManager.prototype.tryMultipleBroadcastMethods = async function(signature, txDoc, chainId) {
