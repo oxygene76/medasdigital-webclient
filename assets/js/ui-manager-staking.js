@@ -628,6 +628,20 @@ UIManager.prototype.checkTransactionStatus = async function() {
 console.log('🎯 Simple Keplr signAndBroadcast staking loaded - NO cache reset issues!');
 
 // ===================================
+// WICHTIGE ÜBERSCHREIBUNG DER ALTEN METHODEN
+// Diese Funktionen überschreiben die problematischen signDirect-Methoden
+// ===================================
+
+// Überschreibe die alte performKeplrStakingWithSendTx wenn sie existiert
+if (UIManager.prototype.performKeplrStakingWithSendTx) {
+    console.log('⚠️ Overriding old performKeplrStakingWithSendTx method');
+    UIManager.prototype.performKeplrStakingWithSendTx = UIManager.prototype.performSimpleKeplrStaking;
+}
+
+// Überschreibe alle alten signDirect-basierten Methoden
+UIManager.prototype.performAminoSigningWithKeplrBroadcast = UIManager.prototype.performSimpleKeplrStaking;
+
+// ===================================
 // UI INTEGRATION UND DISPLAY FUNKTIONEN
 // (Behalte die existierenden UI-Funktionen bei)
 // ===================================
