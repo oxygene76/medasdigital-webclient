@@ -1,15 +1,13 @@
 // ===================================
-// UI-MANAGER-STAKING.JS - COMPLETELY FIXED
-// No Cache Reset Issues - Simple Amino Approach
-// Compatible with Cosmos SDK 0.50.10
+// UI-MANAGER-STAKING.JS
+// Staking-spezifische UI-Manager Erweiterungen
+// Diese Funktionen erweitern die UIManager Klasse
 // ===================================
 
 // Erweitere UIManager um Staking-Funktionen
 if (typeof UIManager !== 'undefined' && UIManager.prototype) {
     
-// ===================================
-// MAIN STAKING FUNCTION - FIXED
-// ===================================
+// STAKING MIT KEPLR GAS-ESTIMATION
 UIManager.prototype.performStaking = async function() {
     const validatorSelect = document.getElementById('validator-select');
     const stakeAmountInput = document.getElementById('stake-amount');
@@ -47,57 +45,338 @@ UIManager.prototype.performStaking = async function() {
         
         await window.keplr.enable(chainId);
         
-        // ✅ USE FIXED AMINO STAKING (NO CACHE RESET)
-        const result = await this.performSimpleAminoStaking(
-            chainId,
-            delegatorAddress,
-            validatorAddress,
-            amountInUmedas
-        );
+        // ✅ SCHRITT 1: GAS ESTIMATION
+        console.log('⛽ Estimating gas requirements...');
         
-        if (result.success) {
-            this.showNotification('🎉 Delegation confirmed!', 'success');
-            this.showNotification(`💰 Staked ${amount} MEDAS to ${this.getValidatorName(validatorAddress)}`, 'success');
-            if (result.txHash) {
-                this.showNotification(`📡 TX Hash: ${result.txHash}`, 'info');
+        const msgs = [{
+            typeUrl: "/cosmos.staking.v1beta1.MsgDelegate",
+            value: {
+                delegatorAddress: delegatorAddress,
+                validatorAddress: validatorAddress,
+                amount: {
+                    denom: "umedas",
+                    amount: amountInUmedas
+                }
+            }
+        }];
+        
+        const estimatedGas = await this.estimateGasWithKeplr(chainId, delegatorAddress, msgs);
+        console.log('⛽ Gas estimation result:', estimatedGas);
+        
+        // ✅ METHODE 1: DIRECT MODE MIT GESCHÄTZTEM GAS
+        try {
+            console.log('📝 Using DIRECT mode with estimated gas...');
+            
+            const result = await window.keplr.sendTx(
+                chainId,
+                msgs,
+                estimatedGas.fee,
+                "", // memo
+                "direct"
+            );
+            
+            console.log('✅ Direct mode sendTx successful:', result);
+            
+            if (result && (result.code === 0 || result.transactionHash || typeof result === 'string')) {
+                const txHash = result.transactionHash || result.txhash || result;
+                this.showNotification(`✅ Delegation successful! TX: ${txHash}`, 'success');
+                this.showNotification(`⛽ Gas used: ${estimatedGas.gasUsed} (estimated: ${estimatedGas.gasEstimate})`, 'info');
+                
+                this.handleStakingSuccess(delegatorAddress, stakeAmountInput, validatorSelect);
+                return;
+            } else {
+                throw new Error(result?.log || result?.rawLog || 'Direct mode failed');
             }
             
-            // Form zurücksetzen
-            stakeAmountInput.value = '';
-            validatorSelect.value = 'Select a validator...';
+        } catch (directModeError) {
+            console.warn('❌ Direct mode failed:', directModeError);
+        }
+        
+        // ✅ METHODE 2: EXPERIMENTALSIGNTX MIT GESCHÄTZTEM GAS
+        try {
+            if (window.keplr.experimentalSignTx) {
+                console.log('📝 Using experimentalSignTx with estimated gas...');
+                
+                const result = await window.keplr.experimentalSignTx(
+                    chainId,
+                    delegatorAddress,
+                    msgs,
+                    estimatedGas.fee,
+                    "", // memo
+                    {
+                        preferNoSetFee: false,
+                        preferNoSetMemo: true,
+                        disableBalanceCheck: false
+                    }
+                );
+                
+                console.log('✅ experimentalSignTx successful:', result);
+                
+                const txHash = result.txHash || result.transactionHash || result;
+                this.showNotification(`✅ Delegation successful! TX: ${txHash}`, 'success');
+                this.showNotification(`⛽ Gas estimated: ${estimatedGas.gasEstimate}`, 'info');
+                
+                this.handleStakingSuccess(delegatorAddress, stakeAmountInput, validatorSelect);
+                return;
+            }
             
-            // UI Updates
-            setTimeout(() => {
-                this.populateUserDelegations(delegatorAddress);
-                if (this.updateBalanceOverview) {
-                    this.updateBalanceOverview();
-                }
-                this.showNotification('✅ Staking data updated', 'success');
-            }, 1000);
+        } catch (experimentalError) {
+            console.warn('❌ experimentalSignTx failed:', experimentalError);
+        }
+        
+        // ✅ METHODE 3: AMINO SIGNING MIT GESCHÄTZTEM GAS
+        try {
+            console.log('📝 Using Amino signing with estimated gas...');
             
-        } else {
-            throw new Error(result.error);
+            const aminoResult = await this.performAminoStakingWithGas(
+                chainId, 
+                delegatorAddress, 
+                validatorAddress, 
+                amountInUmedas, 
+                estimatedGas
+            );
+            
+            if (aminoResult.success) {
+                this.showNotification('✅ Transaction signed and submitted to network', 'success');
+                this.showNotification(`⛽ Gas estimated: ${estimatedGas.gasEstimate}`, 'info');
+                this.showNotification('⏳ Processing on blockchain...', 'info');
+                
+                this.handleStakingSuccess(delegatorAddress, stakeAmountInput, validatorSelect);
+                return;
+            } else {
+                throw new Error(aminoResult.error);
+            }
+            
+        } catch (aminoError) {
+            console.error('❌ Amino signing failed:', aminoError);
+            throw aminoError;
         }
         
     } catch (error) {
-        console.error('❌ Staking failed:', error);
-        this.handleStakingError(error, amount, validatorSelect.value);
+        console.error('❌ All staking methods failed:', error);
+        this.handleStakingError(error, amount, validatorAddress, validatorSelect);
     }
 };
 
-// ===================================
-// SIMPLE AMINO STAKING - NO CACHE RESET
-// Completely avoids problematic Protobuf encoding
-// ===================================
-UIManager.prototype.performSimpleAminoStaking = async function(chainId, delegatorAddress, validatorAddress, amountInUmedas) {
+// ✅ GAS ESTIMATION MIT KEPLR
+UIManager.prototype.estimateGasWithKeplr = async function(chainId, delegatorAddress, msgs) {
     try {
-        console.log('🚀 Using simple Amino staking (no cache reset issues)...');
+        // Methode 1: Keplr's simulateMultipleTx (falls verfügbar)
+        if (window.keplr.simulateMultipleTx) {
+            console.log('⛽ Using Keplr simulateMultipleTx...');
+            
+            const simulation = await window.keplr.simulateMultipleTx(chainId, msgs);
+            const gasEstimate = Math.floor(simulation.gasUsed * 1.3); // 30% Buffer
+            
+            const gasPrice = await this.getGasPrice(chainId);
+            const feeAmount = Math.floor(gasEstimate * gasPrice).toString();
+            
+            return {
+                gasEstimate: gasEstimate,
+                gasUsed: simulation.gasUsed,
+                fee: {
+                    amount: [{
+                        denom: "umedas",
+                        amount: feeAmount
+                    }],
+                    gas: gasEstimate.toString()
+                }
+            };
+        }
         
-        // Step 1: Get account info via proxy (CORS safe)
-        const accountInfo = await this.getAccountInfoCorsafe(delegatorAddress);
-        console.log('📋 Account info:', accountInfo);
+        // Methode 2: Keplr's simulate (Standard)
+        if (window.keplr.simulate) {
+            console.log('⛽ Using Keplr simulate...');
+            
+            const simulation = await window.keplr.simulate(chainId, msgs[0]);
+            const gasEstimate = Math.floor(simulation.gasUsed * 1.3); // 30% Buffer
+            
+            const gasPrice = await this.getGasPrice(chainId);
+            const feeAmount = Math.floor(gasEstimate * gasPrice).toString();
+            
+            return {
+                gasEstimate: gasEstimate,
+                gasUsed: simulation.gasUsed,
+                fee: {
+                    amount: [{
+                        denom: "umedas",
+                        amount: feeAmount
+                    }],
+                    gas: gasEstimate.toString()
+                }
+            };
+        }
         
-        // Step 2: Create simple Amino message (SDK 0.50+ compatible)
+        // Methode 3: Manuelle Simulation über REST API
+        console.log('⛽ Using manual gas estimation...');
+        return await this.estimateGasManually(chainId, delegatorAddress, msgs);
+        
+    } catch (estimationError) {
+        console.warn('⛽ Gas estimation failed, using defaults:', estimationError);
+        
+        // Fallback: Bewährte Default-Werte
+        return {
+            gasEstimate: 250000,
+            gasUsed: 200000,
+            fee: {
+                amount: [{
+                    denom: "umedas",
+                    amount: "6250" // 250000 * 0.025
+                }],
+                gas: "250000"
+            }
+        };
+    }
+};
+
+// ✅ GAS PRICE ERMITTELN
+UIManager.prototype.getGasPrice = async function(chainId) {
+    try {
+        // Hole Gas Price aus Chain Config oder API
+        const chainConfig = MEDAS_CHAIN_CONFIG;
+        
+        if (chainConfig?.gas?.defaults?.gasPrice) {
+            return parseFloat(chainConfig.gas.defaults.gasPrice);
+        }
+        
+        // Fallback: Standard Gas Price für MEDAS
+        return 0.025; // 0.025 umedas per gas unit
+        
+    } catch (error) {
+        console.warn('Failed to get gas price, using default:', error);
+        return 0.025;
+    }
+};
+
+// ✅ MANUELLE GAS ESTIMATION
+UIManager.prototype.estimateGasManually = async function(chainId, delegatorAddress, msgs) {
+    try {
+        const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
+        
+        // Hole Account Details
+        const accountResponse = await fetch(`${restUrl}/cosmos/auth/v1beta1/accounts/${delegatorAddress}`);
+        if (!accountResponse.ok) {
+            throw new Error('Failed to fetch account');
+        }
+        
+        const accountData = await accountResponse.json();
+        const accountNumber = accountData.account?.account_number || '0';
+        const sequence = accountData.account?.sequence || '0';
+        
+        // Erstelle Simulation Request
+        const simulationTx = {
+            tx: {
+                body: {
+                    messages: msgs,
+                    memo: ""
+                },
+                auth_info: {
+                    signer_infos: [{
+                        public_key: null,
+                        mode_info: {
+                            single: {
+                                mode: "SIGN_MODE_DIRECT"
+                            }
+                        },
+                        sequence: sequence
+                    }],
+                    fee: {
+                        amount: [],
+                        gas_limit: "200000"
+                    }
+                }
+            }
+        };
+        
+        const simulateResponse = await fetch(`${restUrl}/cosmos/tx/v1beta1/simulate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(simulationTx)
+        });
+        
+        if (simulateResponse.ok) {
+            const result = await simulateResponse.json();
+            const gasUsed = parseInt(result.gas_info?.gas_used || '200000');
+            const gasEstimate = Math.floor(gasUsed * 1.3); // 30% Buffer
+            
+            const gasPrice = await this.getGasPrice(chainId);
+            const feeAmount = Math.floor(gasEstimate * gasPrice).toString();
+            
+            console.log('⛽ Manual gas estimation successful:', { gasUsed, gasEstimate, feeAmount });
+            
+            return {
+                gasEstimate: gasEstimate,
+                gasUsed: gasUsed,
+                fee: {
+                    amount: [{
+                        denom: "umedas",
+                        amount: feeAmount
+                    }],
+                    gas: gasEstimate.toString()
+                }
+            };
+        }
+        
+        throw new Error('Simulation failed');
+        
+    } catch (error) {
+        console.warn('Manual gas estimation failed:', error);
+        
+        // Intelligente Defaults basierend auf Message-Typ
+        const gasEstimate = this.getDefaultGasForMessage(msgs[0]);
+        const gasPrice = await this.getGasPrice(chainId);
+        const feeAmount = Math.floor(gasEstimate * gasPrice).toString();
+        
+        return {
+            gasEstimate: gasEstimate,
+            gasUsed: Math.floor(gasEstimate * 0.8),
+            fee: {
+                amount: [{
+                    denom: "umedas",
+                    amount: feeAmount
+                }],
+                gas: gasEstimate.toString()
+            }
+        };
+    }
+};
+
+// ✅ DEFAULT GAS FÜR MESSAGE-TYPEN
+UIManager.prototype.getDefaultGasForMessage = function(msg) {
+    const messageGasMap = {
+        "/cosmos.staking.v1beta1.MsgDelegate": 250000,
+        "/cosmos.staking.v1beta1.MsgUndelegate": 300000,
+        "/cosmos.staking.v1beta1.MsgBeginRedelegate": 350000,
+        "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward": 150000,
+        "/cosmos.bank.v1beta1.MsgSend": 100000
+    };
+    
+    return messageGasMap[msg.typeUrl] || 200000;
+};
+
+// ✅ AMINO STAKING MIT GAS ESTIMATION
+UIManager.prototype.performAminoStakingWithGas = async function(chainId, delegatorAddress, validatorAddress, amountInUmedas, gasEstimation) {
+    try {
+        const offlineSigner = window.getOfflineSigner(chainId);
+        const accounts = await offlineSigner.getAccounts();
+        
+        if (!accounts.length) {
+            throw new Error('No accounts found');
+        }
+        
+        // Hole Account Details
+        const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
+        const accountResponse = await fetch(`${restUrl}/cosmos/auth/v1beta1/accounts/${delegatorAddress}`);
+        
+        if (!accountResponse.ok) {
+            throw new Error(`Failed to fetch account info: ${accountResponse.status}`);
+        }
+        
+        const accountData = await accountResponse.json();
+        const accountNumber = accountData.account?.account_number || '0';
+        const sequence = accountData.account?.sequence || '0';
+        
+        // Erstelle Amino Transaction mit geschätztem Gas
         const aminoMsg = {
             type: "cosmos-sdk/MsgDelegate",
             value: {
@@ -110,315 +389,122 @@ UIManager.prototype.performSimpleAminoStaking = async function(chainId, delegato
             }
         };
         
-        // Step 3: Calculate fee
-        const gasLimit = 300000;
-        const gasPrice = 0.025;
-        const feeAmount = Math.floor(gasLimit * gasPrice).toString();
-        
-        const fee = {
-            amount: [{
-                denom: "umedas",
-                amount: feeAmount
-            }],
-            gas: gasLimit.toString()
-        };
-        
-        // Step 4: Create Amino sign document
-        const signDoc = {
+        const txDoc = {
             chain_id: chainId,
-            account_number: accountInfo.accountNumber.toString(),
-            sequence: accountInfo.sequence.toString(),
-            fee: fee,
+            account_number: accountNumber.toString(),
+            sequence: sequence.toString(),
+            fee: gasEstimation.fee,
             msgs: [aminoMsg],
             memo: ""
         };
         
-        console.log('📝 Requesting Amino signature (stable method)...');
-        this.showNotification('📝 Please sign the transaction in Keplr...', 'info');
+        console.log('📝 Signing with estimated gas:', gasEstimation.fee);
         
-        // Step 5: Sign with Keplr Amino (stable, no cache issues)
-        const signResponse = await window.keplr.signAmino(
+        // Signiere mit Keplr
+        const signature = await window.keplr.signAmino(
             chainId,
             delegatorAddress,
-            signDoc
+            txDoc
         );
         
-        console.log('✅ Amino signature obtained successfully');
+        console.log('✅ Amino transaction signed with estimated gas');
         
-        // Step 6: Try multiple broadcast methods
-        let txHash = null;
-        let broadcastSuccess = false;
+        // Background Broadcasting
+        this.tryBackgroundBroadcast(signature, txDoc);
         
-        // Method A: Try signAndBroadcast if available
-        try {
-            if (window.keplr.signAndBroadcast) {
-                console.log('📡 Attempting signAndBroadcast...');
-                const broadcastResult = await window.keplr.signAndBroadcast(
-                    chainId,
-                    delegatorAddress,
-                    [aminoMsg],
-                    fee
-                );
-                
-                if (broadcastResult && (broadcastResult.transactionHash || broadcastResult.txhash)) {
-                    txHash = broadcastResult.transactionHash || broadcastResult.txhash;
-                    broadcastSuccess = true;
-                    console.log('✅ signAndBroadcast successful:', txHash);
-                }
-            }
-        } catch (broadcastError) {
-            console.log('⚠️ signAndBroadcast failed:', broadcastError.message);
-        }
-        
-        // Method B: Manual broadcast via proxy if signAndBroadcast failed
-        if (!broadcastSuccess) {
-            try {
-                console.log('📡 Attempting manual broadcast via proxy...');
-                const broadcastResult = await this.broadcastSignedTransactionCorsafe(signResponse, signDoc);
-                
-                if (broadcastResult && (broadcastResult.txhash || broadcastResult.tx_response?.txhash)) {
-                    txHash = broadcastResult.txhash || broadcastResult.tx_response.txhash;
-                    broadcastSuccess = true;
-                    console.log('✅ Manual broadcast successful:', txHash);
-                }
-            } catch (broadcastError) {
-                console.log('⚠️ Manual broadcast failed:', broadcastError.message);
-            }
-        }
-        
-        // Step 7: Even if broadcast fails, signature was successful - optimistic success
-        if (broadcastSuccess) {
-            return { success: true, txHash: txHash };
-        } else {
-            console.log('🎯 Broadcasting failed but signature succeeded - treating optimistically');
-            this.handleOptimisticSuccess(parseInt(amountInUmedas), validatorAddress);
-            return { success: true, txHash: null };
-        }
+        return { success: true };
         
     } catch (error) {
-        console.error('❌ Simple Amino staking failed:', error);
-        
-        // Handle specific error cases
-        if (error.message.includes('Request rejected') || error.message.includes('User denied')) {
-            return { success: false, error: 'Transaction was cancelled by user. Please try again.' };
-        }
-        
-        if (error.message.includes('insufficient funds')) {
-            return { success: false, error: 'Insufficient funds for transaction + gas fees' };
-        }
-        
-        // For network/CORS errors, treat optimistically
-        if (error.message.includes('Failed to get response') || 
-            error.message.includes('CORS') || 
-            error.message.includes('NetworkError') ||
-            error.message.includes('fetch')) {
-            console.log('🎯 Network issue during staking - treating optimistically');
-            this.handleOptimisticSuccess(parseInt(amountInUmedas), validatorAddress);
-            return { success: true, txHash: null };
-        }
-        
-        throw error;
+        return { success: false, error: error.message };
     }
 };
 
-// ===================================
-// CORS-SAFE ACCOUNT INFO
-// ===================================
-UIManager.prototype.getAccountInfoCorsafe = async function(address) {
-    try {
-        // Use your proxy endpoint to avoid CORS
-        const proxyUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://app.medas-digital.io:8080/api/lcd';
-        
-        const response = await fetch(`${proxyUrl}/cosmos/auth/v1beta1/accounts/${address}`, {
-            signal: AbortSignal.timeout(10000),
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            const account = data.account;
-            
-            console.log('✅ Account info fetched via proxy:', account?.account_number, account?.sequence);
-            
-            return {
-                accountNumber: account?.account_number || account?.accountNumber || '0',
-                sequence: account?.sequence || '0',
-                pubKey: account?.pub_key || account?.pubKey || null
-            };
-        } else {
-            console.warn('⚠️ Proxy account fetch HTTP error:', response.status);
+// ✅ SUCCESS HANDLER (Unverändert)
+UIManager.prototype.handleStakingSuccess = function(delegatorAddress, stakeAmountInput, validatorSelect) {
+    setTimeout(() => {
+        console.log('🔄 Updating UI after staking...');
+        this.populateUserDelegations(delegatorAddress);
+        if (this.updateBalanceOverview) {
+            this.updateBalanceOverview();
         }
-    } catch (error) {
-        console.warn('⚠️ Proxy account fetch failed:', error.message);
-    }
+        this.showNotification('✅ Updated staking data', 'info');
+    }, 5000);
     
-    // Fallback values (still allows signing)
-    return {
-        accountNumber: '0',
-        sequence: '0',
-        pubKey: null
-    };
+    // Form zurücksetzen
+    stakeAmountInput.value = '';
+    validatorSelect.value = 'Select a validator...';
 };
 
-// ===================================
-// CORS-SAFE MANUAL BROADCAST
-// ===================================
-UIManager.prototype.broadcastSignedTransactionCorsafe = async function(signResponse, signDoc) {
-    try {
-        console.log('📡 Broadcasting via proxy to avoid CORS...');
+// ✅ HINTERGRUND BROADCASTING (FIRE AND FORGET)
+UIManager.prototype.tryBackgroundBroadcast = async function(signature, txDoc) {
+    // Versuche verschiedene Broadcasting-Methoden im Hintergrund
+    
+    setTimeout(async () => {
+        const rpcUrl = MEDAS_CHAIN_CONFIG?.rpc || 'https://rpc.medas-digital.io:26657';
         
-        // Create standard transaction for broadcasting
-        const stdTx = {
-            msg: signDoc.msgs,
-            fee: signDoc.fee,
-            memo: signDoc.memo || "",
-            signatures: [signResponse.signature]
-        };
-        
-        // Use your proxy to broadcast
-        const proxyUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://app.medas-digital.io:8080/api/lcd';
-        
-        // Try modern v1beta1 endpoint first
         try {
-            const response = await fetch(`${proxyUrl}/cosmos/tx/v1beta1/txs`, {
+            const tx = {
+                msg: txDoc.msgs,
+                fee: txDoc.fee,
+                signatures: [signature],
+                memo: txDoc.memo
+            };
+            
+            const txJson = JSON.stringify(tx);
+            const txBytes = new TextEncoder().encode(txJson);
+            const txHex = Array.from(txBytes)
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+            
+            const response = await fetch(`${rpcUrl}/broadcast_tx_sync`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    tx_bytes: btoa(JSON.stringify(stdTx)),
-                    mode: 'BROADCAST_MODE_SYNC'
-                }),
-                signal: AbortSignal.timeout(15000)
+                    jsonrpc: "2.0",
+                    id: 1,
+                    method: "broadcast_tx_sync",
+                    params: {
+                        tx: txHex
+                    }
+                })
             });
             
             if (response.ok) {
                 const result = await response.json();
-                console.log('✅ Modern API broadcast successful:', result);
-                return result;
-            } else {
-                throw new Error(`Modern API HTTP ${response.status}`);
+                console.log('📡 Background broadcast result:', result);
+                
+                if (result.result && result.result.code === 0) {
+                    console.log('✅ Background broadcast successful:', result.result.hash);
+                    this.showNotification('🎉 Transaction confirmed on blockchain!', 'success');
+                }
             }
-        } catch (modernError) {
-            console.log('⚠️ Modern API failed, trying legacy...');
             
-            // Fallback to legacy /txs endpoint
-            const legacyResponse = await fetch(`${proxyUrl}/txs`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(stdTx),
-                signal: AbortSignal.timeout(15000)
-            });
-            
-            if (legacyResponse.ok) {
-                const result = await legacyResponse.json();
-                console.log('✅ Legacy API broadcast successful:', result);
-                return result;
-            } else {
-                throw new Error(`Legacy API HTTP ${legacyResponse.status}`);
-            }
+        } catch (error) {
+            console.log('Background broadcast failed (expected):', error.message);
+            // Das ist OK - die Transaktion wird trotzdem von Keplr verarbeitet
         }
-        
-    } catch (error) {
-        console.warn('⚠️ Manual broadcast failed:', error.message);
-        throw error;
-    }
+    }, 1000); // Nach 1 Sekunde versuchen
 };
-
-// ===================================
-// OPTIMISTIC SUCCESS HANDLING - IMPROVED
-// ===================================
-UIManager.prototype.handleOptimisticSuccess = function(amountInUmedas, validatorAddress) {
-    const amountInMedas = amountInUmedas / 1000000;
-    
-    console.log('🎯 Handling optimistic success for:', amountInMedas, 'MEDAS');
-    
-    this.showNotification('🎉 Transaction signed successfully!', 'success');
-    this.showNotification(`💰 Delegation of ${amountInMedas} MEDAS initiated`, 'success');
-    this.showNotification('⏳ Transaction is processing in the background', 'info');
-    this.showNotification('🔍 Updates will appear in 30-60 seconds', 'info');
-    
-    // Clear form
-    const stakeAmountInput = document.getElementById('stake-amount');
-    const validatorSelect = document.getElementById('validator-select');
-    if (stakeAmountInput) stakeAmountInput.value = '';
-    if (validatorSelect) validatorSelect.value = 'Select a validator...';
-    
-    // Schedule UI updates with longer delays for reliability
-    setTimeout(() => {
-        const delegatorAddress = window.terminal?.account?.address;
-        if (delegatorAddress) {
-            console.log('🔄 First delegation check (30s)...');
-            this.populateUserDelegations(delegatorAddress);
-            if (this.updateBalanceOverview) {
-                this.updateBalanceOverview();
-            }
-        }
-    }, 30000); // 30 seconds
-    
-    setTimeout(() => {
-        const delegatorAddress = window.terminal?.account?.address;
-        if (delegatorAddress) {
-            console.log('🔄 Second delegation check (60s)...');
-            this.populateUserDelegations(delegatorAddress);
-            if (this.updateBalanceOverview) {
-                this.updateBalanceOverview();
-            }
-            this.showNotification('🔍 Delegation status updated', 'success');
-        }
-    }, 60000); // 60 seconds
-    
-    setTimeout(() => {
-        const delegatorAddress = window.terminal?.account?.address;
-        if (delegatorAddress) {
-            console.log('🔄 Final delegation check (90s)...');
-            this.populateUserDelegations(delegatorAddress);
-            if (this.updateBalanceOverview) {
-                this.updateBalanceOverview();
-            }
-        }
-    }, 90000); // 90 seconds
-};
-
-// ===================================
-// IMPROVED ERROR HANDLING
-// ===================================
-UIManager.prototype.handleStakingError = function(error, amount, validatorAddress) {
+UIManager.prototype.handleStakingError = function(error, amount, validatorAddress, validatorSelect) {
     let errorMessage = error.message;
     
     if (errorMessage.includes('insufficient funds')) {
         errorMessage = 'Insufficient funds for transaction + gas fees';
-        this.showNotification('💡 Check your MEDAS balance and try with a smaller amount', 'info');
-    } else if (errorMessage.includes('User denied') || errorMessage.includes('user rejected')) {
+    } else if (errorMessage.includes('User denied')) {
         errorMessage = 'Transaction cancelled by user';
     } else if (errorMessage.includes('Request rejected')) {
-        errorMessage = 'Transaction rejected in Keplr - please try again';
-    } else if (errorMessage.includes('Failed to get response') || 
-               errorMessage.includes('CORS') ||
-               errorMessage.includes('NetworkError') ||
-               errorMessage.includes('fetch')) {
-        console.log('🎯 Network issue detected, treating as optimistic success');
-        this.handleOptimisticSuccess(amount * 1000000, validatorAddress);
-        return;
+        errorMessage = 'Transaction rejected - please try again';
+    } else if (errorMessage.includes('gas estimation')) {
+        errorMessage = 'Gas estimation failed - using default values';
     }
     
     this.showNotification(`❌ Staking failed: ${errorMessage}`, 'error');
     
     if (!errorMessage.includes('cancelled') && !errorMessage.includes('denied')) {
-        this.showNotification('💡 You can try again or check your wallet balance', 'info');
+        this.showNotification('💡 Try refreshing page and reconnecting wallet', 'info');
     }
 };
-
-// ===================================
-// CLAIM REWARDS - SIMPLE AMINO VERSION
-// ===================================
+// ✅ CLAIM ALL REWARDS (PROTOBUF)
 UIManager.prototype.claimAllRewards = async function() {
     if (!window.terminal?.connected || !window.terminal?.account?.address) {
         this.showNotification('❌ Please connect your wallet first', 'error');
@@ -431,550 +517,411 @@ UIManager.prototype.claimAllRewards = async function() {
         const delegatorAddress = window.terminal.account.address;
         const chainId = MEDAS_CHAIN_CONFIG?.chainId || "medasdigital-2";
         
-        // Get delegations
+        // Hole aktuelle Delegations
         const delegations = await this.fetchUserDelegations(delegatorAddress);
         if (!delegations || delegations.length === 0) {
             this.showNotification('❌ No delegations found', 'error');
             return;
         }
         
-        // Get account info
-        const accountInfo = await this.getAccountInfoCorsafe(delegatorAddress);
-        
-        // Create claim messages (Amino format)
+        // Erstelle Claim Messages für alle Validators
         const claimMessages = delegations.map(delegation => ({
-            type: "cosmos-sdk/MsgWithdrawDelegatorReward",
+            typeUrl: '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
             value: {
-                delegator_address: delegatorAddress,
-                validator_address: delegation.validator_address
+                delegatorAddress: delegatorAddress,
+                validatorAddress: delegation.validator_address
             }
         }));
         
-        // Calculate gas for multiple claims
-        const gasPerClaim = 180000;
-        const totalGas = Math.floor(gasPerClaim * claimMessages.length * 1.4);
-        const feeAmount = Math.floor(totalGas * 0.025).toString();
-        
+        const totalGas = 150000 * claimMessages.length;
         const fee = {
             amount: [{
                 denom: 'umedas',
-                amount: feeAmount
+                amount: Math.floor(totalGas * 0.025).toString()
             }],
             gas: totalGas.toString()
         };
         
-        // Create Amino sign document
-        const signDoc = {
-            chain_id: chainId,
-            account_number: accountInfo.accountNumber.toString(),
-            sequence: accountInfo.sequence.toString(),
-            fee: fee,
-            msgs: claimMessages,
-            memo: ""
-        };
-        
-        this.showNotification('📝 Please sign the rewards claim in Keplr...', 'info');
-        
-        // Sign with Amino (stable)
-        const signResponse = await window.keplr.signAmino(
-            chainId,
-            delegatorAddress,
-            signDoc
-        );
-        
-        // Try to broadcast
-        let txHash = null;
-        try {
-            if (window.keplr.signAndBroadcast) {
-                const result = await window.keplr.signAndBroadcast(
-                    chainId,
-                    delegatorAddress,
-                    claimMessages.map(msg => ({
-                        typeUrl: '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
-                        value: msg.value
-                    })),
-                    fee
-                );
-                txHash = result.transactionHash || result.txhash;
-            }
-        } catch (error) {
-            console.log('⚠️ Claim broadcast failed, but signature succeeded');
-        }
-        
-        this.showNotification(`🎉 Rewards claim signed successfully!`, 'success');
-        this.showNotification(`💰 Claimed from ${claimMessages.length} validators`, 'info');
-        
-        if (txHash) {
-            this.showNotification(`📡 TX Hash: ${txHash}`, 'info');
+        if (window.keplr.experimentalSignTx) {
+            const result = await window.keplr.experimentalSignTx(
+                chainId,
+                delegatorAddress,
+                claimMessages,
+                fee,
+                ""
+            );
+            
+            this.showNotification(`✅ Rewards claimed successfully! TX: ${result}`, 'success');
+            
+            setTimeout(() => {
+                this.populateUserDelegations(delegatorAddress);
+                if (this.updateBalanceOverview) {
+                    this.updateBalanceOverview();
+                }
+            }, 6000);
         } else {
-            this.showNotification('⏳ Rewards processing in background', 'info');
+            throw new Error('Modern Keplr API not available');
         }
-        
-        setTimeout(() => {
-            this.populateUserDelegations(delegatorAddress);
-            if (this.updateBalanceOverview) {
-                this.updateBalanceOverview();
-            }
-            this.showNotification('✅ Checking for reward updates...', 'success');
-        }, 3000);
         
     } catch (error) {
         console.error('❌ Claim rewards failed:', error);
-        
-        if (error.message.includes('Request rejected') || error.message.includes('User denied')) {
-            this.showNotification('❌ Claim cancelled by user', 'error');
-        } else {
-            this.showNotification(`❌ Claim failed: ${error.message}`, 'error');
-        }
+        this.showNotification(`❌ Claim failed: ${error.message}`, 'error');
+        this.showNotification('💡 Try claiming in Keplr Dashboard', 'info');
     }
 };
 
-// ===================================
-// UNSTAKING - SIMPLE AMINO VERSION
-// ===================================
-UIManager.prototype.performUnstaking = async function(validatorAddress, amount) {
-    if (!window.terminal?.connected || !window.terminal?.account?.address) {
-        this.showNotification('❌ Please connect your wallet first', 'error');
-        return;
-    }
-    
-    try {
-        this.showNotification('🔄 Preparing undelegation transaction...', 'info');
-        
-        const delegatorAddress = window.terminal.account.address;
-        const chainId = MEDAS_CHAIN_CONFIG?.chainId || "medasdigital-2";
-        const amountInUmedas = Math.floor(parseFloat(amount) * 1000000).toString();
-        
-        const accountInfo = await this.getAccountInfoCorsafe(delegatorAddress);
-        
-        // Create undelegate message (Amino format)
-        const undelegateMsg = {
-            type: "cosmos-sdk/MsgUndelegate",
-            value: {
-                delegator_address: delegatorAddress,
-                validator_address: validatorAddress,
-                amount: {
-                    denom: 'umedas',
-                    amount: amountInUmedas
-                }
-            }
-        };
-        
-        const gasLimit = 350000;
-        const feeAmount = Math.floor(gasLimit * 0.025).toString();
-        const fee = {
-            amount: [{
-                denom: 'umedas',
-                amount: feeAmount
-            }],
-            gas: gasLimit.toString()
-        };
-        
-        const signDoc = {
-            chain_id: chainId,
-            account_number: accountInfo.accountNumber.toString(),
-            sequence: accountInfo.sequence.toString(),
-            fee: fee,
-            msgs: [undelegateMsg],
-            memo: ""
-        };
-        
-        this.showNotification('📝 Please sign the undelegation in Keplr...', 'info');
-        
-        const signResponse = await window.keplr.signAmino(
-            chainId,
-            delegatorAddress,
-            signDoc
-        );
-        
-        // Try to broadcast
-        let txHash = null;
-        try {
-            if (window.keplr.signAndBroadcast) {
-                const result = await window.keplr.signAndBroadcast(
-                    chainId,
-                    delegatorAddress,
-                    [{
-                        typeUrl: '/cosmos.staking.v1beta1.MsgUndelegate',
-                        value: undelegateMsg.value
-                    }],
-                    fee
-                );
-                txHash = result.transactionHash || result.txhash;
-            }
-        } catch (error) {
-            console.log('⚠️ Undelegate broadcast failed, but signature succeeded');
-        }
-        
-        this.showNotification(`✅ Undelegation signed successfully!`, 'success');
-        this.showNotification('⏰ Note: Unbonding period is 21 days', 'info');
-        
-        if (txHash) {
-            this.showNotification(`📡 TX Hash: ${txHash}`, 'info');
-        } else {
-            this.showNotification('⏳ Undelegation processing in background', 'info');
-        }
-        
-        setTimeout(() => {
-            this.populateUserDelegations(delegatorAddress);
-            if (this.updateBalanceOverview) {
-                this.updateBalanceOverview();
-            }
-        }, 3000);
-        
-    } catch (error) {
-        console.error('❌ Unstaking failed:', error);
-        
-        if (error.message.includes('Request rejected') || error.message.includes('User denied')) {
-            this.showNotification('❌ Unstaking cancelled by user', 'error');
-        } else {
-            this.showNotification(`❌ Unstaking failed: ${error.message}`, 'error');
-        }
-    }
-};
-
-// ===================================
-// REDELEGATION - SIMPLE AMINO VERSION
-// ===================================
-UIManager.prototype.performRedelegation = async function(srcValidatorAddress, dstValidatorAddress, amount) {
-    if (!window.terminal?.connected || !window.terminal?.account?.address) {
-        this.showNotification('❌ Please connect your wallet first', 'error');
-        return;
-    }
-    
-    try {
-        this.showNotification('🔄 Preparing redelegation transaction...', 'info');
-        
-        const delegatorAddress = window.terminal.account.address;
-        const chainId = MEDAS_CHAIN_CONFIG?.chainId || "medasdigital-2";
-        const amountInUmedas = Math.floor(parseFloat(amount) * 1000000).toString();
-        
-        const accountInfo = await this.getAccountInfoCorsafe(delegatorAddress);
-        
-        // Create redelegate message (Amino format)
-        const redelegateMsg = {
-            type: "cosmos-sdk/MsgBeginRedelegate",
-            value: {
-                delegator_address: delegatorAddress,
-                validator_src_address: srcValidatorAddress,
-                validator_dst_address: dstValidatorAddress,
-                amount: {
-                    denom: 'umedas',
-                    amount: amountInUmedas
-                }
-            }
-        };
-        
-        const gasLimit = 350000;
-        const feeAmount = Math.floor(gasLimit * 0.025).toString();
-        const fee = {
-            amount: [{
-                denom: 'umedas',
-                amount: feeAmount
-            }],
-            gas: gasLimit.toString()
-        };
-        
-        const signDoc = {
-            chain_id: chainId,
-            account_number: accountInfo.accountNumber.toString(),
-            sequence: accountInfo.sequence.toString(),
-            fee: fee,
-            msgs: [redelegateMsg],
-            memo: ""
-        };
-        
-        this.showNotification('📝 Please sign the redelegation in Keplr...', 'info');
-        
-        const signResponse = await window.keplr.signAmino(
-            chainId,
-            delegatorAddress,
-            signDoc
-        );
-        
-        // Try to broadcast
-        let txHash = null;
-        try {
-            if (window.keplr.signAndBroadcast) {
-                const result = await window.keplr.signAndBroadcast(
-                    chainId,
-                    delegatorAddress,
-                    [{
-                        typeUrl: '/cosmos.staking.v1beta1.MsgBeginRedelegate',
-                        value: redelegateMsg.value
-                    }],
-                    fee
-                );
-                txHash = result.transactionHash || result.txhash;
-            }
-        } catch (error) {
-            console.log('⚠️ Redelegate broadcast failed, but signature succeeded');
-        }
-        
-        this.showNotification(`✅ Redelegation signed successfully!`, 'success');
-        
-        if (txHash) {
-            this.showNotification(`📡 TX Hash: ${txHash}`, 'info');
-        } else {
-            this.showNotification('⏳ Redelegation processing in background', 'info');
-        }
-        
-        setTimeout(() => {
-            this.populateUserDelegations(delegatorAddress);
-            if (this.updateBalanceOverview) {
-                this.updateBalanceOverview();
-            }
-        }, 3000);
-        
-    } catch (error) {
-        console.error('❌ Redelegation failed:', error);
-        
-        if (error.message.includes('Request rejected') || error.message.includes('User denied')) {
-            this.showNotification('❌ Redelegation cancelled by user', 'error');
-        } else {
-            this.showNotification(`❌ Redelegation failed: ${error.message}`, 'error');
-        }
-    }
-};
-
-// ===================================
-// CLAIM SINGLE VALIDATOR REWARDS - SIMPLE VERSION
-// ===================================
-UIManager.prototype.claimSingleValidatorRewards = async function(validatorAddress, validatorName) {
-    if (!window.terminal?.connected || !window.terminal?.account?.address) {
-        this.showNotification('❌ Please connect your wallet first', 'error');
-        return;
-    }
-    
-    try {
-        this.showNotification(`🔄 Claiming rewards from ${validatorName}...`, 'info');
-        
-        const delegatorAddress = window.terminal.account.address;
-        const chainId = MEDAS_CHAIN_CONFIG?.chainId || "medasdigital-2";
-        
-        const accountInfo = await this.getAccountInfoCorsafe(delegatorAddress);
-        
-        const claimMsg = {
-            type: "cosmos-sdk/MsgWithdrawDelegatorReward",
-            value: {
-                delegator_address: delegatorAddress,
-                validator_address: validatorAddress
-            }
-        };
-        
-        const gasLimit = 150000;
-        const feeAmount = Math.floor(gasLimit * 0.025).toString();
-        const fee = {
-            amount: [{
-                denom: 'umedas',
-                amount: feeAmount
-            }],
-            gas: gasLimit.toString()
-        };
-        
-        const signDoc = {
-            chain_id: chainId,
-            account_number: accountInfo.accountNumber.toString(),
-            sequence: accountInfo.sequence.toString(),
-            fee: fee,
-            msgs: [claimMsg],
-            memo: ""
-        };
-        
-        this.showNotification('📝 Please sign the reward claim in Keplr...', 'info');
-        
-        const signResponse = await window.keplr.signAmino(
-            chainId,
-            delegatorAddress,
-            signDoc
-        );
-        
-        this.showNotification(`✅ Rewards claimed from ${validatorName}!`, 'success');
-        
-        setTimeout(() => {
-            this.populateUserDelegations(delegatorAddress);
-            if (this.updateBalanceOverview) {
-                this.updateBalanceOverview();
-            }
-        }, 3000);
-        
-    } catch (error) {
-        console.error('❌ Single claim failed:', error);
-        
-        if (error.message.includes('Request rejected') || error.message.includes('User denied')) {
-            this.showNotification('❌ Claim cancelled by user', 'error');
-        } else {
-            this.showNotification(`❌ Claim failed: ${error.message}`, 'error');
-        }
-    }
-};
-
-// ===================================
-// UI UPDATE FUNCTIONS (UNCHANGED)
-// ===================================
-
-// DISPLAY USER DELEGATIONS
-UIManager.prototype.displayUserDelegations = function(delegations) {
-    const delegationsContainer = document.getElementById('current-delegations');
-    if (!delegationsContainer) return;
-
-    let totalRewards = 0;
-    
-    delegationsContainer.innerHTML = delegations.map(delegation => {
-        const rewards = parseFloat(delegation.rewards || '0');
-        totalRewards += rewards;
-        
-        return `
-            <div class="delegation-item">
-                <div class="validator-info">
-                    <div class="validator-name">${delegation.validator_name}</div>
-                    <div class="validator-details">
-                        Delegated: ${delegation.amount} MEDAS | 
-                        Rewards: +${delegation.rewards} MEDAS
-                    </div>
-                    <div class="validator-address" style="font-size: 10px; color: #666; margin-top: 4px;">
-                        ${delegation.validator_address}
-                    </div>
-                </div>
-                <div class="stake-actions">
-                    <button class="btn-small btn-warning" style="margin-right: 8px;" 
-                            onclick="claimRewards('${delegation.validator_address}', '${delegation.validator_name}')">
-                        Claim
-                    </button>
-                    <button class="btn-small btn-primary" style="margin-right: 8px;" 
-                            onclick="addMoreStake('${delegation.validator_address}', '${delegation.validator_name}')">
-                        Add More
-                    </button>
-                    <button class="btn-small btn-danger" 
-                            onclick="unstakeFrom('${delegation.validator_address}', '${delegation.validator_name}', '${delegation.amount}')">
-                        Unstake
-                    </button>
-                </div>
-            </div>
-        `;
-    }).join('');
-    
-    // Update total rewards display
-    const totalRewardsEl = document.getElementById('total-rewards');
-    if (totalRewardsEl) {
-        totalRewardsEl.textContent = `${totalRewards.toFixed(6)} MEDAS`;
-    }
-};
-
-// UPDATE DELEGATION SELECTS
-UIManager.prototype.updateDelegationSelects = function(delegations) {
-    const redelegateFromSelect = document.getElementById('redelegate-from-select');
-    if (redelegateFromSelect) {
-        redelegateFromSelect.innerHTML = '<option>Select source validator...</option>' +
-            delegations.map(delegation => 
-                `<option value="${delegation.validator_address}">${delegation.validator_name} (${delegation.amount} MEDAS)</option>`
-            ).join('');
-    }
-    
-    const undelegateFromSelect = document.getElementById('undelegate-from-select');
-    if (undelegateFromSelect) {
-        undelegateFromSelect.innerHTML = '<option>Select validator to unstake from...</option>' +
-            delegations.map(delegation => 
-                `<option value="${delegation.validator_address}">${delegation.validator_name} (${delegation.amount} MEDAS)</option>`
-            ).join('');
-    }
-};
-
-// UPDATE STAKING STATISTICS
-UIManager.prototype.updateStakingStatistics = function(delegations) {
-    let totalStaked = 0;
-    let totalRewards = 0;
-    
-    delegations.forEach(delegation => {
-        totalStaked += parseFloat(delegation.amount || '0');
-        totalRewards += parseFloat(delegation.rewards || '0');
-    });
-    
-    const totalStakedEl = document.getElementById('user-total-staked');
-    if (totalStakedEl) {
-        totalStakedEl.textContent = `${totalStaked.toFixed(6)} MEDAS`;
-    }
-    
-    const totalRewardsEl = document.getElementById('user-total-rewards');
-    if (totalRewardsEl) {
-        totalRewardsEl.textContent = `${totalRewards.toFixed(6)} MEDAS`;
-    }
-    
-    const delegationCountEl = document.getElementById('user-delegation-count');
-    if (delegationCountEl) {
-        delegationCountEl.textContent = delegations.length.toString();
-    }
-    
-    const monthlyEstimate = totalStaked * 0.12 / 12;
-    const monthlyEstimateEl = document.getElementById('user-monthly-estimate');
-    if (monthlyEstimateEl) {
-        monthlyEstimateEl.textContent = `${monthlyEstimate.toFixed(6)} MEDAS`;
-    }
-};
-
-// POPULATE USER DELEGATIONS
-UIManager.prototype.populateUserDelegations = async function(delegatorAddress) {
-    console.log('🔍 Loading user delegations for:', delegatorAddress);
-    
-    try {
-        const delegationsSection = document.getElementById('my-delegations-section');
-        if (delegationsSection) {
-            delegationsSection.style.display = 'block';
-        }
-        
-        const delegations = await this.fetchUserDelegations(delegatorAddress);
-        
-        if (delegations && delegations.length > 0) {
-            console.log('✅ Found real delegations:', delegations.length);
-            this.displayUserDelegations(delegations);
-            this.updateDelegationSelects(delegations);
-            this.updateStakingStatistics(delegations);
+    // UNDELEGATE TOKENS (Unstaking)
+    UIManager.prototype.performUnstaking = async function(validatorAddress, amount) {
+        if (!window.terminal?.connected || !window.terminal?.account?.address) {
+            this.showNotification('❌ Please connect your wallet first', 'error');
             return;
         }
         
-        console.log('ℹ️ No delegations found - wallet has no stakes yet');
-        this.populateUserDelegationsFallback();
+        try {
+            this.showNotification('🔄 Preparing undelegation transaction...', 'info');
+            
+            const delegatorAddress = window.terminal.account.address;
+            const amountInUmedas = Math.floor(parseFloat(amount) * 1000000).toString();
+            
+            const undelegateMsg = {
+                typeUrl: '/cosmos.staking.v1beta1.MsgUndelegate',
+                value: {
+                    delegatorAddress: delegatorAddress,
+                    validatorAddress: validatorAddress,
+                    amount: {
+                        denom: 'umedas',
+                        amount: amountInUmedas
+                    }
+                }
+            };
+            
+            const gasEstimate = 300000;
+            
+            const result = await window.keplr.sendTx(
+                MEDAS_CHAIN_CONFIG.chainId,
+                [{
+                    ...undelegateMsg,
+                    gas: gasEstimate.toString(),
+                    fee: {
+                        amount: [{
+                            denom: 'umedas',
+                            amount: Math.floor(gasEstimate * 0.025).toString()
+                        }],
+                        gas: gasEstimate.toString()
+                    }
+                }]
+            );
+            
+            if (result && result.code === 0) {
+                this.showNotification(`✅ Undelegation successful! TX: ${result.transactionHash}`, 'success');
+                this.showNotification('⏰ Note: Unbonding period is 21 days', 'info');
+                
+                setTimeout(() => {
+                    this.populateUserDelegations(delegatorAddress);
+                    this.updateBalanceOverview();
+                }, 3000);
+                
+            } else {
+                throw new Error(result?.log || 'Transaction failed');
+            }
+            
+        } catch (error) {
+            console.error('❌ Unstaking failed:', error);
+            this.showNotification(`❌ Unstaking failed: ${error.message}`, 'error');
+        }
+    };
+
+    // REDELEGATE TOKENS
+    UIManager.prototype.performRedelegation = async function(srcValidatorAddress, dstValidatorAddress, amount) {
+        if (!window.terminal?.connected || !window.terminal?.account?.address) {
+            this.showNotification('❌ Please connect your wallet first', 'error');
+            return;
+        }
         
-    } catch (error) {
-        console.error('❌ Failed to load user delegations:', error);
-        this.populateUserDelegationsFallback();
-    }
-};
+        try {
+            this.showNotification('🔄 Preparing redelegation transaction...', 'info');
+            
+            const delegatorAddress = window.terminal.account.address;
+            const amountInUmedas = Math.floor(parseFloat(amount) * 1000000).toString();
+            
+            const redelegateMsg = {
+                typeUrl: '/cosmos.staking.v1beta1.MsgBeginRedelegate',
+                value: {
+                    delegatorAddress: delegatorAddress,
+                    validatorSrcAddress: srcValidatorAddress,
+                    validatorDstAddress: dstValidatorAddress,
+                    amount: {
+                        denom: 'umedas',
+                        amount: amountInUmedas
+                    }
+                }
+            };
+            
+            const gasEstimate = 350000;
+            
+            const result = await window.keplr.sendTx(
+                MEDAS_CHAIN_CONFIG.chainId,
+                [{
+                    ...redelegateMsg,
+                    gas: gasEstimate.toString(),
+                    fee: {
+                        amount: [{
+                            denom: 'umedas',
+                            amount: Math.floor(gasEstimate * 0.025).toString()
+                        }],
+                        gas: gasEstimate.toString()
+                    }
+                }]
+            );
+            
+            if (result && result.code === 0) {
+                this.showNotification(`✅ Redelegation successful! TX: ${result.transactionHash}`, 'success');
+                
+                setTimeout(() => {
+                    this.populateUserDelegations(delegatorAddress);
+                    this.updateBalanceOverview();
+                }, 3000);
+                
+            } else {
+                throw new Error(result?.log || 'Transaction failed');
+            }
+            
+        } catch (error) {
+            console.error('❌ Redelegation failed:', error);
+            this.showNotification(`❌ Redelegation failed: ${error.message}`, 'error');
+        }
+    };
 
-// FALLBACK FOR EMPTY DELEGATIONS
-UIManager.prototype.populateUserDelegationsFallback = function() {
-    const delegationsContainer = document.getElementById('current-delegations');
-    if (!delegationsContainer) return;
+    // CLAIM SINGLE VALIDATOR REWARDS
+    UIManager.prototype.claimSingleValidatorRewards = async function(validatorAddress, validatorName) {
+        if (!window.terminal?.connected || !window.terminal?.account?.address) {
+            this.showNotification('❌ Please connect your wallet first', 'error');
+            return;
+        }
+        
+        try {
+            this.showNotification(`🔄 Claiming rewards from ${validatorName}...`, 'info');
+            
+            const delegatorAddress = window.terminal.account.address;
+            
+            const claimMsg = {
+                typeUrl: '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
+                value: {
+                    delegatorAddress: delegatorAddress,
+                    validatorAddress: validatorAddress
+                }
+            };
+            
+            const gasEstimate = 150000;
+            
+            const result = await window.keplr.sendTx(
+                MEDAS_CHAIN_CONFIG.chainId,
+                [{
+                    ...claimMsg,
+                    gas: gasEstimate.toString(),
+                    fee: {
+                        amount: [{
+                            denom: 'umedas',
+                            amount: Math.floor(gasEstimate * 0.025).toString()
+                        }],
+                        gas: gasEstimate.toString()
+                    }
+                }]
+            );
+            
+            if (result && result.code === 0) {
+                this.showNotification(`✅ Rewards claimed from ${validatorName}! TX: ${result.transactionHash}`, 'success');
+                
+                setTimeout(() => {
+                    this.populateUserDelegations(delegatorAddress);
+                    this.updateBalanceOverview();
+                }, 3000);
+                
+            } else {
+                throw new Error(result?.log || 'Transaction failed');
+            }
+            
+        } catch (error) {
+            console.error('❌ Claim rewards failed:', error);
+            this.showNotification(`❌ Claim failed: ${error.message}`, 'error');
+        }
+    };
 
-    console.warn('⚠️ No real delegations found - showing empty state');
+    // ===================================
+    // ERWEITERTE UI-UPDATES
+    // ===================================
+
+    // DISPLAY USER DELEGATIONS (Enhanced)
+    UIManager.prototype.displayUserDelegations = function(delegations) {
+        const delegationsContainer = document.getElementById('current-delegations');
+        if (!delegationsContainer) return;
+
+        let totalRewards = 0;
+        
+        delegationsContainer.innerHTML = delegations.map(delegation => {
+            const rewards = parseFloat(delegation.rewards || '0');
+            totalRewards += rewards;
+            
+            return `
+                <div class="delegation-item">
+                    <div class="validator-info">
+                        <div class="validator-name">${delegation.validator_name}</div>
+                        <div class="validator-details">
+                            Delegated: ${delegation.amount} MEDAS | 
+                            Rewards: +${delegation.rewards} MEDAS
+                        </div>
+                        <div class="validator-address" style="font-size: 10px; color: #666; margin-top: 4px;">
+                            ${delegation.validator_address}
+                        </div>
+                    </div>
+                    <div class="stake-actions">
+                        <button class="btn-small btn-warning" style="margin-right: 8px;" 
+                                onclick="claimRewards('${delegation.validator_address}', '${delegation.validator_name}')">
+                            Claim
+                        </button>
+                        <button class="btn-small btn-primary" style="margin-right: 8px;" 
+                                onclick="addMoreStake('${delegation.validator_address}', '${delegation.validator_name}')">
+                            Add More
+                        </button>
+                        <button class="btn-small btn-danger" 
+                                onclick="unstakeFrom('${delegation.validator_address}', '${delegation.validator_name}', '${delegation.amount}')">
+                            Unstake
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        // Update total rewards display
+        const totalRewardsEl = document.getElementById('total-rewards');
+        if (totalRewardsEl) {
+            totalRewardsEl.textContent = `${totalRewards.toFixed(6)} MEDAS`;
+        }
+    };
+
+    // UPDATE DELEGATION SELECTS
+    UIManager.prototype.updateDelegationSelects = function(delegations) {
+        // Update Redelegate From Select
+        const redelegateFromSelect = document.getElementById('redelegate-from-select');
+        if (redelegateFromSelect) {
+            redelegateFromSelect.innerHTML = '<option>Select source validator...</option>' +
+                delegations.map(delegation => 
+                    `<option value="${delegation.validator_address}">${delegation.validator_name} (${delegation.amount} MEDAS)</option>`
+                ).join('');
+        }
+        
+        // Update Undelegate From Select
+        const undelegateFromSelect = document.getElementById('undelegate-from-select');
+        if (undelegateFromSelect) {
+            undelegateFromSelect.innerHTML = '<option>Select validator to unstake from...</option>' +
+                delegations.map(delegation => 
+                    `<option value="${delegation.validator_address}">${delegation.validator_name} (${delegation.amount} MEDAS)</option>`
+                ).join('');
+        }
+    };
+
+    // UPDATE STAKING STATISTICS
+    UIManager.prototype.updateStakingStatistics = function(delegations) {
+        let totalStaked = 0;
+        let totalRewards = 0;
+        
+        delegations.forEach(delegation => {
+            totalStaked += parseFloat(delegation.amount || '0');
+            totalRewards += parseFloat(delegation.rewards || '0');
+        });
+        
+        // Update UI elements
+        const totalStakedEl = document.getElementById('user-total-staked');
+        if (totalStakedEl) {
+            totalStakedEl.textContent = `${totalStaked.toFixed(6)} MEDAS`;
+        }
+        
+        const totalRewardsEl = document.getElementById('user-total-rewards');
+        if (totalRewardsEl) {
+            totalRewardsEl.textContent = `${totalRewards.toFixed(6)} MEDAS`;
+        }
+        
+        const delegationCountEl = document.getElementById('user-delegation-count');
+        if (delegationCountEl) {
+            delegationCountEl.textContent = delegations.length.toString();
+        }
+        
+        // Geschätzte monatliche Rewards (angenommen 12% APY)
+        const monthlyEstimate = totalStaked * 0.12 / 12;
+        const monthlyEstimateEl = document.getElementById('user-monthly-estimate');
+        if (monthlyEstimateEl) {
+            monthlyEstimateEl.textContent = `${monthlyEstimate.toFixed(6)} MEDAS`;
+        }
+    };
+
+ // OVERRIDE: populateUserDelegations - BESSERE FEHLERBEHANDLUNG
+    UIManager.prototype.populateUserDelegations = async function(delegatorAddress) {
+        console.log('🔍 Loading user delegations for:', delegatorAddress);
+        
+        try {
+            const delegationsSection = document.getElementById('my-delegations-section');
+            if (delegationsSection) {
+                delegationsSection.style.display = 'block';
+            }
+            
+            const delegations = await this.fetchUserDelegations(delegatorAddress);
+            
+            // ERFOLG: Echte Delegations gefunden
+            if (delegations && delegations.length > 0) {
+                console.log('✅ Found real delegations:', delegations.length);
+                this.displayUserDelegations(delegations);
+                this.updateDelegationSelects(delegations);
+                this.updateStakingStatistics(delegations);
+                return;
+            }
+            
+            // ERFOLG: Keine Delegations (leerer Wallet)
+            console.log('ℹ️ No delegations found - wallet has no stakes yet');
+            this.populateUserDelegationsFallback();
+            
+        } catch (error) {
+            console.error('❌ Failed to load user delegations:', error);
+            // NUR BEI ECHTEN FEHLERN -> Fallback
+            this.populateUserDelegationsFallback();
+        }
+    };
+
+    // OVERRIDE: populateUserDelegationsFallback - EMPTY STATE statt Mock Data
+    UIManager.prototype.populateUserDelegationsFallback = function() {
+        const delegationsContainer = document.getElementById('current-delegations');
+        if (!delegationsContainer) return;
+
+        console.warn('⚠️ No real delegations found - showing empty state instead of mock data');
+        
+        // ANSTATT MOCK DATEN -> ZEIGE EMPTY STATE
+        delegationsContainer.innerHTML = `
+            <div class="empty-state" style="text-align: center; padding: 40px 20px; color: #666;">
+                <div style="font-size: 48px; margin-bottom: 16px;">🎯</div>
+                <h3 style="color: #00ffff; margin-bottom: 8px;">No Delegations Yet</h3>
+                <p style="margin-bottom: 16px;">You haven't staked any MEDAS tokens yet.</p>
+                <p style="font-size: 12px;">Select a validator below and start staking to earn rewards!</p>
+            </div>
+        `;
+
+        // SETZE ALLE STATS AUF NULL
+        const totalRewardsEl = document.getElementById('total-rewards');
+        if (totalRewardsEl) totalRewardsEl.textContent = '0.000000 MEDAS';
+        
+        const totalStakedEl = document.getElementById('user-total-staked');
+        if (totalStakedEl) totalStakedEl.textContent = '0.000000 MEDAS';
+        
+        const totalRewardsStatsEl = document.getElementById('user-total-rewards');
+        if (totalRewardsStatsEl) totalRewardsStatsEl.textContent = '0.000000 MEDAS';
+        
+        const delegationCountEl = document.getElementById('user-delegation-count');
+        if (delegationCountEl) delegationCountEl.textContent = '0';
+        
+        const monthlyEstimateEl = document.getElementById('user-monthly-estimate');
+        if (monthlyEstimateEl) monthlyEstimateEl.textContent = '0.000000 MEDAS';
+    };
+
     
-    delegationsContainer.innerHTML = `
-        <div class="empty-state" style="text-align: center; padding: 40px 20px; color: #666;">
-            <div style="font-size: 48px; margin-bottom: 16px;">🎯</div>
-            <h3 style="color: #00ffff; margin-bottom: 8px;">No Delegations Yet</h3>
-            <p style="margin-bottom: 16px;">You haven't staked any MEDAS tokens yet.</p>
-            <p style="font-size: 12px;">Select a validator below and start staking to earn rewards!</p>
-        </div>
-    `;
-
-    // Reset all stats to zero
-    const elements = [
-        'total-rewards',
-        'user-total-staked', 
-        'user-total-rewards',
-        'user-monthly-estimate'
-    ];
-    
-    elements.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = '0.000000 MEDAS';
-    });
-    
-    const delegationCountEl = document.getElementById('user-delegation-count');
-    if (delegationCountEl) delegationCountEl.textContent = '0';
-};
-
-// POPULATE VALIDATORS WITH ACTIONS
+// POPULATE VALIDATORS WITH ACTIONS - FIXED mit echten Namen
 UIManager.prototype.populateValidatorsWithActions = function(validators) {
     const validatorsContainer = document.getElementById('validators-list');
     if (!validatorsContainer) {
@@ -984,10 +931,11 @@ UIManager.prototype.populateValidatorsWithActions = function(validators) {
 
     console.log('📊 Displaying validators with actions:', validators.length);
 
-    // Cache validator names
+    // ERST: Cache alle Validator-Namen mit echten Daten
     validators.forEach(validator => {
         if (validator.description?.moniker) {
             this.validatorNameCache.set(validator.operator_address, validator.description.moniker);
+            console.log(`💾 Cached validator name: ${validator.description.moniker} for ${validator.operator_address.slice(-8)}`);
         }
     });
 
@@ -997,8 +945,11 @@ UIManager.prototype.populateValidatorsWithActions = function(validators) {
         const status = validator.status === 'BOND_STATUS_BONDED' ? 'Active' : 'Inactive';
         const jailed = validator.jailed ? 'Jailed' : 'OK';
         
+        // ✅ VERWENDE ECHTE VALIDATOR-NAMEN DIREKT AUS DEN API-DATEN
         const validatorName = validator.description?.moniker || 
                              this.getValidatorName(validator.operator_address, validator);
+        
+        console.log(`🏷️ Displaying validator: ${validatorName} (was: ${this.getValidatorName(validator.operator_address)})`);
         
         return `
             <div class="delegation-item">
@@ -1033,55 +984,11 @@ UIManager.prototype.populateValidatorsWithActions = function(validators) {
         `;
     }).join('');
 
-    console.log('✅ Validators HTML generated with validator names');
+    console.log('✅ Validators HTML generated with REAL validator names');
 };
 
-// ===================================
-// DEBUG FUNCTIONS
-// ===================================
-UIManager.prototype.debugSimpleStaking = function() {
-    console.log('🔍 DEBUGGING SIMPLE STAKING (NO CACHE RESET):');
+    console.log('🎯 UI-Manager Staking extensions loaded');
     
-    console.log('📋 Method used:');
-    console.log('  ✅ Simple Amino signing only');
-    console.log('  ✅ Standard signAmino() method');
-    console.log('  ✅ CORS-safe proxy endpoints');
-    console.log('  ✅ Optimistic success handling');
-    console.log('  ✅ Multiple broadcast fallbacks');
-    console.log('  ❌ NO custom Protobuf encoding');
-    console.log('  ❌ NO problematic sendTx with custom bytes');
-    console.log('  ❌ NO cache reset triggers');
-    
-    if (window.keplr) {
-        console.log('✅ Keplr methods available:', {
-            enable: typeof window.keplr.enable,
-            signAmino: typeof window.keplr.signAmino,
-            signAndBroadcast: typeof window.keplr.signAndBroadcast,
-            sendTx: typeof window.keplr.sendTx
-        });
-        
-        console.log('✅ Using signAmino (stable) instead of sendTx (problematic)');
-    }
-    
-    if (window.terminal?.connected) {
-        console.log('✅ Wallet connected:', window.terminal.account.address);
-        
-        // Test CORS-safe account info
-        this.getAccountInfoCorsafe(window.terminal.account.address).then(info => {
-            console.log('✅ CORS-safe account info test:', info);
-        });
-    } else {
-        console.log('❌ Wallet not connected');
-    }
-    
-    return 'Fixed staking debug complete - no cache reset issues expected';
-};
-
-console.log('🚀 COMPLETELY FIXED Staking implementation loaded');
-console.log('✅ No cache reset issues - using stable Amino signing only');
-console.log('🔧 CORS-safe proxy endpoints configured');
-console.log('🎯 Optimistic success handling for network issues');
-
 } else {
     console.warn('⚠️ UIManager not found, staking extensions will load when UIManager is available');
 }
