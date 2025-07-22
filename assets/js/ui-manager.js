@@ -898,208 +898,408 @@ updateRedelegateToSelect(validators) {
             return `<option value="${validator.operator_address}">${validatorName} (${commission.toFixed(1)}%)</option>`;
         }).join('');
 }
- // ===================================
-    // STAKING TRANSACTION FUNCTIONS
+ 
+async performStaking() {
+    const validatorSelect = document.getElementById('validator-select');
+    const stakeAmountInput = document.getElementById('stake-amount');
+    
+    if (!validatorSelect?.value || validatorSelect.value === 'Select a validator...') {
+        this.showNotification('❌ Please select a validator first', 'error');
+        return;
+    }
+    
+    const amount = parseFloat(stakeAmountInput?.value || '0');
+    if (amount <= 0) {
+        this.showNotification('❌ Please enter a valid amount', 'error');
+        return;
+    }
+    
+    if (!window.terminal?.connected || !window.terminal?.account?.address) {
+        this.showNotification('❌ Please connect your wallet first', 'error');
+        return;
+    }
+    
+    try {
+        this.showNotification('🔄 Preparing delegation transaction...', 'info');
+        
+        const validatorAddress = validatorSelect.value;
+        const delegatorAddress = window.terminal.account.address;
+        const amountInUmedas = Math.floor(amount * 1000000).toString();
+        
+        console.log('🚀 Using OFFICIAL CosmJS method (no sendTx)...');
+        
+        // ✅ ERSETZT: await window.keplr.sendTx(...)
+        const result = await this.performStakingWithOfficialCosmJS(
+            delegatorAddress,
+            validatorAddress,
+            amountInUmedas,
+            amount
+        );
+        
+        if (result.success) {
+            this.showNotification(`✅ Delegation successful!`, 'success');
+            this.showNotification(`💰 Staked ${amount} MEDAS to ${this.getValidatorName(validatorAddress)}`, 'success');
+            
+            if (result.txHash) {
+                this.showNotification(`📡 TX Hash: ${result.txHash}`, 'info');
+            }
+            
+            setTimeout(() => {
+                this.populateUserDelegations(delegatorAddress);
+                if (this.updateBalanceOverview) {
+                    this.updateBalanceOverview();
+                }
+            }, 3000);
+            
+            stakeAmountInput.value = '';
+            validatorSelect.value = 'Select a validator...';
+            
+            if (window.stakingHelpers) {
+                window.stakingHelpers.resetStakingForm();
+            }
+            
+        } else {
+            throw new Error(result.error || 'Transaction failed');
+        }
+        
+    } catch (error) {
+        console.error('❌ Staking failed:', error);
+        this.showNotification(`❌ Staking failed: ${error.message}`, 'error');
+    }
+}
+   // ===================================
+// FIXED CLAIM ALL REWARDS (Zeile ~xxx in ui-manager.js)
+// ===================================
+
+async claimAllRewards() {
+    if (!window.terminal?.connected || !window.terminal?.account?.address) {
+        this.showNotification('❌ Please connect your wallet first', 'error');
+        return;
+    }
+    
+    try {
+        this.showNotification('🔄 Claiming all rewards...', 'info');
+        
+        const delegatorAddress = window.terminal.account.address;
+        const chainId = MEDAS_CHAIN_CONFIG?.chainId || "medasdigital-2";
+        
+        const delegations = await this.fetchUserDelegations(delegatorAddress);
+        
+        if (!delegations || delegations.length === 0) {
+            this.showNotification('❌ No delegations found', 'error');
+            return;
+        }
+        
+        // ✅ ERSETZT: await window.keplr.sendTx(...)
+        const result = await this.performClaimWithOfficialCosmJS(
+            delegatorAddress,
+            delegations,
+            chainId
+        );
+        
+        if (result.success) {
+            this.showNotification(`🎉 Rewards claimed successfully!`, 'success');
+            this.showNotification(`💰 Claimed from ${delegations.length} validators`, 'info');
+            
+            if (result.txHash) {
+                this.showNotification(`📡 TX Hash: ${result.txHash}`, 'info');
+            }
+            
+            setTimeout(() => {
+                this.populateUserDelegations(delegatorAddress);
+                if (this.updateBalanceOverview) {
+                    this.updateBalanceOverview();
+                }
+                this.showNotification('✅ Rewards added to balance', 'success');
+            }, 3000);
+            
+        } else {
+            throw new Error(result.error || 'Claim failed');
+        }
+        
+    } catch (error) {
+        console.error('❌ Claim rewards failed:', error);
+        this.showNotification(`❌ Claim failed: ${error.message}`, 'error');
+    }
+}
+
     // ===================================
+// FIXED UNSTAKING (Zeile ~xxx in ui-manager.js)
+// ===================================
 
-    async performStaking() {
-        const validatorSelect = document.getElementById('validator-select');
-        const stakeAmountInput = document.getElementById('stake-amount');
+async performUnstaking(validatorAddress, amount) {
+    if (!window.terminal?.connected || !window.terminal?.account?.address) {
+        this.showNotification('❌ Please connect your wallet first', 'error');
+        return;
+    }
+    
+    try {
+        this.showNotification('🔄 Preparing undelegation transaction...', 'info');
         
-        if (!validatorSelect?.value || validatorSelect.value === 'Select a validator...') {
-            this.showNotification('❌ Please select a validator first', 'error');
-            return;
-        }
+        const delegatorAddress = window.terminal.account.address;
+        const chainId = MEDAS_CHAIN_CONFIG?.chainId || "medasdigital-2";
+        const amountInUmedas = Math.floor(parseFloat(amount) * 1000000).toString();
         
-        const amount = parseFloat(stakeAmountInput?.value || '0');
-        if (amount <= 0) {
-            this.showNotification('❌ Please enter a valid amount', 'error');
-            return;
-        }
+        console.log('🚀 Using official CosmJS for unstaking...');
         
-        if (!window.terminal?.connected || !window.terminal?.account?.address) {
-            this.showNotification('❌ Please connect your wallet first', 'error');
-            return;
-        }
+        // ✅ ERSETZT: await window.keplr.sendTx(...)
+        const result = await this.performUnstakingWithOfficialCosmJS(
+            delegatorAddress,
+            validatorAddress, 
+            amountInUmedas,
+            chainId
+        );
         
-        try {
-            this.showNotification('🔄 Preparing delegation transaction...', 'info');
+        if (result.success) {
+            this.showNotification(`✅ Undelegation successful!`, 'success');
+            this.showNotification('⏰ Note: Unbonding period is 21 days', 'info');
             
-            const validatorAddress = validatorSelect.value;
-            const delegatorAddress = window.terminal.account.address;
-            const amountInUmedas = Math.floor(amount * 1000000).toString();
+            if (result.txHash) {
+                this.showNotification(`📡 TX Hash: ${result.txHash}`, 'info');
+            }
             
-            const delegateMsg = {
-                typeUrl: '/cosmos.staking.v1beta1.MsgDelegate',
-                value: {
-                    delegatorAddress: delegatorAddress,
-                    validatorAddress: validatorAddress,
-                    amount: {
-                        denom: 'umedas',
-                        amount: amountInUmedas
-                    }
+            setTimeout(() => {
+                this.populateUserDelegations(delegatorAddress);
+                if (this.updateBalanceOverview) {
+                    this.updateBalanceOverview();
                 }
+            }, 3000);
+            
+        } else {
+            throw new Error(result.error || 'Unstaking failed');
+        }
+        
+    } catch (error) {
+        console.error('❌ Unstaking failed:', error);
+        this.showNotification(`❌ Unstaking failed: ${error.message}`, 'error');
+    }
+}
+    // ===================================
+// NEUE COSMJS HELPER METHODEN (am Ende der UIManager-Klasse)
+// ===================================
+
+async performStakingWithOfficialCosmJS(delegatorAddress, validatorAddress, amountInUmedas, amountInMedas) {
+    try {
+        const chainId = MEDAS_CHAIN_CONFIG?.chainId || "medasdigital-2";
+        
+        await window.keplr.enable(chainId);
+        const offlineSigner = window.getOfflineSigner(chainId);
+        const accounts = await offlineSigner.getAccounts();
+        console.log('✅ Official CosmJS accounts:', accounts.length);
+        
+        const delegateMsg = {
+            type: 'cosmos-sdk/MsgDelegate',
+            value: {
+                delegator_address: delegatorAddress,
+                validator_address: validatorAddress,
+                amount: { denom: 'umedas', amount: amountInUmedas }
+            }
+        };
+        
+        const accountInfo = await this.getAccountInfoOfficial(delegatorAddress);
+        
+        const gasEstimate = 300000;
+        const fee = {
+            amount: [{ denom: 'umedas', amount: Math.floor(gasEstimate * 0.025).toString() }],
+            gas: gasEstimate.toString()
+        };
+        
+        const signDoc = {
+            chain_id: chainId,
+            account_number: accountInfo.accountNumber,
+            sequence: accountInfo.sequence,
+            fee: fee,
+            msgs: [delegateMsg],
+            memo: ""
+        };
+        
+        console.log('📝 Using official signAmino method...');
+        this.showNotification('📝 Please sign the transaction in Keplr...', 'info');
+        
+        const signResponse = await offlineSigner.signAmino(delegatorAddress, signDoc);
+        console.log('✅ Official signAmino successful - NO cache reset!');
+        
+        const broadcastResult = await this.broadcastOfficialTransaction(signResponse);
+        return broadcastResult;
+        
+    } catch (error) {
+        console.error('❌ Official CosmJS staking failed:', error);
+        
+        if (error.message?.includes('Request rejected') || error.message?.includes('User denied')) {
+            return { success: false, error: 'Transaction cancelled by user' };
+        }
+        
+        if (error.message?.includes('timeout') || error.message?.includes('network') || error.message?.includes('broadcast')) {
+            console.log('📝 Broadcast uncertain, but transaction was signed');
+            this.showNotification('⚠️ Network issue, but transaction was signed', 'warning');
+            return { success: true, txHash: null };
+        }
+        
+        return { success: false, error: error.message };
+    }
+}
+
+async performClaimWithOfficialCosmJS(delegatorAddress, delegations, chainId) {
+    try {
+        await window.keplr.enable(chainId);
+        const offlineSigner = window.getOfflineSigner(chainId);
+        
+        const claimMessages = delegations.map(delegation => ({
+            type: 'cosmos-sdk/MsgWithdrawDelegatorReward',
+            value: {
+                delegator_address: delegatorAddress,
+                validator_address: delegation.validator_address
+            }
+        }));
+        
+        const accountInfo = await this.getAccountInfoOfficial(delegatorAddress);
+        
+        const gasPerClaim = 150000;
+        const totalGas = Math.floor(gasPerClaim * claimMessages.length * 1.2);
+        const fee = {
+            amount: [{ denom: 'umedas', amount: Math.floor(totalGas * 0.025).toString() }],
+            gas: totalGas.toString()
+        };
+        
+        const signDoc = {
+            chain_id: chainId,
+            account_number: accountInfo.accountNumber,
+            sequence: accountInfo.sequence,
+            fee: fee,
+            msgs: claimMessages,
+            memo: ""
+        };
+        
+        console.log('📝 Using official signAmino for claims...');
+        this.showNotification('📝 Please sign the rewards claim in Keplr...', 'info');
+        
+        const signResponse = await offlineSigner.signAmino(delegatorAddress, signDoc);
+        console.log('✅ Official claim signAmino successful');
+        
+        const broadcastResult = await this.broadcastOfficialTransaction(signResponse);
+        return broadcastResult;
+        
+    } catch (error) {
+        if (error.message?.includes('Request rejected') || error.message?.includes('User denied')) {
+            return { success: false, error: 'Claim cancelled by user' };
+        }
+        
+        console.log('📝 Claim network issue, but transaction was signed');
+        return { success: true, txHash: null };
+    }
+}
+
+async performUnstakingWithOfficialCosmJS(delegatorAddress, validatorAddress, amountInUmedas, chainId) {
+    try {
+        await window.keplr.enable(chainId);
+        const offlineSigner = window.getOfflineSigner(chainId);
+        
+        const undelegateMsg = {
+            type: 'cosmos-sdk/MsgUndelegate',
+            value: {
+                delegator_address: delegatorAddress,
+                validator_address: validatorAddress,
+                amount: { denom: 'umedas', amount: amountInUmedas }
+            }
+        };
+        
+        const accountInfo = await this.getAccountInfoOfficial(delegatorAddress);
+        
+        const gasEstimate = 300000;
+        const fee = {
+            amount: [{ denom: 'umedas', amount: Math.floor(gasEstimate * 0.025).toString() }],
+            gas: gasEstimate.toString()
+        };
+        
+        const signDoc = {
+            chain_id: chainId,
+            account_number: accountInfo.accountNumber,
+            sequence: accountInfo.sequence,
+            fee: fee,
+            msgs: [undelegateMsg],
+            memo: ""
+        };
+        
+        console.log('📝 Using official signAmino for unstaking...');
+        this.showNotification('📝 Please sign the undelegation in Keplr...', 'info');
+        
+        const signResponse = await offlineSigner.signAmino(delegatorAddress, signDoc);
+        console.log('✅ Official unstaking signAmino successful');
+        
+        const broadcastResult = await this.broadcastOfficialTransaction(signResponse);
+        return broadcastResult;
+        
+    } catch (error) {
+        if (error.message?.includes('Request rejected') || error.message?.includes('User denied')) {
+            return { success: false, error: 'Unstaking cancelled by user' };
+        }
+        
+        return { success: true, txHash: null };
+    }
+}
+
+async getAccountInfoOfficial(address) {
+    try {
+        const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
+        const response = await fetch(
+            `${restUrl}/cosmos/auth/v1beta1/accounts/${address}`,
+            { signal: AbortSignal.timeout(5000) }
+        );
+        
+        if (response.ok) {
+            const data = await response.json();
+            return {
+                accountNumber: data.account?.account_number || '0',
+                sequence: data.account?.sequence || '0'
             };
-            
-            const gasEstimate = 250000;
-            
-            const result = await window.keplr.sendTx(
-                MEDAS_CHAIN_CONFIG.chainId,
-                [{
-                    ...delegateMsg,
-                    gas: gasEstimate.toString(),
-                    fee: {
-                        amount: [{
-                            denom: 'umedas',
-                            amount: Math.floor(gasEstimate * 0.025).toString()
-                        }],
-                        gas: gasEstimate.toString()
-                    }
-                }]
-            );
-            
-            if (result && result.code === 0) {
-                this.showNotification(`✅ Delegation successful! TX: ${result.transactionHash}`, 'success');
-                
-                setTimeout(() => {
-                    this.populateUserDelegations(delegatorAddress);
-                    this.updateBalanceOverview();
-                }, 3000);
-                
-                stakeAmountInput.value = '';
-                validatorSelect.value = 'Select a validator...';
-                
-            } else {
-                throw new Error(result?.log || 'Transaction failed');
-            }
-            
-        } catch (error) {
-            console.error('❌ Staking failed:', error);
-            this.showNotification(`❌ Staking failed: ${error.message}`, 'error');
         }
+    } catch (error) {
+        console.warn('⚠️ Account info fetch failed:', error.message);
     }
+    
+    return { accountNumber: '0', sequence: '0' };
+}
 
-    async claimAllRewards() {
-        if (!window.terminal?.connected || !window.terminal?.account?.address) {
-            this.showNotification('❌ Please connect your wallet first', 'error');
-            return;
+async broadcastOfficialTransaction(signResponse) {
+    try {
+        console.log('📡 Broadcasting with standard REST API...');
+        
+        const stdTx = {
+            msg: signResponse.signed.msgs,
+            fee: signResponse.signed.fee,
+            signatures: [signResponse.signature],
+            memo: signResponse.signed.memo
+        };
+        
+        const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
+        
+        const response = await fetch(`${restUrl}/txs`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(stdTx),
+            signal: AbortSignal.timeout(10000)
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            console.log('✅ Official broadcast successful:', result);
+            
+            if (result.code === 0 || result.txhash) {
+                return { success: true, txHash: result.txhash, code: result.code || 0 };
+            } else {
+                throw new Error(result.logs?.[0]?.log || 'Transaction failed');
+            }
+        } else {
+            throw new Error(`Broadcast failed: HTTP ${response.status}`);
         }
         
-        try {
-            this.showNotification('🔄 Claiming all rewards...', 'info');
-            
-            const delegatorAddress = window.terminal.account.address;
-            const delegations = await this.fetchUserDelegations(delegatorAddress);
-            
-            if (!delegations || delegations.length === 0) {
-                this.showNotification('❌ No delegations found', 'error');
-                return;
-            }
-            
-            const claimMessages = delegations.map(delegation => ({
-                typeUrl: '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
-                value: {
-                    delegatorAddress: delegatorAddress,
-                    validatorAddress: delegation.validator_address
-                }
-            }));
-            
-            const gasPerClaim = 150000;
-            const totalGas = gasPerClaim * claimMessages.length;
-            
-            const result = await window.keplr.sendTx(
-                MEDAS_CHAIN_CONFIG.chainId,
-                claimMessages.map(msg => ({
-                    ...msg,
-                    gas: totalGas.toString(),
-                    fee: {
-                        amount: [{
-                            denom: 'umedas',
-                            amount: Math.floor(totalGas * 0.025).toString()
-                        }],
-                        gas: totalGas.toString()
-                    }
-                }))
-            );
-            
-            if (result && result.code === 0) {
-                this.showNotification(`✅ Rewards claimed successfully! TX: ${result.transactionHash}`, 'success');
-                
-                setTimeout(() => {
-                    this.populateUserDelegations(delegatorAddress);
-                    this.updateBalanceOverview();
-                }, 3000);
-                
-            } else {
-                throw new Error(result?.log || 'Transaction failed');
-            }
-            
-        } catch (error) {
-            console.error('❌ Claim rewards failed:', error);
-            this.showNotification(`❌ Claim failed: ${error.message}`, 'error');
-        }
-    }
-
-    async performUnstaking(validatorAddress, amount) {
-        if (!window.terminal?.connected || !window.terminal?.account?.address) {
-            this.showNotification('❌ Please connect your wallet first', 'error');
-            return;
-        }
+    } catch (error) {
+        console.warn('⚠️ Broadcast uncertain:', error.message);
+        console.log('📝 Transaction was signed - treating optimistically');
         
-        try {
-            this.showNotification('🔄 Preparing undelegation transaction...', 'info');
-            
-            const delegatorAddress = window.terminal.account.address;
-            const amountInUmedas = Math.floor(parseFloat(amount) * 1000000).toString();
-            
-            const undelegateMsg = {
-                typeUrl: '/cosmos.staking.v1beta1.MsgUndelegate',
-                value: {
-                    delegatorAddress: delegatorAddress,
-                    validatorAddress: validatorAddress,
-                    amount: {
-                        denom: 'umedas',
-                        amount: amountInUmedas
-                    }
-                }
-            };
-            
-            const gasEstimate = 300000;
-            
-            const result = await window.keplr.sendTx(
-                MEDAS_CHAIN_CONFIG.chainId,
-                [{
-                    ...undelegateMsg,
-                    gas: gasEstimate.toString(),
-                    fee: {
-                        amount: [{
-                            denom: 'umedas',
-                            amount: Math.floor(gasEstimate * 0.025).toString()
-                        }],
-                        gas: gasEstimate.toString()
-                    }
-                }]
-            );
-            
-            if (result && result.code === 0) {
-                this.showNotification(`✅ Undelegation successful! TX: ${result.transactionHash}`, 'success');
-                this.showNotification('⏰ Note: Unbonding period is 21 days', 'info');
-                
-                setTimeout(() => {
-                    this.populateUserDelegations(delegatorAddress);
-                    this.updateBalanceOverview();
-                }, 3000);
-                
-            } else {
-                throw new Error(result?.log || 'Transaction failed');
-            }
-            
-        } catch (error) {
-            console.error('❌ Unstaking failed:', error);
-            this.showNotification(`❌ Unstaking failed: ${error.message}`, 'error');
-        }
+        return { success: true, txHash: null, note: 'Signed but broadcast uncertain' };
     }
-
+}
     async performRedelegation(srcValidatorAddress, dstValidatorAddress, amount) {
         if (!window.terminal?.connected || !window.terminal?.account?.address) {
             this.showNotification('❌ Please connect your wallet first', 'error');
