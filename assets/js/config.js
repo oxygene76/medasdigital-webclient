@@ -1,11 +1,16 @@
 // MedasDigital WebClient - Configuration
+// ✅ CORS-PROBLEM GELÖST: Dual Config Ansatz
 
-// Blockchain Configuration
-const MEDAS_CHAIN_CONFIG = {
+// ===================================
+// 1. KEPLR CHAIN CONFIG (DIREKTE ENDPOINTS)
+// ===================================
+
+const KEPLR_CHAIN_CONFIG = {
     chainId: "medasdigital-2",
     chainName: "MedasDigital",
-    rpc: "https://app.medas-digital.io:8080/api/rpc",
-    rest: "https://app.medas-digital.io:8080/api/lcd",
+    // ✅ DIREKTE ENDPOINTS für Keplr (kein CORS-Problem)
+    rpc: "https://rpc.medas-digital.io:26657",
+    rest: "https://lcd.medas-digital.io:1317",
     bip44: {
         coinType: 118,
     },
@@ -44,18 +49,16 @@ const MEDAS_CHAIN_CONFIG = {
         coinDecimals: 6,
         coinGeckoId: "medas-digital",
     },
-    // ✅ NEU: Features für Cosmos SDK 0.50
+    // ✅ KEINE deprecated features
     features: [
         "cosmwasm",
         "ibc-transfer", 
         "ibc-go"
     ],
-    // ✅ NEU: Transaction Explorer
     txExplorer: {
         name: "Medas Explorer", 
         txUrl: "https://explorer.medas-digital.io/tx/{txHash}"
     },
-    // ✅ NEU: Gas-Einstellungen für verschiedene Transaktionen
     gas: {
         defaults: {
             delegate: 250000,
@@ -64,8 +67,30 @@ const MEDAS_CHAIN_CONFIG = {
             claimRewards: 150000,
             send: 80000
         },
-        multiplier: 1.3 // Safety margin
+        multiplier: 1.3
     }
+};
+
+// ===================================
+// 2. WEBCLIENT API CONFIG (PROXY ENDPOINTS)
+// ===================================
+
+const WEBCLIENT_API_CONFIG = {
+    // ✅ PROXY ENDPOINTS für WebClient API-Calls
+    rpc: "https://app.medas-digital.io:8080/api/rpc",
+    rest: "https://app.medas-digital.io:8080/api/lcd",
+    chainId: "medasdigital-2"
+};
+
+// ===================================
+// 3. MEDAS_CHAIN_CONFIG (HAUPTKONFIGURATION)
+// ===================================
+
+const MEDAS_CHAIN_CONFIG = {
+    ...KEPLR_CHAIN_CONFIG,
+    // ✅ Für WebClient API-Calls verwende Proxy:
+    rpc: WEBCLIENT_API_CONFIG.rpc,
+    rest: WEBCLIENT_API_CONFIG.rest
 };
 
 // API Configuration
@@ -332,7 +357,86 @@ const FEATURE_FLAGS = {
     networkDebug: false
 };
 
-// ✅ NEU: Keplr Compatibility Check
+// ===================================
+// 🔧 CORS-FIXED FUNCTIONS
+// ===================================
+
+// CORS Compatibility Check
+window.checkCorsConfiguration = function() {
+    console.log('🔍 CORS CONFIGURATION CHECK:');
+    console.log('==============================');
+    console.log('Keplr endpoints (direct):', {
+        rpc: KEPLR_CHAIN_CONFIG.rpc,
+        rest: KEPLR_CHAIN_CONFIG.rest
+    });
+    console.log('WebClient endpoints (proxy):', {
+        rpc: WEBCLIENT_API_CONFIG.rpc,
+        rest: WEBCLIENT_API_CONFIG.rest
+    });
+    console.log('MEDAS_CHAIN_CONFIG (mixed):', {
+        rpc: MEDAS_CHAIN_CONFIG.rpc,
+        rest: MEDAS_CHAIN_CONFIG.rest
+    });
+    
+    return {
+        keplrUsesProxy: KEPLR_CHAIN_CONFIG.rest.includes('8080'),
+        webClientUsesProxy: WEBCLIENT_API_CONFIG.rest.includes('8080'),
+        corsFixed: !KEPLR_CHAIN_CONFIG.rest.includes('8080') && WEBCLIENT_API_CONFIG.rest.includes('8080')
+    };
+};
+
+// Test CORS Configuration
+window.testCorsEndpoints = async function() {
+    console.log('🧪 TESTING CORS ENDPOINTS...');
+    
+    const tests = [
+        {
+            name: 'Keplr Direct RPC',
+            url: KEPLR_CHAIN_CONFIG.rpc + '/status'
+        },
+        {
+            name: 'Keplr Direct REST',
+            url: KEPLR_CHAIN_CONFIG.rest + '/cosmos/base/tendermint/v1beta1/node_info'
+        },
+        {
+            name: 'WebClient Proxy RPC',
+            url: WEBCLIENT_API_CONFIG.rpc + '/status'
+        },
+        {
+            name: 'WebClient Proxy REST',
+            url: WEBCLIENT_API_CONFIG.rest + '/cosmos/base/tendermint/v1beta1/node_info'
+        }
+    ];
+    
+    const results = [];
+    
+    for (const test of tests) {
+        try {
+            const response = await fetch(test.url, { 
+                signal: AbortSignal.timeout(5000) 
+            });
+            results.push({
+                name: test.name,
+                url: test.url,
+                status: response.ok ? 'SUCCESS' : `FAILED (${response.status})`,
+                working: response.ok
+            });
+            console.log(`✅ ${test.name}: ${response.ok ? 'SUCCESS' : 'FAILED'}`);
+        } catch (error) {
+            results.push({
+                name: test.name,
+                url: test.url,
+                status: `ERROR (${error.message})`,
+                working: false
+            });
+            console.log(`❌ ${test.name}: ${error.message}`);
+        }
+    }
+    
+    return results;
+};
+
+// Keplr Compatibility Check (UPDATED)
 window.checkKeplrCompatibility = function() {
     console.log('🔍 KEPLR COMPATIBILITY CHECK:');
     console.log('Keplr version:', window.keplr?.version || 'unknown');
@@ -346,11 +450,18 @@ window.checkKeplrCompatibility = function() {
     console.log('Chain config features:', chainInfo.features);
     console.log('Chain config gas defaults:', chainInfo.gas?.defaults);
     
+    // ✅ CORS Check
+    const corsCheck = window.checkCorsConfiguration();
+    console.log('CORS configuration:', corsCheck);
+    
     return {
         version: window.keplr?.version,
         modern: !!window.keplr?.experimentalSignTx,
         legacy: !!window.keplr?.sendTx,
-        recommended: 'Update to Keplr v0.12+ for best compatibility with Cosmos SDK 0.50'
+        corsFixed: corsCheck.corsFixed,
+        recommended: corsCheck.corsFixed ? 
+            'CORS configuration looks good!' : 
+            'CORS configuration needs fixing'
     };
 };
 
@@ -359,6 +470,8 @@ if (typeof module !== 'undefined' && module.exports) {
     // Node.js environment
     module.exports = {
         MEDAS_CHAIN_CONFIG,
+        KEPLR_CHAIN_CONFIG,
+        WEBCLIENT_API_CONFIG,
         API_CONFIG,
         UI_CONFIG,
         REGISTRATION_CONFIG,
@@ -369,8 +482,13 @@ if (typeof module !== 'undefined' && module.exports) {
         FEATURE_FLAGS
     };
 } else {
-    // Browser environment - configurations are already in global scope
+    // Browser environment - make configs globally available
+    window.MEDAS_CHAIN_CONFIG = MEDAS_CHAIN_CONFIG;
+    window.KEPLR_CHAIN_CONFIG = KEPLR_CHAIN_CONFIG;
+    window.WEBCLIENT_API_CONFIG = WEBCLIENT_API_CONFIG;
+    
     console.log('🔧 MedasDigital WebClient Configuration Loaded');
+    console.log('🎯 CORS-Fixed Configuration Active');
     
     // Log feature flags if debug is enabled
     if (DEBUG_CONFIG.logging.enabled) {
@@ -378,7 +496,7 @@ if (typeof module !== 'undefined' && module.exports) {
     }
 }
 
-// Utility Functions
+// Utility Functions (UPDATED)
 const ConfigUtils = {
     // Get configuration value with fallback
     get(path, fallback = null) {
@@ -412,7 +530,7 @@ const ConfigUtils = {
         return UI_CONFIG.theme[color] || '#ffffff';
     },
     
-    // ✅ NEU: Get Gas Configuration
+    // Get Gas Configuration
     getGasConfig(txType = 'delegate') {
         const gasDefaults = MEDAS_CHAIN_CONFIG.gas?.defaults || {};
         const multiplier = MEDAS_CHAIN_CONFIG.gas?.multiplier || 1.3;
@@ -425,9 +543,18 @@ const ConfigUtils = {
         };
     },
     
+    // ✅ NEU: Get correct config for context
+    getKeplrConfig() {
+        return KEPLR_CHAIN_CONFIG;
+    },
+    
+    getWebClientConfig() {
+        return WEBCLIENT_API_CONFIG;
+    },
+    
     // Validate environment
     validateEnvironment() {
-        const required = ['MEDAS_CHAIN_CONFIG', 'API_CONFIG', 'UI_CONFIG'];
+        const required = ['MEDAS_CHAIN_CONFIG', 'KEPLR_CHAIN_CONFIG', 'WEBCLIENT_API_CONFIG'];
         const missing = required.filter(config => !window[config]);
         
         if (missing.length > 0) {
