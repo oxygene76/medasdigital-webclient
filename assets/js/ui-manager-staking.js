@@ -450,6 +450,73 @@ if (typeof UIManager !== 'undefined' && UIManager.prototype) {
         }
     };
 
+ // OVERRIDE: populateUserDelegations - BESSERE FEHLERBEHANDLUNG
+    UIManager.prototype.populateUserDelegations = async function(delegatorAddress) {
+        console.log('🔍 Loading user delegations for:', delegatorAddress);
+        
+        try {
+            const delegationsSection = document.getElementById('my-delegations-section');
+            if (delegationsSection) {
+                delegationsSection.style.display = 'block';
+            }
+            
+            const delegations = await this.fetchUserDelegations(delegatorAddress);
+            
+            // ERFOLG: Echte Delegations gefunden
+            if (delegations && delegations.length > 0) {
+                console.log('✅ Found real delegations:', delegations.length);
+                this.displayUserDelegations(delegations);
+                this.updateDelegationSelects(delegations);
+                this.updateStakingStatistics(delegations);
+                return;
+            }
+            
+            // ERFOLG: Keine Delegations (leerer Wallet)
+            console.log('ℹ️ No delegations found - wallet has no stakes yet');
+            this.populateUserDelegationsFallback();
+            
+        } catch (error) {
+            console.error('❌ Failed to load user delegations:', error);
+            // NUR BEI ECHTEN FEHLERN -> Fallback
+            this.populateUserDelegationsFallback();
+        }
+    };
+
+    // OVERRIDE: populateUserDelegationsFallback - EMPTY STATE statt Mock Data
+    UIManager.prototype.populateUserDelegationsFallback = function() {
+        const delegationsContainer = document.getElementById('current-delegations');
+        if (!delegationsContainer) return;
+
+        console.warn('⚠️ No real delegations found - showing empty state instead of mock data');
+        
+        // ANSTATT MOCK DATEN -> ZEIGE EMPTY STATE
+        delegationsContainer.innerHTML = `
+            <div class="empty-state" style="text-align: center; padding: 40px 20px; color: #666;">
+                <div style="font-size: 48px; margin-bottom: 16px;">🎯</div>
+                <h3 style="color: #00ffff; margin-bottom: 8px;">No Delegations Yet</h3>
+                <p style="margin-bottom: 16px;">You haven't staked any MEDAS tokens yet.</p>
+                <p style="font-size: 12px;">Select a validator below and start staking to earn rewards!</p>
+            </div>
+        `;
+
+        // SETZE ALLE STATS AUF NULL
+        const totalRewardsEl = document.getElementById('total-rewards');
+        if (totalRewardsEl) totalRewardsEl.textContent = '0.000000 MEDAS';
+        
+        const totalStakedEl = document.getElementById('user-total-staked');
+        if (totalStakedEl) totalStakedEl.textContent = '0.000000 MEDAS';
+        
+        const totalRewardsStatsEl = document.getElementById('user-total-rewards');
+        if (totalRewardsStatsEl) totalRewardsStatsEl.textContent = '0.000000 MEDAS';
+        
+        const delegationCountEl = document.getElementById('user-delegation-count');
+        if (delegationCountEl) delegationCountEl.textContent = '0';
+        
+        const monthlyEstimateEl = document.getElementById('user-monthly-estimate');
+        if (monthlyEstimateEl) monthlyEstimateEl.textContent = '0.000000 MEDAS';
+    };
+
+    
     // POPULATE VALIDATORS WITH ACTIONS
 // ERSETZE DIESE FUNKTION in ui-manager-staking.js (um Zeile 240-290)
 // POPULATE VALIDATORS WITH ACTIONS
