@@ -537,29 +537,28 @@ class UIManager {
         }
     }
 
-    // MAIN VALIDATOR LOADING FUNCTION
-    async populateValidators() {
-        console.log('🔍 Loading validators...');
+   async populateValidators() {
+    console.log('🔍 Loading validators...');
+    
+    try {
+        const validators = await this.fetchRealValidators();
         
-        try {
-            const validators = await this.fetchRealValidators();
-            
-            if (validators && validators.length > 0) {
-                console.log('✅ Loaded validators:', validators.length);
-                this.populateValidatorsWithActions(validators);
-                this.updateValidatorSelect(validators);
-                this.updateRedelegateToSelect(validators);
-                return;
-            }
-            
-            console.warn('⚠️ No real validators found, using fallback');
-            this.populateValidatorsFallback();
-            
-        } catch (error) {
-            console.error('❌ Failed to load validators:', error);
-            this.populateValidatorsFallback();
+        if (validators && validators.length > 0) {
+            console.log('✅ Loaded validators:', validators.length);
+            this.populateValidatorsWithActions(validators);
+            this.updateValidatorSelect(validators);
+            this.updateRedelegateToSelect(validators);
+            return;
         }
+        
+        console.warn('⚠️ No real validators found, using fallback');
+        this.populateValidatorsFallback();
+        
+    } catch (error) {
+        console.error('❌ Failed to load validators:', error);
+        this.populateValidatorsFallback();
     }
+}
 
     // FETCH REAL VALIDATORS FROM BLOCKCHAIN
     async fetchRealValidators() {
