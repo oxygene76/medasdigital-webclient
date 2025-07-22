@@ -114,15 +114,8 @@ UIManager.prototype.performAminoSigningWithKeplrBroadcast = async function(chain
             console.log('⚠️ signAndBroadcast not available, trying sendTx...');
         }
         
-        // ✅ METHOD 2: Use sendTx with Protobuf messages (Keplr's preferred method)
-        try {
-            const result = await this.tryKeplrProtobufSendTx(chainId, delegatorAddress, validatorAddress, amountInUmedas, gasEstimation);
-            if (result.success) {
-                return result;
-            }
-        } catch (error) {
-            console.log('⚠️ Protobuf sendTx failed:', error.message);
-        }
+        // ✅ METHOD 2: Skip complex sendTx - go directly to simple Amino
+        console.log('⚠️ Skipping complex sendTx method - using simple Amino instead');
         
         // ✅ METHOD 3: Simple Amino approach (fallback)
         try {
@@ -197,65 +190,11 @@ UIManager.prototype.tryKeplrSignAndBroadcast = async function(chainId, delegator
 };
 
 // ===================================
-// METHOD 2: KEPLR SENDTX WITH PROPER ENCODING (CORRECTED)
+// METHOD 2: SKIP COMPLEX SENDTX - JUST USE AMINO
 // ===================================
 UIManager.prototype.tryKeplrProtobufSendTx = async function(chainId, delegatorAddress, validatorAddress, amountInUmedas, gasEstimation) {
-    try {
-        console.log('🚀 Using Keplr sendTx with proper encoding...');
-        
-        // Get account info first
-        const accountInfo = await this.getAccountInfo(delegatorAddress);
-        
-        // Create the message for signing
-        const msgs = [{
-            typeUrl: '/cosmos.staking.v1beta1.MsgDelegate',
-            value: {
-                delegatorAddress: delegatorAddress,
-                validatorAddress: validatorAddress,
-                amount: {
-                    denom: 'umedas',
-                    amount: amountInUmedas
-                }
-            }
-        }];
-        
-        this.showNotification('📝 Please sign the transaction in Keplr...', 'info');
-        
-        // Use signDirect for proper Protobuf encoding
-        const signDoc = {
-            bodyBytes: null, // Will be filled by Keplr
-            authInfoBytes: null, // Will be filled by Keplr
-            chainId: chainId,
-            accountNumber: parseInt(accountInfo.accountNumber)
-        };
-        
-        // Sign with Keplr's signDirect (Protobuf method)
-        const signResponse = await window.keplr.signDirect(
-            chainId,
-            delegatorAddress,
-            {
-                ...signDoc,
-                accountNumber: parseInt(accountInfo.accountNumber)
-            }
-        );
-        
-        // Create properly encoded transaction bytes
-        const txBytes = this.createProperProtobufTx(signResponse, msgs, gasEstimation.fee);
-        
-        console.log('📡 Broadcasting with Keplr sendTx...');
-        
-        // Now use sendTx with proper parameters: chainId, txBytes, mode
-        const result = await window.keplr.sendTx(chainId, txBytes, "block");
-        
-        console.log('✅ Keplr sendTx successful:', result);
-        
-        const txHash = this.extractTxHashFromResponse(result);
-        return { success: true, txHash };
-        
-    } catch (error) {
-        console.error('❌ Proper sendTx failed:', error);
-        throw error;
-    }
+    // Skip this method entirely - it's too complex and error-prone
+    throw new Error('Skipping complex sendTx method - using Amino fallback');
 };
 
 // ===================================
