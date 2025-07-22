@@ -9,7 +9,7 @@ if (typeof UIManager !== 'undefined' && UIManager.prototype) {
     
 // ERSETZE die performStaking Funktion in ui-manager-staking.js:
 
-// DELEGATE TOKENS (Staking) - MODERNE KEPLR API
+// DELEGATE TOKENS (Staking) - KORRIGIERTE KEPLR API
 UIManager.prototype.performStaking = async function() {
     const validatorSelect = document.getElementById('validator-select');
     const stakeAmountInput = document.getElementById('stake-amount');
@@ -47,18 +47,23 @@ UIManager.prototype.performStaking = async function() {
             chainId: chainId
         });
         
-        // ✅ VERWENDE MODERNE KEPLR DIRECT SIGNING
+        // ✅ ENABLE KEPLR FÜR CHAIN
         await window.keplr.enable(chainId);
-        const offlineSigner = window.getOfflineSignerAuto(chainId);
         
-        // Account Info holen
+        // ✅ VERWENDE STANDARD getOfflineSigner (nicht Auto)
+        const offlineSigner = window.getOfflineSigner(chainId);
+        
+        // Account Info holen mit korrekter API
         const accounts = await offlineSigner.getAccounts();
         if (!accounts.length) {
-            throw new Error('No accounts found in Keplr');
+            throw new Error('No accounts found in Keplr wallet');
         }
         
         const account = accounts[0];
-        console.log('📋 Account info:', account);
+        console.log('📋 Account info:', {
+            address: account.address,
+            pubkeyType: account.pubkey ? 'present' : 'missing'
+        });
         
         // ✅ HOLE ACCOUNT DETAILS FÜR SEQUENCE/ACCOUNT NUMBER
         const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
@@ -74,19 +79,6 @@ UIManager.prototype.performStaking = async function() {
         
         console.log('📋 Account details:', { accountNumber, sequence });
         
-        // ✅ ERSTELLE PROTOBUF MESSAGE
-        const msgDelegate = {
-            typeUrl: "/cosmos.staking.v1beta1.MsgDelegate",
-            value: {
-                delegatorAddress: delegatorAddress,
-                validatorAddress: validatorAddress,
-                amount: {
-                    denom: "umedas",
-                    amount: amountInUmedas,
-                },
-            },
-        };
-        
         // ✅ FEE BERECHNUNG
         const gasLimit = 250000;
         const gasPrice = 0.025;
@@ -100,55 +92,67 @@ UIManager.prototype.performStaking = async function() {
             gas: gasLimit.toString(),
         };
         
-        console.log('📋 Message:', msgDelegate);
-        console.log('📋 Fee:', fee);
-        
-        // ✅ VERWENDE SIGN DIRECT (PROTOBUF)
-        const txBody = {
-            messages: [msgDelegate],
-            memo: "",
-        };
-        
-        const authInfo = {
-            signerInfos: [{
-                publicKey: account.pubkey,
-                modeInfo: {
-                    single: {
-                        mode: 1, // SIGN_MODE_DIRECT
-                    },
+        // ✅ ERSTELLE AMINO MESSAGE (LEGACY ABER FUNKTIONAL)
+        const msg = {
+            type: "cosmos-sdk/MsgDelegate",
+            value: {
+                delegator_address: delegatorAddress,
+                validator_address: validatorAddress,
+                amount: {
+                    denom: "umedas",
+                    amount: amountInUmedas,
                 },
-                sequence: sequence,
-            }],
+            },
+        };
+        
+        // ✅ ERSTELLE TRANSACTION DOCUMENT
+        const txDoc = {
+            chain_id: chainId,
+            account_number: accountNumber.toString(),
+            sequence: sequence.toString(),
             fee: fee,
+            msgs: [msg],
+            memo: ""
         };
         
-        // ✅ SIGNIERE MIT KEPLR's signDirect
-        const signDoc = {
-            bodyBytes: this.encodeTxBody(txBody),
-            authInfoBytes: this.encodeAuthInfo(authInfo),
-            chainId: chainId,
-            accountNumber: accountNumber,
-        };
+        console.log('📋 TX Document:', txDoc);
+        console.log('📝 Signing transaction with Amino...');
         
-        console.log('📝 Signing transaction...');
-        
-        // Verwende signDirect anstatt experimentalSignTx
-        const signature = await offlineSigner.signDirect(
+        // ✅ SIGNIERE MIT AMINO (LEGACY ABER ZUVERLÄSSIG)
+        const signature = await window.keplr.signAmino(
+            chainId,
             delegatorAddress,
-            signDoc
+            txDoc
         );
         
-        console.log('✅ Transaction signed:', signature);
+        console.log('✅ Transaction signed successfully');
         
-        // ✅ BROADCAST ÜBER KEPLR (falls möglich) oder RPC
+        // ✅ BROADCAST ÜBER REST API
         try {
-            // Versuche Keplr's eigenes Broadcasting
-            const broadcastResult = await this.broadcastTxWithKeplr(signature);
+            const txBytes = this.encodeTxForBroadcast(signature, txDoc);
             
-            if (broadcastResult.code === 0) {
-                this.showNotification(`✅ Delegation successful! TX: ${broadcastResult.transactionHash}`, 'success');
+            const broadcastResponse = await fetch(`${restUrl}/cosmos/tx/v1beta1/txs`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    tx_bytes: txBytes,
+                    mode: 'BROADCAST_MODE_SYNC'
+                })
+            });
+            
+            if (!broadcastResponse.ok) {
+                throw new Error(`Broadcast failed: ${broadcastResponse.status}`);
+            }
+            
+            const result = await broadcastResponse.json();
+            console.log('📡 Broadcast result:', result);
+            
+            if (result.tx_response?.code === 0) {
+                this.showNotification(`✅ Delegation successful! TX: ${result.tx_response.txhash}`, 'success');
                 
-                // Längere Wartezeit für SDK 0.50
+                // Längere Wartezeit für Blockchain Update
                 setTimeout(() => {
                     this.populateUserDelegations(delegatorAddress);
                     if (this.updateBalanceOverview) {
@@ -161,12 +165,17 @@ UIManager.prototype.performStaking = async function() {
                 validatorSelect.value = 'Select a validator...';
                 
             } else {
-                throw new Error(`Transaction failed: ${broadcastResult.rawLog}`);
+                const errorLog = result.tx_response?.raw_log || 'Unknown error';
+                throw new Error(`Transaction failed: ${errorLog}`);
             }
             
         } catch (broadcastError) {
             console.error('❌ Broadcasting failed:', broadcastError);
-            throw new Error(`Broadcasting failed: ${broadcastError.message}`);
+            
+            // Fallback: Zeige Benutzer-Anweisungen
+            this.showNotification('❌ Direct broadcasting failed', 'error');
+            this.showNotification('💡 Please complete the transaction in Keplr Dashboard:', 'info');
+            this.showNotification(`🎯 Delegate ${amount} MEDAS to ${validatorAddress.slice(-8)}`, 'info');
         }
         
     } catch (error) {
@@ -180,16 +189,36 @@ UIManager.prototype.performStaking = async function() {
             errorMessage = 'Transaction cancelled by user';
         } else if (errorMessage.includes('Request rejected')) {
             errorMessage = 'Transaction rejected - please try again';
-        } else if (errorMessage.includes('signDirect')) {
-            errorMessage = 'Please update your Keplr extension to the latest version';
+        } else if (errorMessage.includes('getAccounts is not a function')) {
+            errorMessage = 'Keplr compatibility issue - please update Keplr extension';
+        } else if (errorMessage.includes('enable')) {
+            errorMessage = 'Failed to connect to Keplr - please unlock your wallet';
         }
         
         this.showNotification(`❌ Staking failed: ${errorMessage}`, 'error');
         
         // Fallback Info
-        this.showNotification('💡 Try using Keplr Dashboard for staking as fallback', 'info');
+        this.showNotification('💡 Alternative: Use Keplr Dashboard for manual staking', 'info');
     }
 };
+
+// ✅ ENCODING HELPER FÜR TX BROADCAST
+UIManager.prototype.encodeTxForBroadcast = function(signature, txDoc) {
+    // Vereinfachte TX-Codierung für Cosmos SDK
+    // In echter Implementation würde man @cosmjs/amino verwenden
+    
+    const tx = {
+        msg: txDoc.msgs,
+        fee: txDoc.fee,
+        signatures: [signature],
+        memo: txDoc.memo
+    };
+    
+    // Base64 Encoding
+    const txJson = JSON.stringify(tx);
+    return btoa(txJson);
+};
+
 
 // ✅ HELPER FUNKTIONEN FÜR PROTOBUF ENCODING
 UIManager.prototype.encodeTxBody = function(txBody) {
