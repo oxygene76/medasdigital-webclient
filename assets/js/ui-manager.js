@@ -1495,6 +1495,273 @@ async quickStake(validatorAddress, validatorName) {
     // Führe Staking aus
     await this.performStaking();
 }
+
+// ===================================
+// ERWEITERTE UI-MANAGER FUNKTIONEN
+// Diese Funktionen zur UIManager Klasse hinzufügen
+// ===================================
+
+// 1. POPULATE USER DELEGATIONS (Erweitert mit Advanced Operations Support)
+async populateUserDelegations(delegatorAddress) {
+    console.log('🔍 Loading user delegations for:', delegatorAddress);
+    
+    try {
+        // Zeige Delegations-Section wenn Wallet verbunden
+        const delegationsSection = document.getElementById('my-delegations-section');
+        if (delegationsSection) {
+            delegationsSection.style.display = 'block';
+        }
+        
+        // Hole echte Delegations
+        const delegations = await this.fetchUserDelegations(delegatorAddress);
+        
+        if (delegations && delegations.length > 0) {
+            console.log('✅ Found delegations:', delegations.length);
+            
+            // Update delegations display
+            this.displayUserDelegations(delegations);
+            
+            // Update delegation selects für Advanced Operations
+            this.updateDelegationSelects(delegations);
+            
+            // Update staking statistics
+            this.updateStakingStatistics(delegations);
+            
+            return;
+        }
+        
+        // Fallback wenn keine Delegations gefunden
+        this.populateUserDelegationsFallback();
+        
+    } catch (error) {
+        console.error('❌ Failed to load user delegations:', error);
+        this.populateUserDelegationsFallback();
+    }
+}
+
+// 2. DISPLAY USER DELEGATIONS (Neue verbesserte Anzeige)
+displayUserDelegations(delegations) {
+    const delegationsContainer = document.getElementById('current-delegations');
+    if (!delegationsContainer) return;
+
+    let totalRewards = 0;
+    
+    delegationsContainer.innerHTML = delegations.map(delegation => {
+        const rewards = parseFloat(delegation.rewards || '0');
+        totalRewards += rewards;
+        
+        return `
+            <div class="delegation-item">
+                <div class="validator-info">
+                    <div class="validator-name">${delegation.validator_name}</div>
+                    <div class="validator-details">
+                        Delegated: ${delegation.amount} MEDAS | 
+                        Rewards: +${delegation.rewards} MEDAS
+                    </div>
+                    <div class="validator-address" style="font-size: 10px; color: #666; margin-top: 4px;">
+                        ${delegation.validator_address}
+                    </div>
+                </div>
+                <div class="stake-actions">
+                    <button class="btn-small btn-warning" style="margin-right: 8px;" 
+                            onclick="claimRewards('${delegation.validator_address}', '${delegation.validator_name}')">
+                        Claim
+                    </button>
+                    <button class="btn-small btn-primary" style="margin-right: 8px;" 
+                            onclick="addMoreStake('${delegation.validator_address}', '${delegation.validator_name}')">
+                        Add More
+                    </button>
+                    <button class="btn-small btn-danger" 
+                            onclick="unstakeFrom('${delegation.validator_address}', '${delegation.validator_name}', '${delegation.amount}')">
+                        Unstake
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    // Update total rewards display
+    const totalRewardsEl = document.getElementById('total-rewards');
+    if (totalRewardsEl) {
+        totalRewardsEl.textContent = `${totalRewards.toFixed(6)} MEDAS`;
+    }
+}
+
+// 3. UPDATE DELEGATION SELECTS für Advanced Operations
+updateDelegationSelects(delegations) {
+    // Update Redelegate From Select
+    const redelegateFromSelect = document.getElementById('redelegate-from-select');
+    if (redelegateFromSelect) {
+        redelegateFromSelect.innerHTML = '<option>Select source validator...</option>' +
+            delegations.map(delegation => 
+                `<option value="${delegation.validator_address}">${delegation.validator_name} (${delegation.amount} MEDAS)</option>`
+            ).join('');
+    }
+    
+    // Update Undelegate From Select
+    const undelegateFromSelect = document.getElementById('undelegate-from-select');
+    if (undelegateFromSelect) {
+        undelegateFromSelect.innerHTML = '<option>Select validator to unstake from...</option>' +
+            delegations.map(delegation => 
+                `<option value="${delegation.validator_address}">${delegation.validator_name} (${delegation.amount} MEDAS)</option>`
+            ).join('');
+    }
+}
+
+// 4. UPDATE STAKING STATISTICS
+updateStakingStatistics(delegations) {
+    let totalStaked = 0;
+    let totalRewards = 0;
+    
+    delegations.forEach(delegation => {
+        totalStaked += parseFloat(delegation.amount || '0');
+        totalRewards += parseFloat(delegation.rewards || '0');
+    });
+    
+    // Update UI elements
+    const totalStakedEl = document.getElementById('user-total-staked');
+    if (totalStakedEl) {
+        totalStakedEl.textContent = `${totalStaked.toFixed(6)} MEDAS`;
+    }
+    
+    const totalRewardsEl = document.getElementById('user-total-rewards');
+    if (totalRewardsEl) {
+        totalRewardsEl.textContent = `${totalRewards.toFixed(6)} MEDAS`;
+    }
+    
+    const delegationCountEl = document.getElementById('user-delegation-count');
+    if (delegationCountEl) {
+        delegationCountEl.textContent = delegations.length.toString();
+    }
+    
+    // Geschätzte monatliche Rewards (angenommen 12% APY)
+    const monthlyEstimate = totalStaked * 0.12 / 12;
+    const monthlyEstimateEl = document.getElementById('user-monthly-estimate');
+    if (monthlyEstimateEl) {
+        monthlyEstimateEl.textContent = `${monthlyEstimate.toFixed(6)} MEDAS`;
+    }
+}
+
+// 5. ERWEITERTE VALIDATOR POPULATION mit Advanced Operations Support
+async populateValidators() {
+    console.log('🔍 Loading validators...');
+    
+    try {
+        const validators = await this.fetchRealValidators();
+        
+        if (validators && validators.length > 0) {
+            console.log('✅ Loaded validators:', validators.length);
+            
+            // Standard validator display mit Actions
+            this.populateValidatorsWithActions(validators);
+            
+            // Update Redelegate To Select
+            this.updateRedelegateToSelect(validators);
+            
+            // Update Standard Validator Select
+            this.updateValidatorSelect(validators);
+            
+            return;
+        }
+        
+        // Fallback
+        this.populateValidatorsFallback();
+        
+    } catch (error) {
+        console.error('❌ Failed to load validators:', error);
+        this.populateValidatorsFallback();
+    }
+}
+
+// 6. UPDATE REDELEGATE TO SELECT
+updateRedelegateToSelect(validators) {
+    const redelegateToSelect = document.getElementById('redelegate-to-select');
+    if (!redelegateToSelect) return;
+    
+    redelegateToSelect.innerHTML = '<option>Select destination validator...</option>' +
+        validators.slice(0, 50).map(validator => { // Top 50 für Performance
+            const validatorName = this.getValidatorName(validator.operator_address);
+            const commission = parseFloat(validator.commission?.commission_rates?.rate || 0) * 100;
+            return `<option value="${validator.operator_address}">${validatorName} (${commission.toFixed(1)}%)</option>`;
+        }).join('');
+}
+
+// 7. UPDATE STANDARD VALIDATOR SELECT
+updateValidatorSelect(validators) {
+    const validatorSelect = document.getElementById('validator-select');
+    if (!validatorSelect) return;
+    
+    // Behalte aktuelle Auswahl
+    const currentValue = validatorSelect.value;
+    
+    validatorSelect.innerHTML = '<option>Select a validator...</option>' +
+        validators.slice(0, 30).map(validator => { // Top 30 für Performance
+            const validatorName = this.getValidatorName(validator.operator_address);
+            const commission = parseFloat(validator.commission?.commission_rates?.rate || 0) * 100;
+            return `<option value="${validator.operator_address}">${validatorName} (${commission.toFixed(1)}%)</option>`;
+        }).join('');
+    
+    // Restore selection wenn möglich
+    if (currentValue && currentValue !== 'Select a validator...') {
+        validatorSelect.value = currentValue;
+    }
+}
+
+// 8. CLAIM SINGLE VALIDATOR REWARDS
+async claimSingleValidatorRewards(validatorAddress, validatorName) {
+    if (!window.terminal?.connected || !window.terminal?.account?.address) {
+        this.showNotification('❌ Please connect your wallet first', 'error');
+        return;
+    }
+    
+    try {
+        this.showNotification(`🔄 Claiming rewards from ${validatorName}...`, 'info');
+        
+        const delegatorAddress = window.terminal.account.address;
+        
+        const claimMsg = {
+            typeUrl: '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
+            value: {
+                delegatorAddress: delegatorAddress,
+                validatorAddress: validatorAddress
+            }
+        };
+        
+        const gasEstimate = 150000;
+        
+        const result = await window.keplr.sendTx(
+            MEDAS_CHAIN_CONFIG.chainId,
+            [{
+                ...claimMsg,
+                gas: gasEstimate.toString(),
+                fee: {
+                    amount: [{
+                        denom: 'umedas',
+                        amount: Math.floor(gasEstimate * 0.025).toString()
+                    }],
+                    gas: gasEstimate.toString()
+                }
+            }]
+        );
+        
+        if (result && result.code === 0) {
+            this.showNotification(`✅ Rewards claimed from ${validatorName}! TX: ${result.transactionHash}`, 'success');
+            
+            // Aktualisiere UI
+            setTimeout(() => {
+                this.populateUserDelegations(delegatorAddress);
+                this.updateBalanceOverview();
+            }, 3000);
+            
+        } else {
+            throw new Error(result?.log || 'Transaction failed');
+        }
+        
+    } catch (error) {
+        console.error('❌ Claim rewards failed:', error);
+        this.showNotification(`❌ Claim failed: ${error.message}`, 'error');
+    }
+}
     
     populateTransactionHistory() {
         const transactionsContainer = document.getElementById('transaction-list');
