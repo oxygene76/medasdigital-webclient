@@ -7,7 +7,7 @@
 // Erweitere UIManager um Staking-Funktionen
 if (typeof UIManager !== 'undefined' && UIManager.prototype) {
     
-// KORRIGIERTE KEPLR SENDTX MIT PROTOBUF FORMAT
+// STAKING MIT KEPLR GAS-ESTIMATION
 UIManager.prototype.performStaking = async function() {
     const validatorSelect = document.getElementById('validator-select');
     const stakeAmountInput = document.getElementById('stake-amount');
@@ -45,189 +45,111 @@ UIManager.prototype.performStaking = async function() {
         
         await window.keplr.enable(chainId);
         
-        // ✅ METHODE 1: MODERNE PROTOBUF SENDTX
-        try {
-            console.log('📝 Using modern Protobuf sendTx API...');
-            
-            // PROTOBUF MESSAGE FORMAT (nicht Amino!)
-            const msgs = [{
-                typeUrl: "/cosmos.staking.v1beta1.MsgDelegate",
-                value: {
-                    delegatorAddress: delegatorAddress,
-                    validatorAddress: validatorAddress,
-                    amount: {
-                        denom: "umedas",
-                        amount: amountInUmedas
-                    }
+        // ✅ SCHRITT 1: GAS ESTIMATION
+        console.log('⛽ Estimating gas requirements...');
+        
+        const msgs = [{
+            typeUrl: "/cosmos.staking.v1beta1.MsgDelegate",
+            value: {
+                delegatorAddress: delegatorAddress,
+                validatorAddress: validatorAddress,
+                amount: {
+                    denom: "umedas",
+                    amount: amountInUmedas
                 }
-            }];
+            }
+        }];
+        
+        const estimatedGas = await this.estimateGasWithKeplr(chainId, delegatorAddress, msgs);
+        console.log('⛽ Gas estimation result:', estimatedGas);
+        
+        // ✅ METHODE 1: DIRECT MODE MIT GESCHÄTZTEM GAS
+        try {
+            console.log('📝 Using DIRECT mode with estimated gas...');
             
-            const fee = {
-                amount: [{
-                    denom: "umedas", 
-                    amount: "6250"
-                }],
-                gas: "250000"
-            };
-            
-            // KORREKTES SENDTX FORMAT FÜR PROTOBUF
             const result = await window.keplr.sendTx(
                 chainId,
-                msgs, // Direkt die Protobuf Messages
-                fee,
+                msgs,
+                estimatedGas.fee,
                 "", // memo
-                {
-                    // Optionen für moderne Keplr
-                    preferNoSetFee: false,
-                    preferNoSetMemo: true
-                }
+                "direct"
             );
             
-            console.log('✅ Modern sendTx successful:', result);
+            console.log('✅ Direct mode sendTx successful:', result);
             
-            // Erfolg prüfen
             if (result && (result.code === 0 || result.transactionHash || typeof result === 'string')) {
                 const txHash = result.transactionHash || result.txhash || result;
                 this.showNotification(`✅ Delegation successful! TX: ${txHash}`, 'success');
+                this.showNotification(`⛽ Gas used: ${estimatedGas.gasUsed} (estimated: ${estimatedGas.gasEstimate})`, 'info');
                 
                 this.handleStakingSuccess(delegatorAddress, stakeAmountInput, validatorSelect);
                 return;
             } else {
-                throw new Error(result?.log || result?.rawLog || 'sendTx returned unexpected result');
+                throw new Error(result?.log || result?.rawLog || 'Direct mode failed');
             }
             
-        } catch (sendTxError) {
-            console.warn('❌ Modern sendTx failed:', sendTxError);
-            
-            // Fall through zu Methode 2
+        } catch (directModeError) {
+            console.warn('❌ Direct mode failed:', directModeError);
         }
         
-        // ✅ METHODE 2: DIREKTE KEPLR REQUEST API
+        // ✅ METHODE 2: EXPERIMENTALSIGNTX MIT GESCHÄTZTEM GAS
         try {
-            console.log('📝 Using direct Keplr request API...');
-            
-            // Verwende Keplr's request API direkt
-            const result = await window.keplr.request({
-                method: "broadcast",
-                params: [
+            if (window.keplr.experimentalSignTx) {
+                console.log('📝 Using experimentalSignTx with estimated gas...');
+                
+                const result = await window.keplr.experimentalSignTx(
                     chainId,
-                    [{
-                        typeUrl: "/cosmos.staking.v1beta1.MsgDelegate",
-                        value: {
-                            delegatorAddress: delegatorAddress,
-                            validatorAddress: validatorAddress,
-                            amount: {
-                                denom: "umedas",
-                                amount: amountInUmedas
-                            }
-                        }
-                    }],
+                    delegatorAddress,
+                    msgs,
+                    estimatedGas.fee,
+                    "", // memo
                     {
-                        amount: [{
-                            denom: "umedas", 
-                            amount: "6250"
-                        }],
-                        gas: "250000"
-                    },
-                    "" // memo
-                ]
-            });
-            
-            console.log('✅ Keplr request successful:', result);
-            
-            if (result && result.transactionHash) {
-                this.showNotification(`✅ Delegation successful! TX: ${result.transactionHash}`, 'success');
+                        preferNoSetFee: false,
+                        preferNoSetMemo: true,
+                        disableBalanceCheck: false
+                    }
+                );
+                
+                console.log('✅ experimentalSignTx successful:', result);
+                
+                const txHash = result.txHash || result.transactionHash || result;
+                this.showNotification(`✅ Delegation successful! TX: ${txHash}`, 'success');
+                this.showNotification(`⛽ Gas estimated: ${estimatedGas.gasEstimate}`, 'info');
+                
                 this.handleStakingSuccess(delegatorAddress, stakeAmountInput, validatorSelect);
                 return;
             }
             
-        } catch (requestError) {
-            console.warn('❌ Keplr request failed:', requestError);
-            
-            // Fall through zu Methode 3
+        } catch (experimentalError) {
+            console.warn('❌ experimentalSignTx failed:', experimentalError);
         }
         
-        // ✅ METHODE 3: SIGN + OPTIMISTIC UPDATE
+        // ✅ METHODE 3: AMINO SIGNING MIT GESCHÄTZTEM GAS
         try {
-            console.log('📝 Using sign + optimistic update...');
+            console.log('📝 Using Amino signing with estimated gas...');
             
-            const offlineSigner = window.getOfflineSigner(chainId);
-            const accounts = await offlineSigner.getAccounts();
-            
-            if (!accounts.length) {
-                throw new Error('No accounts found in Keplr');
-            }
-            
-            // Hole Account Details
-            const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
-            const accountResponse = await fetch(`${restUrl}/cosmos/auth/v1beta1/accounts/${delegatorAddress}`);
-            
-            if (!accountResponse.ok) {
-                throw new Error(`Failed to fetch account info: ${accountResponse.status}`);
-            }
-            
-            const accountData = await accountResponse.json();
-            const accountNumber = accountData.account?.account_number || '0';
-            const sequence = accountData.account?.sequence || '0';
-            
-            console.log('📋 Account details:', { accountNumber, sequence });
-            
-            // Erstelle Amino Transaction für Signierung
-            const aminoMsg = {
-                type: "cosmos-sdk/MsgDelegate",
-                value: {
-                    delegator_address: delegatorAddress,
-                    validator_address: validatorAddress,
-                    amount: {
-                        denom: "umedas",
-                        amount: amountInUmedas
-                    }
-                }
-            };
-            
-            const fee = {
-                amount: [{
-                    denom: "umedas", 
-                    amount: "6250"
-                }],
-                gas: "250000"
-            };
-            
-            const txDoc = {
-                chain_id: chainId,
-                account_number: accountNumber.toString(),
-                sequence: sequence.toString(),
-                fee: fee,
-                msgs: [aminoMsg],
-                memo: ""
-            };
-            
-            console.log('📝 Signing transaction...');
-            
-            // Signiere mit Keplr
-            const signature = await window.keplr.signAmino(
-                chainId,
-                delegatorAddress,
-                txDoc
+            const aminoResult = await this.performAminoStakingWithGas(
+                chainId, 
+                delegatorAddress, 
+                validatorAddress, 
+                amountInUmedas, 
+                estimatedGas
             );
             
-            console.log('✅ Transaction signed successfully');
+            if (aminoResult.success) {
+                this.showNotification('✅ Transaction signed and submitted to network', 'success');
+                this.showNotification(`⛽ Gas estimated: ${estimatedGas.gasEstimate}`, 'info');
+                this.showNotification('⏳ Processing on blockchain...', 'info');
+                
+                this.handleStakingSuccess(delegatorAddress, stakeAmountInput, validatorSelect);
+                return;
+            } else {
+                throw new Error(aminoResult.error);
+            }
             
-            // OPTIMISTISCHE BEHANDLUNG
-            this.showNotification('✅ Transaction signed and submitted to network', 'success');
-            this.showNotification('⏳ Processing on blockchain...', 'info');
-            
-            // Versuche Broadcasting im Hintergrund (ohne auf Erfolg zu warten)
-            this.tryBackgroundBroadcast(signature, txDoc);
-            
-            // UI sofort aktualisieren (optimistisch)
-            this.handleStakingSuccess(delegatorAddress, stakeAmountInput, validatorSelect);
-            
-            return;
-            
-        } catch (signingError) {
-            console.error('❌ Signing failed:', signingError);
-            throw signingError;
+        } catch (aminoError) {
+            console.error('❌ Amino signing failed:', aminoError);
+            throw aminoError;
         }
         
     } catch (error) {
@@ -236,75 +158,284 @@ UIManager.prototype.performStaking = async function() {
     }
 };
 
-// ✅ HINTERGRUND BROADCASTING (FIRE AND FORGET)
-UIManager.prototype.tryBackgroundBroadcast = async function(signature, txDoc) {
-    // Versuche verschiedene Broadcasting-Methoden im Hintergrund
-    
-    setTimeout(async () => {
-        const rpcUrl = MEDAS_CHAIN_CONFIG?.rpc || 'https://rpc.medas-digital.io:26657';
-        
-        try {
-            const tx = {
-                msg: txDoc.msgs,
-                fee: txDoc.fee,
-                signatures: [signature],
-                memo: txDoc.memo
-            };
+// ✅ GAS ESTIMATION MIT KEPLR
+UIManager.prototype.estimateGasWithKeplr = async function(chainId, delegatorAddress, msgs) {
+    try {
+        // Methode 1: Keplr's simulateMultipleTx (falls verfügbar)
+        if (window.keplr.simulateMultipleTx) {
+            console.log('⛽ Using Keplr simulateMultipleTx...');
             
-            const txJson = JSON.stringify(tx);
-            const txBytes = new TextEncoder().encode(txJson);
-            const txHex = Array.from(txBytes)
-                .map(b => b.toString(16).padStart(2, '0'))
-                .join('');
+            const simulation = await window.keplr.simulateMultipleTx(chainId, msgs);
+            const gasEstimate = Math.floor(simulation.gasUsed * 1.3); // 30% Buffer
             
-            const response = await fetch(`${rpcUrl}/broadcast_tx_sync`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    jsonrpc: "2.0",
-                    id: 1,
-                    method: "broadcast_tx_sync",
-                    params: {
-                        tx: txHex
-                    }
-                })
-            });
+            const gasPrice = await this.getGasPrice(chainId);
+            const feeAmount = Math.floor(gasEstimate * gasPrice).toString();
             
-            if (response.ok) {
-                const result = await response.json();
-                console.log('📡 Background broadcast result:', result);
-                
-                if (result.result && result.result.code === 0) {
-                    console.log('✅ Background broadcast successful:', result.result.hash);
-                    this.showNotification('🎉 Transaction confirmed on blockchain!', 'success');
+            return {
+                gasEstimate: gasEstimate,
+                gasUsed: simulation.gasUsed,
+                fee: {
+                    amount: [{
+                        denom: "umedas",
+                        amount: feeAmount
+                    }],
+                    gas: gasEstimate.toString()
                 }
-            }
-            
-        } catch (error) {
-            console.log('Background broadcast failed (expected):', error.message);
-            // Das ist OK - die Transaktion wird trotzdem von Keplr verarbeitet
+            };
         }
-    }, 1000); // Nach 1 Sekunde versuchen
+        
+        // Methode 2: Keplr's simulate (Standard)
+        if (window.keplr.simulate) {
+            console.log('⛽ Using Keplr simulate...');
+            
+            const simulation = await window.keplr.simulate(chainId, msgs[0]);
+            const gasEstimate = Math.floor(simulation.gasUsed * 1.3); // 30% Buffer
+            
+            const gasPrice = await this.getGasPrice(chainId);
+            const feeAmount = Math.floor(gasEstimate * gasPrice).toString();
+            
+            return {
+                gasEstimate: gasEstimate,
+                gasUsed: simulation.gasUsed,
+                fee: {
+                    amount: [{
+                        denom: "umedas",
+                        amount: feeAmount
+                    }],
+                    gas: gasEstimate.toString()
+                }
+            };
+        }
+        
+        // Methode 3: Manuelle Simulation über REST API
+        console.log('⛽ Using manual gas estimation...');
+        return await this.estimateGasManually(chainId, delegatorAddress, msgs);
+        
+    } catch (estimationError) {
+        console.warn('⛽ Gas estimation failed, using defaults:', estimationError);
+        
+        // Fallback: Bewährte Default-Werte
+        return {
+            gasEstimate: 250000,
+            gasUsed: 200000,
+            fee: {
+                amount: [{
+                    denom: "umedas",
+                    amount: "6250" // 250000 * 0.025
+                }],
+                gas: "250000"
+            }
+        };
+    }
 };
 
-// ✅ ERFOLGREICHE TRANSAKTION BEHANDELN
+// ✅ GAS PRICE ERMITTELN
+UIManager.prototype.getGasPrice = async function(chainId) {
+    try {
+        // Hole Gas Price aus Chain Config oder API
+        const chainConfig = MEDAS_CHAIN_CONFIG;
+        
+        if (chainConfig?.gas?.defaults?.gasPrice) {
+            return parseFloat(chainConfig.gas.defaults.gasPrice);
+        }
+        
+        // Fallback: Standard Gas Price für MEDAS
+        return 0.025; // 0.025 umedas per gas unit
+        
+    } catch (error) {
+        console.warn('Failed to get gas price, using default:', error);
+        return 0.025;
+    }
+};
+
+// ✅ MANUELLE GAS ESTIMATION
+UIManager.prototype.estimateGasManually = async function(chainId, delegatorAddress, msgs) {
+    try {
+        const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
+        
+        // Hole Account Details
+        const accountResponse = await fetch(`${restUrl}/cosmos/auth/v1beta1/accounts/${delegatorAddress}`);
+        if (!accountResponse.ok) {
+            throw new Error('Failed to fetch account');
+        }
+        
+        const accountData = await accountResponse.json();
+        const accountNumber = accountData.account?.account_number || '0';
+        const sequence = accountData.account?.sequence || '0';
+        
+        // Erstelle Simulation Request
+        const simulationTx = {
+            tx: {
+                body: {
+                    messages: msgs,
+                    memo: ""
+                },
+                auth_info: {
+                    signer_infos: [{
+                        public_key: null,
+                        mode_info: {
+                            single: {
+                                mode: "SIGN_MODE_DIRECT"
+                            }
+                        },
+                        sequence: sequence
+                    }],
+                    fee: {
+                        amount: [],
+                        gas_limit: "200000"
+                    }
+                }
+            }
+        };
+        
+        const simulateResponse = await fetch(`${restUrl}/cosmos/tx/v1beta1/simulate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(simulationTx)
+        });
+        
+        if (simulateResponse.ok) {
+            const result = await simulateResponse.json();
+            const gasUsed = parseInt(result.gas_info?.gas_used || '200000');
+            const gasEstimate = Math.floor(gasUsed * 1.3); // 30% Buffer
+            
+            const gasPrice = await this.getGasPrice(chainId);
+            const feeAmount = Math.floor(gasEstimate * gasPrice).toString();
+            
+            console.log('⛽ Manual gas estimation successful:', { gasUsed, gasEstimate, feeAmount });
+            
+            return {
+                gasEstimate: gasEstimate,
+                gasUsed: gasUsed,
+                fee: {
+                    amount: [{
+                        denom: "umedas",
+                        amount: feeAmount
+                    }],
+                    gas: gasEstimate.toString()
+                }
+            };
+        }
+        
+        throw new Error('Simulation failed');
+        
+    } catch (error) {
+        console.warn('Manual gas estimation failed:', error);
+        
+        // Intelligente Defaults basierend auf Message-Typ
+        const gasEstimate = this.getDefaultGasForMessage(msgs[0]);
+        const gasPrice = await this.getGasPrice(chainId);
+        const feeAmount = Math.floor(gasEstimate * gasPrice).toString();
+        
+        return {
+            gasEstimate: gasEstimate,
+            gasUsed: Math.floor(gasEstimate * 0.8),
+            fee: {
+                amount: [{
+                    denom: "umedas",
+                    amount: feeAmount
+                }],
+                gas: gasEstimate.toString()
+            }
+        };
+    }
+};
+
+// ✅ DEFAULT GAS FÜR MESSAGE-TYPEN
+UIManager.prototype.getDefaultGasForMessage = function(msg) {
+    const messageGasMap = {
+        "/cosmos.staking.v1beta1.MsgDelegate": 250000,
+        "/cosmos.staking.v1beta1.MsgUndelegate": 300000,
+        "/cosmos.staking.v1beta1.MsgBeginRedelegate": 350000,
+        "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward": 150000,
+        "/cosmos.bank.v1beta1.MsgSend": 100000
+    };
+    
+    return messageGasMap[msg.typeUrl] || 200000;
+};
+
+// ✅ AMINO STAKING MIT GAS ESTIMATION
+UIManager.prototype.performAminoStakingWithGas = async function(chainId, delegatorAddress, validatorAddress, amountInUmedas, gasEstimation) {
+    try {
+        const offlineSigner = window.getOfflineSigner(chainId);
+        const accounts = await offlineSigner.getAccounts();
+        
+        if (!accounts.length) {
+            throw new Error('No accounts found');
+        }
+        
+        // Hole Account Details
+        const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
+        const accountResponse = await fetch(`${restUrl}/cosmos/auth/v1beta1/accounts/${delegatorAddress}`);
+        
+        if (!accountResponse.ok) {
+            throw new Error(`Failed to fetch account info: ${accountResponse.status}`);
+        }
+        
+        const accountData = await accountResponse.json();
+        const accountNumber = accountData.account?.account_number || '0';
+        const sequence = accountData.account?.sequence || '0';
+        
+        // Erstelle Amino Transaction mit geschätztem Gas
+        const aminoMsg = {
+            type: "cosmos-sdk/MsgDelegate",
+            value: {
+                delegator_address: delegatorAddress,
+                validator_address: validatorAddress,
+                amount: {
+                    denom: "umedas",
+                    amount: amountInUmedas
+                }
+            }
+        };
+        
+        const txDoc = {
+            chain_id: chainId,
+            account_number: accountNumber.toString(),
+            sequence: sequence.toString(),
+            fee: gasEstimation.fee,
+            msgs: [aminoMsg],
+            memo: ""
+        };
+        
+        console.log('📝 Signing with estimated gas:', gasEstimation.fee);
+        
+        // Signiere mit Keplr
+        const signature = await window.keplr.signAmino(
+            chainId,
+            delegatorAddress,
+            txDoc
+        );
+        
+        console.log('✅ Amino transaction signed with estimated gas');
+        
+        // Background Broadcasting
+        this.tryImprovedBackgroundBroadcast(signature, txDoc);
+        
+        return { success: true };
+        
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+// ✅ SUCCESS HANDLER (Unverändert)
 UIManager.prototype.handleStakingSuccess = function(delegatorAddress, stakeAmountInput, validatorSelect) {
-    // UI nach 6 Sekunden aktualisieren
     setTimeout(() => {
         console.log('🔄 Updating UI after staking...');
         this.populateUserDelegations(delegatorAddress);
         if (this.updateBalanceOverview) {
             this.updateBalanceOverview();
         }
-        this.showNotification('✅ Staking data updated', 'info');
-    }, 6000);
+        this.showNotification('✅ Updated staking data', 'info');
+    }, 5000);
     
     // Form zurücksetzen
     stakeAmountInput.value = '';
     validatorSelect.value = 'Select a validator...';
 };
 
-// ✅ FEHLERBEHANDLUNG
+// ✅ ERROR HANDLER (Erweitert)
 UIManager.prototype.handleStakingError = function(error, amount, validatorAddress, validatorSelect) {
     let errorMessage = error.message;
     
@@ -314,16 +445,14 @@ UIManager.prototype.handleStakingError = function(error, amount, validatorAddres
         errorMessage = 'Transaction cancelled by user';
     } else if (errorMessage.includes('Request rejected')) {
         errorMessage = 'Transaction rejected - please try again';
-    } else if (errorMessage.includes('legacy std tx')) {
-        errorMessage = 'Keplr API compatibility issue - please update Keplr';
+    } else if (errorMessage.includes('gas estimation')) {
+        errorMessage = 'Gas estimation failed - using default values';
     }
     
     this.showNotification(`❌ Staking failed: ${errorMessage}`, 'error');
     
-    // Bei API-Problemen: Zeige Alternative
-    if (errorMessage.includes('compatibility') || errorMessage.includes('API')) {
-        this.showNotification('💡 Alternative: Use Keplr extension directly', 'info');
-        this.showNotification('📱 Open Keplr → Stake → MedasDigital → Select Validator', 'info');
+    if (!errorMessage.includes('cancelled') && !errorMessage.includes('denied')) {
+        this.showNotification('💡 Try refreshing page and reconnecting wallet', 'info');
     }
 };
 
