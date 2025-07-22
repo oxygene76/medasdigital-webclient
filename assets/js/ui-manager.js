@@ -1100,7 +1100,7 @@ class UIManager {
         }
     }
 
- // ===================================
+// ===================================
 // CORS-FIXED CLAIM & UNSTAKING METHODS - NUR SENDTX
 // Ersetze diese Methoden in deiner ui-manager.js
 // ===================================
