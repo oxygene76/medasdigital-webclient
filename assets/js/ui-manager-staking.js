@@ -7,95 +7,164 @@
 // Erweitere UIManager um Staking-Funktionen
 if (typeof UIManager !== 'undefined' && UIManager.prototype) {
     
-    // ===================================
-    // ECHTE STAKING-TRANSAKTIONEN
-    // ===================================
+   // ERSETZE DIESE FUNKTION in ui-manager-staking.js (um Zeile 50-100):
 
-    // DELEGATE TOKENS (Staking)
-    UIManager.prototype.performStaking = async function() {
-        const validatorSelect = document.getElementById('validator-select');
-        const stakeAmountInput = document.getElementById('stake-amount');
+// DELEGATE TOKENS (Staking) - FIXED Keplr API
+UIManager.prototype.performStaking = async function() {
+    const validatorSelect = document.getElementById('validator-select');
+    const stakeAmountInput = document.getElementById('stake-amount');
+    
+    if (!validatorSelect?.value || validatorSelect.value === 'Select a validator...') {
+        this.showNotification('❌ Please select a validator first', 'error');
+        return;
+    }
+    
+    const amount = parseFloat(stakeAmountInput?.value || '0');
+    if (amount <= 0) {
+        this.showNotification('❌ Please enter a valid amount', 'error');
+        return;
+    }
+    
+    if (!window.terminal?.connected || !window.terminal?.account?.address) {
+        this.showNotification('❌ Please connect your wallet first', 'error');
+        return;
+    }
+    
+    try {
+        this.showNotification('🔄 Preparing delegation transaction...', 'info');
         
-        if (!validatorSelect?.value || validatorSelect.value === 'Select a validator...') {
-            this.showNotification('❌ Please select a validator first', 'error');
-            return;
-        }
+        const validatorAddress = validatorSelect.value;
+        const delegatorAddress = window.terminal.account.address;
         
-        const amount = parseFloat(stakeAmountInput?.value || '0');
-        if (amount <= 0) {
-            this.showNotification('❌ Please enter a valid amount', 'error');
-            return;
-        }
+        // Konvertiere MEDAS zu umedas (6 Dezimalstellen)
+        const amountInUmedas = Math.floor(amount * 1000000).toString();
         
-        if (!window.terminal?.connected || !window.terminal?.account?.address) {
-            this.showNotification('❌ Please connect your wallet first', 'error');
-            return;
-        }
+        console.log('🔧 Transaction details:', {
+            delegator: delegatorAddress,
+            validator: validatorAddress,
+            amount: `${amountInUmedas} umedas (${amount} MEDAS)`
+        });
         
-        try {
-            this.showNotification('🔄 Preparing delegation transaction...', 'info');
-            
-            const validatorAddress = validatorSelect.value;
-            const delegatorAddress = window.terminal.account.address;
-            
-            // Konvertiere MEDAS zu umedas (6 Dezimalstellen)
-            const amountInUmedas = Math.floor(amount * 1000000).toString();
-            
-            // Erstelle Delegation Message
-            const delegateMsg = {
-                typeUrl: '/cosmos.staking.v1beta1.MsgDelegate',
-                value: {
-                    delegatorAddress: delegatorAddress,
-                    validatorAddress: validatorAddress,
-                    amount: {
-                        denom: 'umedas',
-                        amount: amountInUmedas
-                    }
+        // ✅ KORRIGIERTE KEPLR API VERWENDUNG
+        const chainId = MEDAS_CHAIN_CONFIG?.chainId || "medasdigital-2";
+        
+        // Verwende signAmino statt sendTx für bessere Kompatibilität
+        const offlineSigner = window.getOfflineSigner(chainId);
+        
+        // Erstelle die Delegation Message im Amino Format
+        const msgDelegate = {
+            type: 'cosmos-sdk/MsgDelegate',
+            value: {
+                delegator_address: delegatorAddress,
+                validator_address: validatorAddress,
+                amount: {
+                    denom: 'umedas',
+                    amount: amountInUmedas
                 }
-            };
-            
-            // Gas-Schätzung
-            const gasEstimate = 250000;
-            
-            // Verwende Keplr für Transaction
-            const result = await window.keplr.sendTx(
-                MEDAS_CHAIN_CONFIG.chainId,
-                [{
-                    ...delegateMsg,
-                    gas: gasEstimate.toString(),
-                    fee: {
-                        amount: [{
-                            denom: 'umedas',
-                            amount: Math.floor(gasEstimate * 0.025).toString()
-                        }],
-                        gas: gasEstimate.toString()
-                    }
-                }]
-            );
-            
-            if (result && result.code === 0) {
-                this.showNotification(`✅ Delegation successful! TX: ${result.transactionHash}`, 'success');
-                
-                // Aktualisiere UI
-                setTimeout(() => {
-                    this.populateUserDelegations(delegatorAddress);
-                    this.updateBalanceOverview();
-                }, 3000);
-                
-                // Reset Form via StakingHelpers
-                if (window.stakingHelpers) {
-                    window.stakingHelpers.resetStakingForm();
-                }
-                
-            } else {
-                throw new Error(result?.log || 'Transaction failed');
             }
-            
-        } catch (error) {
-            console.error('❌ Staking failed:', error);
-            this.showNotification(`❌ Staking failed: ${error.message}`, 'error');
+        };
+        
+        // Hole Account Info für Sequence/Account Number
+        const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
+        const accountResponse = await fetch(`${restUrl}/cosmos/auth/v1beta1/accounts/${delegatorAddress}`);
+        
+        if (!accountResponse.ok) {
+            throw new Error('Failed to fetch account info');
         }
-    };
+        
+        const accountData = await accountResponse.json();
+        const accountNumber = accountData.account?.account_number || '0';
+        const sequence = accountData.account?.sequence || '0';
+        
+        console.log('📋 Account info:', { accountNumber, sequence });
+        
+        // Gas und Fee
+        const gasLimit = '250000';
+        const gasPrice = '0.025';
+        const feeAmount = Math.floor(parseInt(gasLimit) * parseFloat(gasPrice)).toString();
+        
+        // Erstelle Sign Doc
+        const signDoc = {
+            account_number: accountNumber,
+            chain_id: chainId,
+            fee: {
+                amount: [{ denom: 'umedas', amount: feeAmount }],
+                gas: gasLimit
+            },
+            memo: '',
+            msgs: [msgDelegate],
+            sequence: sequence
+        };
+        
+        console.log('📝 Sign document:', signDoc);
+        
+        // Signiere mit Keplr
+        const signature = await window.keplr.signAmino(
+            chainId,
+            delegatorAddress,
+            signDoc
+        );
+        
+        console.log('✅ Transaction signed successfully');
+        
+        // Erstelle Broadcast-Ready Transaction
+        const signedTx = {
+            msg: signDoc.msgs,
+            fee: signDoc.fee,
+            signatures: [signature.signature],
+            memo: signDoc.memo
+        };
+        
+        // Broadcaste die Transaction
+        const broadcastResponse = await fetch(`${restUrl}/cosmos/tx/v1beta1/txs`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tx_bytes: btoa(JSON.stringify(signedTx)),
+                mode: 'BROADCAST_MODE_SYNC'
+            })
+        });
+        
+        if (!broadcastResponse.ok) {
+            throw new Error('Broadcast failed');
+        }
+        
+        const result = await broadcastResponse.json();
+        
+        if (result.tx_response?.code === 0) {
+            this.showNotification(`✅ Delegation successful! TX: ${result.tx_response.txhash}`, 'success');
+            
+            // Aktualisiere UI nach 3 Sekunden
+            setTimeout(() => {
+                this.populateUserDelegations(delegatorAddress);
+                if (this.updateBalanceOverview) {
+                    this.updateBalanceOverview();
+                }
+            }, 3000);
+            
+            // Reset Form
+            stakeAmountInput.value = '';
+            validatorSelect.value = 'Select a validator...';
+            
+        } else {
+            const errorMsg = result.tx_response?.raw_log || 'Transaction failed';
+            throw new Error(errorMsg);
+        }
+        
+    } catch (error) {
+        console.error('❌ Staking failed:', error);
+        
+        // Detaillierte Fehlermeldung
+        let errorMessage = error.message;
+        if (errorMessage.includes('insufficient funds')) {
+            errorMessage = 'Insufficient funds for transaction + gas fees';
+        } else if (errorMessage.includes('invalid mode')) {
+            errorMessage = 'Keplr API error - please try again';
+        }
+        
+        this.showNotification(`❌ Staking failed: ${errorMessage}`, 'error');
+    }
+};
 
     // CLAIM ALL REWARDS
     UIManager.prototype.claimAllRewards = async function() {
