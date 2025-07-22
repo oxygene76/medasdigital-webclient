@@ -4,8 +4,8 @@
 const MEDAS_CHAIN_CONFIG = {
     chainId: "medasdigital-2",
     chainName: "MedasDigital",
-    rpc: "https://rpc.medas-digital.io:26657",
-    rest: "https://lcd.medas-digital.io:1317",
+    rpc: "https://app.medas-digital.io:8080/api/rpc",
+    rest: "https://app.medas-digital.io:8080/api/lcd",
     bip44: {
         coinType: 118,
     },
