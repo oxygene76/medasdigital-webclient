@@ -1073,6 +1073,429 @@ getValidatorName(validatorAddress) {
         }
     } // ← WICHTIG: Schließende Klammer für setMaxStakeAmount
 
+// ===================================
+// ECHTE STAKING-FUNKTIONEN FÜR UI-MANAGER
+// Diese Funktionen zur UIManager Klasse hinzufügen
+// ===================================
+
+// 1. DELEGATE TOKENS (Staking)
+async performStaking() {
+    const validatorSelect = document.getElementById('validator-select');
+    const stakeAmountInput = document.getElementById('stake-amount');
+    
+    if (!validatorSelect?.value || validatorSelect.value === 'Select a validator...') {
+        this.showNotification('❌ Please select a validator first', 'error');
+        return;
+    }
+    
+    const amount = parseFloat(stakeAmountInput?.value || '0');
+    if (amount <= 0) {
+        this.showNotification('❌ Please enter a valid amount', 'error');
+        return;
+    }
+    
+    if (!window.terminal?.connected || !window.terminal?.account?.address) {
+        this.showNotification('❌ Please connect your wallet first', 'error');
+        return;
+    }
+    
+    try {
+        this.showNotification('🔄 Preparing delegation transaction...', 'info');
+        
+        const validatorAddress = validatorSelect.value;
+        const delegatorAddress = window.terminal.account.address;
+        
+        // Konvertiere MEDAS zu umedas (6 Dezimalstellen)
+        const amountInUmedas = Math.floor(amount * 1000000).toString();
+        
+        // Erstelle Delegation Message
+        const delegateMsg = {
+            typeUrl: '/cosmos.staking.v1beta1.MsgDelegate',
+            value: {
+                delegatorAddress: delegatorAddress,
+                validatorAddress: validatorAddress,
+                amount: {
+                    denom: 'umedas',
+                    amount: amountInUmedas
+                }
+            }
+        };
+        
+        // Gas-Schätzung
+        const gasEstimate = 250000; // Conservative estimate für Delegation
+        const gasPrice = '0.025umedas';
+        
+        // Verwende Keplr für Transaction
+        const result = await window.keplr.sendTx(
+            MEDAS_CHAIN_CONFIG.chainId,
+            [{
+                ...delegateMsg,
+                gas: gasEstimate.toString(),
+                fee: {
+                    amount: [{
+                        denom: 'umedas',
+                        amount: Math.floor(gasEstimate * 0.025).toString()
+                    }],
+                    gas: gasEstimate.toString()
+                }
+            }]
+        );
+        
+        if (result && result.code === 0) {
+            this.showNotification(`✅ Delegation successful! TX: ${result.transactionHash}`, 'success');
+            
+            // Aktualisiere UI
+            setTimeout(() => {
+                this.populateUserDelegations(delegatorAddress);
+                this.updateBalanceOverview();
+            }, 3000); // Warte 3s für Block Konfirmation
+            
+            // Reset Form
+            stakeAmountInput.value = '';
+            validatorSelect.value = 'Select a validator...';
+            
+        } else {
+            throw new Error(result?.log || 'Transaction failed');
+        }
+        
+    } catch (error) {
+        console.error('❌ Staking failed:', error);
+        this.showNotification(`❌ Staking failed: ${error.message}`, 'error');
+    }
+}
+
+// 2. CLAIM REWARDS
+async claimAllRewards() {
+    if (!window.terminal?.connected || !window.terminal?.account?.address) {
+        this.showNotification('❌ Please connect your wallet first', 'error');
+        return;
+    }
+    
+    try {
+        this.showNotification('🔄 Claiming all rewards...', 'info');
+        
+        const delegatorAddress = window.terminal.account.address;
+        
+        // Hole aktuelle Delegations um Validator-Adressen zu bekommen
+        const delegations = await this.fetchUserDelegations(delegatorAddress);
+        if (!delegations || delegations.length === 0) {
+            this.showNotification('❌ No delegations found', 'error');
+            return;
+        }
+        
+        // Erstelle Claim-Messages für alle Validators
+        const claimMessages = delegations.map(delegation => ({
+            typeUrl: '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
+            value: {
+                delegatorAddress: delegatorAddress,
+                validatorAddress: delegation.validator_address
+            }
+        }));
+        
+        if (claimMessages.length === 0) {
+            this.showNotification('❌ No rewards to claim', 'error');
+            return;
+        }
+        
+        // Gas-Schätzung (pro Validator)
+        const gasPerClaim = 150000;
+        const totalGas = gasPerClaim * claimMessages.length;
+        const gasPrice = '0.025umedas';
+        
+        // Verwende Keplr für Transaction
+        const result = await window.keplr.sendTx(
+            MEDAS_CHAIN_CONFIG.chainId,
+            claimMessages.map(msg => ({
+                ...msg,
+                gas: totalGas.toString(),
+                fee: {
+                    amount: [{
+                        denom: 'umedas',
+                        amount: Math.floor(totalGas * 0.025).toString()
+                    }],
+                    gas: totalGas.toString()
+                }
+            }))
+        );
+        
+        if (result && result.code === 0) {
+            this.showNotification(`✅ Rewards claimed successfully! TX: ${result.transactionHash}`, 'success');
+            
+            // Aktualisiere UI
+            setTimeout(() => {
+                this.populateUserDelegations(delegatorAddress);
+                this.updateBalanceOverview();
+            }, 3000);
+            
+        } else {
+            throw new Error(result?.log || 'Transaction failed');
+        }
+        
+    } catch (error) {
+        console.error('❌ Claim rewards failed:', error);
+        this.showNotification(`❌ Claim failed: ${error.message}`, 'error');
+    }
+}
+
+// 3. UNDELEGATE TOKENS (Unstaking)
+async performUnstaking(validatorAddress, amount) {
+    if (!window.terminal?.connected || !window.terminal?.account?.address) {
+        this.showNotification('❌ Please connect your wallet first', 'error');
+        return;
+    }
+    
+    try {
+        this.showNotification('🔄 Preparing undelegation transaction...', 'info');
+        
+        const delegatorAddress = window.terminal.account.address;
+        const amountInUmedas = Math.floor(parseFloat(amount) * 1000000).toString();
+        
+        // Erstelle Undelegation Message
+        const undelegateMsg = {
+            typeUrl: '/cosmos.staking.v1beta1.MsgUndelegate',
+            value: {
+                delegatorAddress: delegatorAddress,
+                validatorAddress: validatorAddress,
+                amount: {
+                    denom: 'umedas',
+                    amount: amountInUmedas
+                }
+            }
+        };
+        
+        const gasEstimate = 300000; // Conservative estimate für Undelegation
+        
+        const result = await window.keplr.sendTx(
+            MEDAS_CHAIN_CONFIG.chainId,
+            [{
+                ...undelegateMsg,
+                gas: gasEstimate.toString(),
+                fee: {
+                    amount: [{
+                        denom: 'umedas',
+                        amount: Math.floor(gasEstimate * 0.025).toString()
+                    }],
+                    gas: gasEstimate.toString()
+                }
+            }]
+        );
+        
+        if (result && result.code === 0) {
+            this.showNotification(`✅ Undelegation successful! TX: ${result.transactionHash}`, 'success');
+            this.showNotification('⏰ Note: Unbonding period is 21 days', 'info');
+            
+            // Aktualisiere UI
+            setTimeout(() => {
+                this.populateUserDelegations(delegatorAddress);
+                this.updateBalanceOverview();
+            }, 3000);
+            
+        } else {
+            throw new Error(result?.log || 'Transaction failed');
+        }
+        
+    } catch (error) {
+        console.error('❌ Unstaking failed:', error);
+        this.showNotification(`❌ Unstaking failed: ${error.message}`, 'error');
+    }
+}
+
+// 4. REDELEGATE TOKENS
+async performRedelegation(srcValidatorAddress, dstValidatorAddress, amount) {
+    if (!window.terminal?.connected || !window.terminal?.account?.address) {
+        this.showNotification('❌ Please connect your wallet first', 'error');
+        return;
+    }
+    
+    try {
+        this.showNotification('🔄 Preparing redelegation transaction...', 'info');
+        
+        const delegatorAddress = window.terminal.account.address;
+        const amountInUmedas = Math.floor(parseFloat(amount) * 1000000).toString();
+        
+        // Erstelle Redelegation Message
+        const redelegateMsg = {
+            typeUrl: '/cosmos.staking.v1beta1.MsgBeginRedelegate',
+            value: {
+                delegatorAddress: delegatorAddress,
+                validatorSrcAddress: srcValidatorAddress,
+                validatorDstAddress: dstValidatorAddress,
+                amount: {
+                    denom: 'umedas',
+                    amount: amountInUmedas
+                }
+            }
+        };
+        
+        const gasEstimate = 350000; // Conservative estimate für Redelegation
+        
+        const result = await window.keplr.sendTx(
+            MEDAS_CHAIN_CONFIG.chainId,
+            [{
+                ...redelegateMsg,
+                gas: gasEstimate.toString(),
+                fee: {
+                    amount: [{
+                        denom: 'umedas',
+                        amount: Math.floor(gasEstimate * 0.025).toString()
+                    }],
+                    gas: gasEstimate.toString()
+                }
+            }]
+        );
+        
+        if (result && result.code === 0) {
+            this.showNotification(`✅ Redelegation successful! TX: ${result.transactionHash}`, 'success');
+            
+            // Aktualisiere UI
+            setTimeout(() => {
+                this.populateUserDelegations(delegatorAddress);
+                this.updateBalanceOverview();
+            }, 3000);
+            
+        } else {
+            throw new Error(result?.log || 'Transaction failed');
+        }
+        
+    } catch (error) {
+        console.error('❌ Redelegation failed:', error);
+        this.showNotification(`❌ Redelegation failed: ${error.message}`, 'error');
+    }
+}
+
+// 5. NOTIFICATION SYSTEM
+showNotification(message, type = 'info') {
+    // Erstelle Notification Container falls nicht vorhanden
+    let notificationContainer = document.getElementById('notification-container');
+    if (!notificationContainer) {
+        notificationContainer = document.createElement('div');
+        notificationContainer.id = 'notification-container';
+        notificationContainer.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            max-width: 400px;
+        `;
+        document.body.appendChild(notificationContainer);
+    }
+    
+    // Erstelle Notification Element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.style.cssText = `
+        background: ${type === 'success' ? '#1a4a1a' : type === 'error' ? '#4a1a1a' : '#1a1a4a'};
+        border: 1px solid ${type === 'success' ? '#00ff00' : type === 'error' ? '#ff0000' : '#00ffff'};
+        color: ${type === 'success' ? '#00ff00' : type === 'error' ? '#ff0000' : '#00ffff'};
+        padding: 12px 16px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        font-family: 'Share Tech Mono', monospace;
+        font-size: 12px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        animation: slideInRight 0.3s ease-out;
+    `;
+    notification.textContent = message;
+    
+    // Füge CSS Animation hinzu
+    if (!document.getElementById('notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOutRight {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    notificationContainer.appendChild(notification);
+    
+    // Auto-remove nach 5 Sekunden
+    setTimeout(() => {
+        notification.style.animation = 'slideOutRight 0.3s ease-out';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 5000);
+}
+
+// 6. UTILITY: Validator-Auswahl erweitern mit Actions
+populateValidatorsWithActions(validators) {
+    const validatorsContainer = document.getElementById('validators-list');
+    if (!validatorsContainer) return;
+
+    validatorsContainer.innerHTML = validators.map(validator => {
+        const commission = parseFloat(validator.commission?.commission_rates?.rate || 0) * 100;
+        const votingPower = this.formatTokenAmount(validator.tokens, 6);
+        const status = validator.status === 'BOND_STATUS_BONDED' ? 'Active' : 'Inactive';
+        const jailed = validator.jailed ? 'Jailed' : 'OK';
+        
+        return `
+            <div class="delegation-item">
+                <div class="validator-info">
+                    <div class="validator-name">${this.getValidatorName(validator.operator_address)}</div>
+                    <div class="validator-details">
+                        Commission: ${commission.toFixed(2)}% | 
+                        Voting Power: ${votingPower} MEDAS | 
+                        Status: ${status} ${jailed !== 'OK' ? '(' + jailed + ')' : ''}
+                    </div>
+                    <div class="validator-address" style="font-size: 10px; color: #666; margin-top: 4px;">
+                        ${validator.operator_address}
+                    </div>
+                </div>
+                <div class="stake-actions">
+                    <button class="btn-small btn-primary" style="border-color: #00ffff; color: #00ffff; margin-right: 8px;" 
+                            onclick="selectValidator('${validator.operator_address}', '${this.getValidatorName(validator.operator_address)}')">
+                        Select
+                    </button>
+                    <button class="btn-small btn-success" style="border-color: #00ff00; color: #00ff00;" 
+                            onclick="quickStake('${validator.operator_address}', '${this.getValidatorName(validator.operator_address)}')">
+                        Quick Stake
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 7. QUICK STAKE FUNCTION
+async quickStake(validatorAddress, validatorName) {
+    // Zeige Quick Stake Dialog
+    const amount = prompt(`Quick Stake to ${validatorName}\n\nEnter amount in MEDAS:`);
+    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+        return;
+    }
+    
+    // Setze Validator im Select und führe Staking aus
+    const validatorSelect = document.getElementById('validator-select');
+    const stakeAmountInput = document.getElementById('stake-amount');
+    
+    if (validatorSelect) {
+        // Füge Option hinzu falls nicht vorhanden
+        let option = Array.from(validatorSelect.options).find(opt => opt.value === validatorAddress);
+        if (!option) {
+            option = new Option(validatorName, validatorAddress);
+            validatorSelect.add(option);
+        }
+        validatorSelect.value = validatorAddress;
+    }
+    
+    if (stakeAmountInput) {
+        stakeAmountInput.value = amount;
+    }
+    
+    // Führe Staking aus
+    await this.performStaking();
+}
+    
     populateTransactionHistory() {
         const transactionsContainer = document.getElementById('transaction-list');
         if (!transactionsContainer || !window.MockData) return;
