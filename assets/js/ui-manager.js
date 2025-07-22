@@ -598,8 +598,7 @@ class UIManager {
         }
     }
 
-    // ERSETZE DIESE FUNKTION in ui-manager.js (um Zeile 630-670)
-// DISPLAY VALIDATORS WITH ACTION BUTTONS
+// 2. ERWEITERTE populateValidatorsWithActions Funktion  
 populateValidatorsWithActions(validators) {
     const validatorsContainer = document.getElementById('validators-list');
     if (!validatorsContainer) {
@@ -609,14 +608,22 @@ populateValidatorsWithActions(validators) {
 
     console.log('📊 Displaying validators with actions:', validators.length);
 
+    // ERST: Cache alle Validator-Namen mit echten Daten
+    validators.forEach(validator => {
+        if (validator.description?.moniker) {
+            this.validatorNameCache.set(validator.operator_address, validator.description.moniker);
+        }
+    });
+
     validatorsContainer.innerHTML = validators.map((validator, index) => {
         const commission = parseFloat(validator.commission?.commission_rates?.rate || 0) * 100;
         const votingPower = this.formatTokenAmount(validator.tokens, 6);
         const status = validator.status === 'BOND_STATUS_BONDED' ? 'Active' : 'Inactive';
         const jailed = validator.jailed ? 'Jailed' : 'OK';
         
-        // FIX: Validator Name außerhalb des Template String berechnen
-        const validatorName = this.getValidatorName(validator.operator_address);
+        // VERWENDE ECHTE VALIDATOR-NAMEN
+        const validatorName = validator.description?.moniker || 
+                             this.getValidatorName(validator.operator_address, validator);
         
         return `
             <div class="delegation-item">
@@ -651,8 +658,9 @@ populateValidatorsWithActions(validators) {
         `;
     }).join('');
 
-    console.log('✅ Validators HTML generated and inserted');
+    console.log('✅ Validators HTML generated with real names');
 }
+
     // FALLBACK VALIDATORS (MOCKDATA)
     populateValidatorsFallback() {
         const validatorsContainer = document.getElementById('validators-list');
@@ -858,37 +866,38 @@ populateValidatorsWithActions(validators) {
         }
     }
 
-    // UPDATE VALIDATOR SELECTS
-    updateValidatorSelect(validators) {
-        const validatorSelect = document.getElementById('validator-select');
-        if (!validatorSelect) return;
-        
-        const currentValue = validatorSelect.value;
-        
-        validatorSelect.innerHTML = '<option>Select a validator...</option>' +
-            validators.slice(0, 30).map(validator => {
-                const validatorName = this.getValidatorName(validator.operator_address);
-                const commission = parseFloat(validator.commission?.commission_rates?.rate || 0) * 100;
-                return `<option value="${validator.operator_address}">${validatorName} (${commission.toFixed(1)}%)</option>`;
-            }).join('');
-        
-        if (currentValue && currentValue !== 'Select a validator...') {
-            validatorSelect.value = currentValue;
-        }
+   // 3. ERWEITERTE updateValidatorSelect Funktion
+updateValidatorSelect(validators) {
+    const validatorSelect = document.getElementById('validator-select');
+    if (!validatorSelect) return;
+    
+    const currentValue = validatorSelect.value;
+    
+    validatorSelect.innerHTML = '<option>Select a validator...</option>' +
+        validators.slice(0, 30).map(validator => {
+            const validatorName = validator.description?.moniker || 
+                                 this.getValidatorName(validator.operator_address, validator);
+            const commission = parseFloat(validator.commission?.commission_rates?.rate || 0) * 100;
+            return `<option value="${validator.operator_address}">${validatorName} (${commission.toFixed(1)}%)</option>`;
+        }).join('');
+    
+    if (currentValue && currentValue !== 'Select a validator...') {
+        validatorSelect.value = currentValue;
     }
-
-    updateRedelegateToSelect(validators) {
-        const redelegateToSelect = document.getElementById('redelegate-to-select');
-        if (!redelegateToSelect) return;
-        
-        redelegateToSelect.innerHTML = '<option>Select destination validator...</option>' +
-            validators.slice(0, 50).map(validator => {
-                const validatorName = this.getValidatorName(validator.operator_address);
-                const commission = parseFloat(validator.commission?.commission_rates?.rate || 0) * 100;
-                return `<option value="${validator.operator_address}">${validatorName} (${commission.toFixed(1)}%)</option>`;
-            }).join('');
-    }
-
+}
+ // 4. ERWEITERTE updateRedelegateToSelect Funktion  
+updateRedelegateToSelect(validators) {
+    const redelegateToSelect = document.getElementById('redelegate-to-select');
+    if (!redelegateToSelect) return;
+    
+    redelegateToSelect.innerHTML = '<option>Select destination validator...</option>' +
+        validators.slice(0, 50).map(validator => {
+            const validatorName = validator.description?.moniker || 
+                                 this.getValidatorName(validator.operator_address, validator);
+            const commission = parseFloat(validator.commission?.commission_rates?.rate || 0) * 100;
+            return `<option value="${validator.operator_address}">${validatorName} (${commission.toFixed(1)}%)</option>`;
+        }).join('');
+}
     // ===================================
     // STAKING TRANSACTION FUNCTIONS
     // ===================================
@@ -1603,6 +1612,34 @@ window.checkValidatorHTML = function() {
     
     return 'HTML structure check complete';
 };
+
+// 5. DEBUG: Prüfe Validator-Daten
+window.debugValidatorNames = function() {
+    console.log('🔍 VALIDATOR NAMES DEBUG:');
+    
+    if (window.terminal?.ui?.validatorNameCache) {
+        console.log('Cached names:', Object.fromEntries(window.terminal.ui.validatorNameCache));
+    }
+    
+    // Force reload mit Debug
+    if (window.terminal?.ui?.fetchRealValidators) {
+        window.terminal.ui.fetchRealValidators().then(validators => {
+            console.log('Raw validator data sample:');
+            validators.slice(0, 3).forEach((v, i) => {
+                console.log(`Validator ${i}:`, {
+                    address: v.operator_address,
+                    moniker: v.description?.moniker,
+                    identity: v.description?.identity,
+                    website: v.description?.website,
+                    details: v.description?.details
+                });
+            });
+        });
+    }
+    
+    return 'Validator names debug complete';
+};
+
 
 window.selectValidator = function(validatorAddress, validatorName) {
     const validatorSelect = document.getElementById('validator-select');
