@@ -806,49 +806,7 @@ populateValidatorsWithActions(validators) {
         }
     }
 
-   // 1. FIX: populateUserDelegationsFallback - NUR FALLBACK wenn wirklich keine Verbindung
-UIManager.prototype.populateUserDelegationsFallback = function() {
-    const delegationsContainer = document.getElementById('current-delegations');
-    if (!delegationsContainer) return;
 
-    console.warn('⚠️ No real delegations found - showing empty state instead of mock data');
-    
-    // ANSTATT MOCK DATEN -> ZEIGE EMPTY STATE
-    delegationsContainer.innerHTML = `
-        <div class="empty-state" style="text-align: center; padding: 40px 20px; color: #666;">
-            <div style="font-size: 48px; margin-bottom: 16px;">🎯</div>
-            <h3 style="color: #00ffff; margin-bottom: 8px;">No Delegations Yet</h3>
-            <p style="margin-bottom: 16px;">You haven't staked any MEDAS tokens yet.</p>
-            <p style="font-size: 12px;">Select a validator below and start staking to earn rewards!</p>
-        </div>
-    `;
-
-    // SETZE ALLE STATS AUF NULL
-    const totalRewardsEl = document.getElementById('total-rewards');
-    if (totalRewardsEl) {
-        totalRewardsEl.textContent = '0.000000 MEDAS';
-    }
-    
-    const totalStakedEl = document.getElementById('user-total-staked');
-    if (totalStakedEl) {
-        totalStakedEl.textContent = '0.000000 MEDAS';
-    }
-    
-    const totalRewardsStatsEl = document.getElementById('user-total-rewards');
-    if (totalRewardsStatsEl) {
-        totalRewardsStatsEl.textContent = '0.000000 MEDAS';
-    }
-    
-    const delegationCountEl = document.getElementById('user-delegation-count');
-    if (delegationCountEl) {
-        delegationCountEl.textContent = '0';
-    }
-    
-    const monthlyEstimateEl = document.getElementById('user-monthly-estimate');
-    if (monthlyEstimateEl) {
-        monthlyEstimateEl.textContent = '0.000000 MEDAS';
-    }
-};
     // UPDATE DELEGATION SELECTS FOR ADVANCED OPERATIONS
     updateDelegationSelects(delegations) {
         const redelegateFromSelect = document.getElementById('redelegate-from-select');
