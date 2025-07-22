@@ -7,7 +7,7 @@
 // Erweitere UIManager um Staking-Funktionen
 if (typeof UIManager !== 'undefined' && UIManager.prototype) {
     
-/ DELEGATE TOKENS (Staking) - OPTIMIERTE FINALE VERSION
+// DELEGATE TOKENS (Staking) - OPTIMIERTE FINALE VERSION
 UIManager.prototype.performStaking = async function() {
     const validatorSelect = document.getElementById('validator-select');
     const stakeAmountInput = document.getElementById('stake-amount');
