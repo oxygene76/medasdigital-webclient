@@ -1515,8 +1515,121 @@ populateValidatorsWithActions(validators) {
 }
 
 // ===================================
-// GLOBAL FUNCTION FOR VALIDATOR SELECTION
+// NEUE GLOBALE VALIDATOR BUTTON ACTIONS
 // ===================================
+
+window.selectValidatorAction = function(button) {
+    const validatorAddress = button.dataset.validatorAddress;
+    const validatorName = button.dataset.validatorName;
+    
+    console.log('📊 Validator selected via button:', validatorName, validatorAddress);
+    
+    // Rufe die existierende selectValidator Funktion auf
+    if (window.selectValidator) {
+        window.selectValidator(validatorAddress, validatorName);
+    } else {
+        // Fallback: Direkt das Select Element updaten
+        const validatorSelect = document.getElementById('validator-select');
+        if (validatorSelect) {
+            // Prüfe ob Option bereits existiert
+            let option = Array.from(validatorSelect.options).find(opt => opt.value === validatorAddress);
+            if (!option) {
+                // Erstelle neue Option
+                option = new Option(validatorName, validatorAddress);
+                validatorSelect.add(option);
+            }
+            validatorSelect.value = validatorAddress;
+            
+            // Visual Feedback
+            button.textContent = 'Selected!';
+            button.style.borderColor = '#00ff00';
+            button.style.color = '#00ff00';
+            
+            setTimeout(() => {
+                button.textContent = 'Select';
+                button.style.borderColor = '#00ffff';
+                button.style.color = '#00ffff';
+            }, 1500);
+            
+            console.log(`📊 Selected validator: ${validatorName} (${validatorAddress})`);
+        }
+    }
+};
+
+window.quickStakeAction = function(button) {
+    const validatorAddress = button.dataset.validatorAddress;
+    const validatorName = button.dataset.validatorName;
+    
+    console.log('🚀 Quick stake for validator:', validatorName);
+    
+    // Erst Validator auswählen
+    const selectButton = button.parentElement.querySelector('[data-validator-address="' + validatorAddress + '"]');
+    if (selectButton && selectButton !== button) {
+        window.selectValidatorAction(selectButton);
+    } else {
+        // Fallback wenn Select Button nicht gefunden
+        window.selectValidatorAction(button);
+    }
+    
+    // Dann fokus auf Amount Input
+    setTimeout(() => {
+        const stakeInput = document.getElementById('stake-amount');
+        if (stakeInput) {
+            stakeInput.focus();
+            // Optional: Scroll to staking section
+            stakeInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 100);
+};
+
+// DEBUG FUNKTIONEN
+window.debugValidators = function() {
+    console.log('🔍 VALIDATOR DEBUG:');
+    
+    // Check Container
+    const container = document.getElementById('validators-list');
+    console.log('Container found:', !!container);
+    console.log('Container HTML length:', container?.innerHTML?.length || 0);
+    
+    // Check ob UI Manager existiert
+    console.log('Terminal instance:', !!window.terminal);
+    console.log('UI Manager instance:', !!window.terminal?.ui);
+    
+    // Check aktuellen Tab
+    console.log('Active tab:', window.terminal?.activeTab);
+    
+    // Manual validator load versuchen
+    if (window.terminal?.ui?.populateValidators) {
+        console.log('🔄 Triggering manual validator load...');
+        window.terminal.ui.populateValidators();
+    }
+    
+    return 'Debug complete - check console output above';
+};
+
+window.checkValidatorHTML = function() {
+    const stakingTab = document.getElementById('staking-tab');
+    const validatorsList = document.getElementById('validators-list');
+    
+    console.log('🔍 HTML STRUCTURE CHECK:');
+    console.log('Staking tab exists:', !!stakingTab);
+    console.log('Validators list exists:', !!validatorsList);
+    
+    if (!validatorsList) {
+        console.error('❌ validators-list element missing!');
+    }
+    
+    if (validatorsList) {
+        console.log('Current validators-list content length:', validatorsList.innerHTML.length);
+        if (validatorsList.innerHTML.length > 0) {
+            console.log('Content preview:', validatorsList.innerHTML.substring(0, 200) + '...');
+        } else {
+            console.log('Container is empty');
+        }
+    }
+    
+    return 'HTML structure check complete';
+};
 
 window.selectValidator = function(validatorAddress, validatorName) {
     const validatorSelect = document.getElementById('validator-select');
