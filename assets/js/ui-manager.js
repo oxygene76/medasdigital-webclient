@@ -1405,17 +1405,27 @@ populateValidatorsWithActions(validators) {
         return value.toFixed(6);
     }
 
-    getValidatorName(operatorAddress) {
-        if (this.validatorNameCache.has(operatorAddress)) {
-            return this.validatorNameCache.get(operatorAddress);
-        }
-        
-        const shortAddress = operatorAddress.slice(-8).toUpperCase();
-        const name = `Validator ${shortAddress}`;
-        
-        this.validatorNameCache.set(operatorAddress, name);
-        return name;
+  // 1. ERWEITERTE getValidatorName Funktion
+getValidatorName(operatorAddress, validatorData = null) {
+    // Prüfe zuerst den Cache
+    if (this.validatorNameCache.has(operatorAddress)) {
+        return this.validatorNameCache.get(operatorAddress);
     }
+    
+    // Falls Validator-Daten mitgegeben wurden, verwende den echten Namen
+    if (validatorData?.description?.moniker) {
+        const realName = validatorData.description.moniker;
+        this.validatorNameCache.set(operatorAddress, realName);
+        return realName;
+    }
+    
+    // Fallback: Kurzer Address-basierter Name
+    const shortAddress = operatorAddress.slice(-8).toUpperCase();
+    const fallbackName = `Validator ${shortAddress}`;
+    this.validatorNameCache.set(operatorAddress, fallbackName);
+    
+    return fallbackName;
+}
 
     showNotification(message, type = 'info') {
         let notificationContainer = document.getElementById('notification-container');
