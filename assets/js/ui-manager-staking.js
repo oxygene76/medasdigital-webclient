@@ -7,7 +7,7 @@
 // Erweitere UIManager um Staking-Funktionen
 if (typeof UIManager !== 'undefined' && UIManager.prototype) {
     
-// DELEGATE TOKENS (Staking) - OPTIMIERTE FINALE VERSION
+// DELEGATE TOKENS (Staking) - FUNKTIONIERENDE BROADCAST-LÖSUNG
 UIManager.prototype.performStaking = async function() {
     const validatorSelect = document.getElementById('validator-select');
     const stakeAmountInput = document.getElementById('stake-amount');
@@ -35,7 +35,7 @@ UIManager.prototype.performStaking = async function() {
         const delegatorAddress = window.terminal.account.address;
         const chainId = MEDAS_CHAIN_CONFIG?.chainId || "medasdigital-2";
         
-        // Konvertiere MEDAS zu umedas (6 Dezimalstellen)
+        // Konvertiere MEDAS zu umedas
         const amountInUmedas = Math.floor(amount * 1000000).toString();
         
         console.log('🔧 Transaction details:', {
@@ -45,120 +45,179 @@ UIManager.prototype.performStaking = async function() {
             chainId: chainId
         });
         
-        // ✅ VERWENDE AMINO SIGNIERUNG (FUNKTIONIERT ZUVERLÄSSIG)
         await window.keplr.enable(chainId);
         
-        const offlineSigner = window.getOfflineSigner(chainId);
-        const accounts = await offlineSigner.getAccounts();
-        
-        if (!accounts.length) {
-            throw new Error('No accounts found in Keplr wallet');
-        }
-        
-        // Hole Account Details
-        const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
-        const accountResponse = await fetch(`${restUrl}/cosmos/auth/v1beta1/accounts/${delegatorAddress}`);
-        
-        if (!accountResponse.ok) {
-            throw new Error(`Account fetch failed: ${accountResponse.status}`);
-        }
-        
-        const accountData = await accountResponse.json();
-        const accountNumber = accountData.account?.account_number || '0';
-        const sequence = accountData.account?.sequence || '0';
-        
-        console.log('📋 Account details:', { accountNumber, sequence });
-        
-        // Erstelle Amino Message
-        const aminoMsg = {
-            type: "cosmos-sdk/MsgDelegate",
-            value: {
-                delegator_address: delegatorAddress,
-                validator_address: validatorAddress,
-                amount: {
-                    denom: "umedas",
-                    amount: amountInUmedas
-                }
-            }
-        };
-        
-        const fee = {
-            amount: [{
-                denom: "umedas", 
-                amount: "6250" // 0.025 * 250000
-            }],
-            gas: "250000"
-        };
-        
-        const txDoc = {
-            chain_id: chainId,
-            account_number: accountNumber.toString(),
-            sequence: sequence.toString(),
-            fee: fee,
-            msgs: [aminoMsg],
-            memo: ""
-        };
-        
-        console.log('📝 Signing transaction with Amino...');
-        
-        const signature = await window.keplr.signAmino(
-            chainId,
-            delegatorAddress,
-            txDoc
-        );
-        
-        console.log('✅ Transaction signed successfully');
-        
-        // ✅ ZEIGE SOFORTIGEN ERFOLG (WEIL SIGNIERUNG = ERFOLG)
-        this.showNotification(`✅ Delegation transaction signed successfully!`, 'success');
-        this.showNotification(`🎯 Delegated ${amount} MEDAS to validator`, 'success');
-        
-        // ✅ VERSUCHE BROADCASTING (ABER AKZEPTIERE FEHLER)
-        let broadcastSuccess = false;
+        // ✅ METHODE 1: VERWENDE KEPLR'S SENDTX MIT KORREKTEM FORMAT
         try {
-            console.log('📡 Attempting to broadcast transaction...');
+            const offlineSigner = window.getOfflineSigner(chainId);
+            const accounts = await offlineSigner.getAccounts();
             
-            // Versuche RPC Broadcasting zuerst
-            const rpcResult = await this.tryRPCBroadcast(signature, txDoc);
-            if (rpcResult.success) {
-                this.showNotification(`🚀 Transaction broadcasted: ${rpcResult.txHash}`, 'success');
-                broadcastSuccess = true;
+            if (!accounts.length) {
+                throw new Error('No accounts found');
+            }
+            
+            // Hole Account Info
+            const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
+            const accountResponse = await fetch(`${restUrl}/cosmos/auth/v1beta1/accounts/${delegatorAddress}`);
+            
+            if (!accountResponse.ok) {
+                throw new Error(`Account fetch failed: ${accountResponse.status}`);
+            }
+            
+            const accountData = await accountResponse.json();
+            const accountNumber = accountData.account?.account_number || '0';
+            const sequence = accountData.account?.sequence || '0';
+            
+            console.log('📋 Account details:', { accountNumber, sequence });
+            
+            // Erstelle Standard Cosmos Message
+            const msg = {
+                type: "cosmos-sdk/MsgDelegate",
+                value: {
+                    delegator_address: delegatorAddress,
+                    validator_address: validatorAddress,
+                    amount: {
+                        denom: "umedas",
+                        amount: amountInUmedas
+                    }
+                }
+            };
+            
+            const fee = {
+                amount: [{
+                    denom: "umedas", 
+                    amount: "6250"
+                }],
+                gas: "250000"
+            };
+            
+            // ✅ VERWENDE KEPLR'S SENDTX MIT STANDARD COSMOS FORMAT
+            console.log('📡 Broadcasting via Keplr sendTx...');
+            
+            const txResult = await window.keplr.sendTx(
+                chainId,
+                {
+                    msg: [msg],
+                    fee: fee,
+                    memo: "",
+                    account_number: accountNumber,
+                    sequence: sequence
+                },
+                "block" // Warte auf Block-Bestätigung
+            );
+            
+            console.log('✅ Keplr sendTx successful:', txResult);
+            
+            // Erfolg!
+            const txHash = txResult.txhash || txResult.transactionHash || txResult;
+            this.showNotification(`✅ Delegation successful! TX: ${txHash}`, 'success');
+            
+            // Update UI
+            setTimeout(() => {
+                this.populateUserDelegations(delegatorAddress);
+                if (this.updateBalanceOverview) {
+                    this.updateBalanceOverview();
+                }
+            }, 3000); // Kürzere Wartezeit da "block" mode
+            
+            // Reset Form
+            stakeAmountInput.value = '';
+            validatorSelect.value = 'Select a validator...';
+            
+            return; // Erfolg!
+            
+        } catch (sendTxError) {
+            console.warn('❌ Keplr sendTx failed:', sendTxError);
+            
+            // Fall through zu Methode 2
+        }
+        
+        // ✅ METHODE 2: AMINO SIGNIERUNG + MANUELLES BROADCASTING
+        try {
+            const offlineSigner = window.getOfflineSigner(chainId);
+            const accounts = await offlineSigner.getAccounts();
+            
+            // Account Details holen
+            const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
+            const accountResponse = await fetch(`${restUrl}/cosmos/auth/v1beta1/accounts/${delegatorAddress}`);
+            
+            if (!accountResponse.ok) {
+                throw new Error(`Account fetch failed: ${accountResponse.status}`);
+            }
+            
+            const accountData = await accountResponse.json();
+            const accountNumber = accountData.account?.account_number || '0';
+            const sequence = accountData.account?.sequence || '0';
+            
+            // Erstelle TX Document
+            const aminoMsg = {
+                type: "cosmos-sdk/MsgDelegate",
+                value: {
+                    delegator_address: delegatorAddress,
+                    validator_address: validatorAddress,
+                    amount: {
+                        denom: "umedas",
+                        amount: amountInUmedas
+                    }
+                }
+            };
+            
+            const fee = {
+                amount: [{
+                    denom: "umedas", 
+                    amount: "6250"
+                }],
+                gas: "250000"
+            };
+            
+            const txDoc = {
+                chain_id: chainId,
+                account_number: accountNumber.toString(),
+                sequence: sequence.toString(),
+                fee: fee,
+                msgs: [aminoMsg],
+                memo: ""
+            };
+            
+            console.log('📝 Signing with Amino...');
+            
+            const signature = await window.keplr.signAmino(
+                chainId,
+                delegatorAddress,
+                txDoc
+            );
+            
+            console.log('✅ Amino signature successful');
+            
+            // ✅ VERSUCHE VERSCHIEDENE BROADCASTING-METHODEN
+            const broadcastResult = await this.tryMultipleBroadcastMethods(signature, txDoc, chainId);
+            
+            if (broadcastResult.success) {
+                this.showNotification(`✅ Delegation successful! TX: ${broadcastResult.txHash}`, 'success');
+                
+                setTimeout(() => {
+                    this.populateUserDelegations(delegatorAddress);
+                    if (this.updateBalanceOverview) {
+                        this.updateBalanceOverview();
+                    }
+                }, 6000);
+                
+                // Reset Form
+                stakeAmountInput.value = '';
+                validatorSelect.value = 'Select a validator...';
+                
             } else {
-                console.log('RPC broadcast failed, transaction still processed by network');
+                throw new Error(broadcastResult.error || 'Broadcasting failed');
             }
             
-        } catch (broadcastError) {
-            console.log('Broadcasting failed (expected due to CORS):', broadcastError.message);
-            // Das ist OK - die Transaktion wird trotzdem verarbeitet
+        } catch (aminoError) {
+            console.error('❌ Amino method also failed:', aminoError);
+            throw aminoError;
         }
-        
-        // ✅ INFORMATIVE NACHRICHTEN
-        if (!broadcastSuccess) {
-            this.showNotification('📡 Transaction submitted to network', 'info');
-            this.showNotification('⏳ Processing may take 6-8 seconds', 'info');
-        }
-        
-        // ✅ UPDATE UI OPTIMISTISCH (NACH 8 SEKUNDEN)
-        setTimeout(() => {
-            console.log('🔄 Refreshing delegation data...');
-            this.populateUserDelegations(delegatorAddress);
-            if (this.updateBalanceOverview) {
-                this.updateBalanceOverview();
-            }
-            this.showNotification('🔄 Updated balances and delegations', 'info');
-        }, 8000);
-        
-        // ✅ RESET FORM
-        stakeAmountInput.value = '';
-        validatorSelect.value = 'Select a validator...';
-        
-        // ✅ ZUSÄTZLICHE INFO FÜR BENUTZER
-        this.showNotification('💡 Check Keplr extension for transaction status', 'info');
         
     } catch (error) {
-        console.error('❌ Staking failed:', error);
+        console.error('❌ All staking methods failed:', error);
         
-        // Detaillierte Fehlermeldung
         let errorMessage = error.message;
         if (errorMessage.includes('insufficient funds')) {
             errorMessage = 'Insufficient funds for transaction + gas fees';
@@ -166,19 +225,203 @@ UIManager.prototype.performStaking = async function() {
             errorMessage = 'Transaction cancelled by user';
         } else if (errorMessage.includes('Request rejected')) {
             errorMessage = 'Transaction rejected - please try again';
-        } else if (errorMessage.includes('Account fetch failed')) {
-            errorMessage = 'Network error - please try again';
-        } else if (errorMessage.includes('enable')) {
-            errorMessage = 'Failed to connect to Keplr - please unlock wallet';
         }
         
         this.showNotification(`❌ Staking failed: ${errorMessage}`, 'error');
         
         // Fallback: Manuelle Anweisungen
-        if (!errorMessage.includes('cancelled') && !errorMessage.includes('denied')) {
-            this.showManualStakingFallback(amount, validatorAddress, validatorSelect);
-        }
+        this.showManualStakingInstructions(amount, validatorAddress, validatorSelect);
     }
+};
+
+// ✅ HELPER: VERSUCHE MULTIPLE BROADCASTING-METHODEN
+UIManager.prototype.tryMultipleBroadcastMethods = async function(signature, txDoc, chainId) {
+    const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
+    const rpcUrl = MEDAS_CHAIN_CONFIG?.rpc || 'https://rpc.medas-digital.io:26657';
+    
+    // Methode 1: REST API mit korrektem Format
+    try {
+        console.log('📡 Trying REST broadcast...');
+        
+        const tx = {
+            msg: txDoc.msgs,
+            fee: txDoc.fee,
+            signatures: [signature],
+            memo: txDoc.memo
+        };
+        
+        // Verwende application/x-www-form-urlencoded statt JSON
+        const formData = new URLSearchParams();
+        formData.append('tx', JSON.stringify(tx));
+        
+        const response = await fetch(`${restUrl}/txs`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formData
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            
+            if (result.code === 0) {
+                return {
+                    success: true,
+                    txHash: result.txhash
+                };
+            } else {
+                console.warn('REST broadcast rejected:', result.raw_log);
+            }
+        }
+        
+    } catch (restError) {
+        console.log('REST broadcast failed:', restError.message);
+    }
+    
+    // Methode 2: RPC mit korrektem Hex-Format
+    try {
+        console.log('📡 Trying RPC broadcast...');
+        
+        const tx = {
+            msg: txDoc.msgs,
+            fee: txDoc.fee,
+            signatures: [signature],
+            memo: txDoc.memo
+        };
+        
+        // Konvertiere zu korrektem Hex-Format
+        const txJson = JSON.stringify(tx);
+        const txBytes = new TextEncoder().encode(txJson);
+        const txHex = Array.from(txBytes)
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('')
+            .toUpperCase();
+        
+        const response = await fetch(`${rpcUrl}/broadcast_tx_commit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                id: 1,
+                method: "broadcast_tx_commit",
+                params: {
+                    tx: txHex
+                }
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            
+            if (result.result && result.result.check_tx.code === 0 && result.result.deliver_tx.code === 0) {
+                return {
+                    success: true,
+                    txHash: result.result.hash
+                };
+            } else {
+                console.warn('RPC broadcast rejected:', result.result?.deliver_tx?.log);
+            }
+        }
+        
+    } catch (rpcError) {
+        console.log('RPC broadcast failed:', rpcError.message);
+    }
+    
+    // Methode 3: Direkte WebSocket (falls verfügbar)
+    try {
+        console.log('📡 Trying WebSocket broadcast...');
+        
+        const wsUrl = rpcUrl.replace('https://', 'wss://').replace('http://', 'ws://');
+        
+        return await new Promise((resolve, reject) => {
+            const ws = new WebSocket(`${wsUrl}/websocket`);
+            let timeout = setTimeout(() => {
+                ws.close();
+                reject(new Error('WebSocket timeout'));
+            }, 10000);
+            
+            ws.onopen = () => {
+                const tx = {
+                    msg: txDoc.msgs,
+                    fee: txDoc.fee,
+                    signatures: [signature],
+                    memo: txDoc.memo
+                };
+                
+                const txJson = JSON.stringify(tx);
+                const txBytes = new TextEncoder().encode(txJson);
+                const txHex = Array.from(txBytes)
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('');
+                
+                ws.send(JSON.stringify({
+                    jsonrpc: "2.0",
+                    id: 1,
+                    method: "broadcast_tx_commit",
+                    params: {
+                        tx: txHex
+                    }
+                }));
+            };
+            
+            ws.onmessage = (event) => {
+                clearTimeout(timeout);
+                const result = JSON.parse(event.data);
+                
+                if (result.result && result.result.deliver_tx.code === 0) {
+                    resolve({
+                        success: true,
+                        txHash: result.result.hash
+                    });
+                } else {
+                    resolve({
+                        success: false,
+                        error: result.result?.deliver_tx?.log || 'WebSocket broadcast failed'
+                    });
+                }
+                
+                ws.close();
+            };
+            
+            ws.onerror = () => {
+                clearTimeout(timeout);
+                reject(new Error('WebSocket connection failed'));
+            };
+        });
+        
+    } catch (wsError) {
+        console.log('WebSocket broadcast failed:', wsError.message);
+    }
+    
+    return {
+        success: false,
+        error: 'All broadcasting methods failed'
+    };
+};
+
+// ✅ HELPER: MANUELLE STAKING-ANWEISUNGEN
+UIManager.prototype.showManualStakingInstructions = function(amount, validatorAddress, validatorSelect) {
+    const validatorName = validatorSelect.options[validatorSelect.selectedIndex]?.text || `Validator ${validatorAddress.slice(-8)}`;
+    
+    this.showNotification('❌ Automatic broadcasting failed', 'error');
+    this.showNotification('💡 Please complete staking manually in Keplr:', 'info');
+    this.showNotification(`🎯 Delegate ${amount} MEDAS to ${validatorName}`, 'info');
+    this.showNotification(`🔗 Validator: ${validatorAddress.slice(-8)}`, 'info');
+    
+    // Versuche Keplr Dashboard zu öffnen
+    try {
+        const keplrUrl = `https://wallet.keplr.app/chains/${MEDAS_CHAIN_CONFIG?.chainId || 'medasdigital-2'}`;
+        window.open(keplrUrl, '_blank');
+        this.showNotification('🚀 Opening Keplr Dashboard...', 'success');
+    } catch (error) {
+        this.showNotification('💻 Please open Keplr Dashboard manually', 'info');
+    }
+    
+    // Reset form
+    const stakeAmountInput = document.getElementById('stake-amount');
+    if (stakeAmountInput) stakeAmountInput.value = '';
+    if (validatorSelect) validatorSelect.value = 'Select a validator...';
 };
 
 // ✅ HELPER: RPC BROADCASTING (CORS-FREIER VERSUCH)
