@@ -48,9 +48,7 @@ const MEDAS_CHAIN_CONFIG = {
     features: [
         "cosmwasm",
         "ibc-transfer", 
-        "ibc-go",
-        "stargate",       // Protobuf support
-        "no-legacy-stdTx" // Kein Legacy Amino
+        "ibc-go"
     ],
     // ✅ NEU: Transaction Explorer
     txExplorer: {
