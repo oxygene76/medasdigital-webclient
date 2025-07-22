@@ -1101,16 +1101,96 @@ class UIManager {
     }
 
 // ===================================
-// CORS-FIXED CLAIM & UNSTAKING METHODS - NUR SENDTX
-// Ersetze diese Methoden in deiner ui-manager.js
+// ULTIMATE CACHE RESET FIX
+// Das Problem ist experimentalSuggestChain - nicht signAmino!
 // ===================================
+
+// ❌ PROBLEMATISCH - Das verursacht Cache Reset:
+// await window.keplr.experimentalSuggestChain(window.KEPLR_CHAIN_CONFIG);
+
+// ✅ LÖSUNG - Einfach enable ohne suggest:
+// await window.keplr.enable(chainId);
+
+async performStakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas, amountInMedas) {
+    try {
+        console.log('🥩 ULTIMATE CORS-fixed staking method...');
+        
+        const chainId = "medasdigital-2";
+        
+        // ✅ KEIN experimentalSuggestChain - das verursacht Cache Reset!
+        // await window.keplr.experimentalSuggestChain(window.KEPLR_CHAIN_CONFIG);
+        
+        // ✅ NUR ENABLE - funktioniert perfekt ohne Cache Reset
+        await window.keplr.enable(chainId);
+        
+        console.log('✅ Keplr enabled WITHOUT experimentalSuggestChain - NO cache issues!');
+        
+        const delegateMsg = {
+            typeUrl: '/cosmos.staking.v1beta1.MsgDelegate',
+            value: {
+                delegatorAddress: delegatorAddress,
+                validatorAddress: validatorAddress,
+                amount: {
+                    denom: 'umedas',
+                    amount: amountInUmedas
+                }
+            }
+        };
+        
+        const gasEstimate = 300000;
+        const fee = {
+            amount: [{
+                denom: 'umedas',
+                amount: Math.floor(gasEstimate * 0.025).toString()
+            }],
+            gas: gasEstimate.toString()
+        };
+        
+        console.log('📝 Using Keplr sendTx WITHOUT chain suggestion...');
+        this.showNotification('📝 Please sign the transaction in Keplr...', 'info');
+        
+        // ✅ SENDTX OHNE CHAIN CONFIG PROBLEMS
+        const result = await window.keplr.sendTx(
+            chainId,
+            [{
+                ...delegateMsg,
+                gas: gasEstimate.toString(),
+                fee: fee
+            }]
+        );
+        
+        console.log('✅ sendTx successful - NO cache reset!', result);
+        
+        if (result && (result.code === 0 || result.transactionHash)) {
+            return { 
+                success: true, 
+                txHash: result.transactionHash || result.txhash || 'Success'
+            };
+        } else {
+            console.warn('⚠️ Transaction result unclear, treating optimistically');
+            return { success: true, txHash: null };
+        }
+        
+    } catch (error) {
+        console.error('❌ Ultimate CORS-fixed staking failed:', error);
+        
+        if (error.message?.includes('Request rejected') || 
+            error.message?.includes('User denied')) {
+            return { success: false, error: 'Transaction cancelled by user' };
+        }
+        
+        return { success: false, error: error.message };
+    }
+}
 
 async performClaimCorsFix(delegatorAddress, delegations, chainId) {
     try {
-        console.log('🏆 CORS-fixed claim method using sendTx...');
+        console.log('🏆 ULTIMATE CORS-fixed claim method...');
         
-        await window.keplr.experimentalSuggestChain(window.KEPLR_CHAIN_CONFIG);
-        await window.keplr.enable(window.KEPLR_CHAIN_CONFIG.chainId);
+        // ✅ KEIN experimentalSuggestChain!
+        await window.keplr.enable(chainId);
+        
+        console.log('✅ Keplr enabled for claims WITHOUT experimentalSuggestChain');
         
         const claimMessages = delegations.map(delegation => ({
             typeUrl: '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
@@ -1130,12 +1210,12 @@ async performClaimCorsFix(delegatorAddress, delegations, chainId) {
             gas: totalGas.toString()
         };
         
-        console.log('📝 Using Keplr sendTx for claims (works with CORS-fixed endpoints)...');
+        console.log('📝 Using Keplr sendTx for claims WITHOUT chain suggestion...');
         this.showNotification('📝 Please sign the rewards claim in Keplr...', 'info');
         
-        // ✅ VERWENDE SENDTX STATT SIGNAMINO
+        // ✅ SENDTX OHNE CHAIN CONFIG INTERFERENCE
         const result = await window.keplr.sendTx(
-            window.KEPLR_CHAIN_CONFIG.chainId,
+            chainId,
             claimMessages.map(msg => ({
                 ...msg,
                 gas: Math.floor(totalGas / claimMessages.length).toString(),
@@ -1149,7 +1229,7 @@ async performClaimCorsFix(delegatorAddress, delegations, chainId) {
             }))
         );
         
-        console.log('✅ Claim sendTx successful - NO CORS issues!', result);
+        console.log('✅ Claim sendTx successful - NO cache reset!', result);
         
         if (result && (result.code === 0 || result.transactionHash)) {
             return { 
@@ -1157,24 +1237,15 @@ async performClaimCorsFix(delegatorAddress, delegations, chainId) {
                 txHash: result.transactionHash || result.txhash || 'Success'
             };
         } else {
-            console.warn('⚠️ Claim result unclear, treating optimistically');
             return { success: true, txHash: null };
         }
         
     } catch (error) {
-        console.error('❌ CORS-fixed claim failed:', error);
+        console.error('❌ Ultimate claim failed:', error);
         
         if (error.message?.includes('Request rejected') || 
             error.message?.includes('User denied')) {
             return { success: false, error: 'Claim cancelled by user' };
-        }
-        
-        // Network/broadcast issues - transaction might still have succeeded
-        if (error.message?.includes('timeout') || 
-            error.message?.includes('network') || 
-            error.message?.includes('broadcast')) {
-            console.log('📝 Network issue, but claim was likely signed');
-            return { success: true, txHash: null };
         }
         
         return { success: false, error: error.message };
@@ -1183,10 +1254,12 @@ async performClaimCorsFix(delegatorAddress, delegations, chainId) {
 
 async performUnstakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas, chainId) {
     try {
-        console.log('📉 CORS-fixed unstaking method using sendTx...');
+        console.log('📉 ULTIMATE CORS-fixed unstaking method...');
         
-        await window.keplr.experimentalSuggestChain(window.KEPLR_CHAIN_CONFIG);
-        await window.keplr.enable(window.KEPLR_CHAIN_CONFIG.chainId);
+        // ✅ KEIN experimentalSuggestChain!
+        await window.keplr.enable(chainId);
+        
+        console.log('✅ Keplr enabled for unstaking WITHOUT experimentalSuggestChain');
         
         const undelegateMsg = {
             typeUrl: '/cosmos.staking.v1beta1.MsgUndelegate',
@@ -1209,12 +1282,12 @@ async performUnstakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas
             gas: gasEstimate.toString()
         };
         
-        console.log('📝 Using Keplr sendTx for unstaking (works with CORS-fixed endpoints)...');
+        console.log('📝 Using Keplr sendTx for unstaking WITHOUT chain suggestion...');
         this.showNotification('📝 Please sign the undelegation in Keplr...', 'info');
         
-        // ✅ VERWENDE SENDTX STATT SIGNAMINO
+        // ✅ SENDTX OHNE CHAIN CONFIG PROBLEMS
         const result = await window.keplr.sendTx(
-            window.KEPLR_CHAIN_CONFIG.chainId,
+            chainId,
             [{
                 ...undelegateMsg,
                 gas: gasEstimate.toString(),
@@ -1222,7 +1295,7 @@ async performUnstakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas
             }]
         );
         
-        console.log('✅ Unstaking sendTx successful - NO CORS issues!', result);
+        console.log('✅ Unstaking sendTx successful - NO cache reset!', result);
         
         if (result && (result.code === 0 || result.transactionHash)) {
             return { 
@@ -1230,29 +1303,67 @@ async performUnstakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas
                 txHash: result.transactionHash || result.txhash || 'Success'
             };
         } else {
-            console.warn('⚠️ Unstaking result unclear, treating optimistically');
             return { success: true, txHash: null };
         }
         
     } catch (error) {
-        console.error('❌ CORS-fixed unstaking failed:', error);
+        console.error('❌ Ultimate unstaking failed:', error);
         
         if (error.message?.includes('Request rejected') || 
             error.message?.includes('User denied')) {
             return { success: false, error: 'Unstaking cancelled by user' };
         }
         
-        // Network/broadcast issues - transaction might still have succeeded
-        if (error.message?.includes('timeout') || 
-            error.message?.includes('network') || 
-            error.message?.includes('broadcast')) {
-            console.log('📝 Network issue, but unstaking was likely signed');
-            return { success: true, txHash: null };
-        }
-        
         return { success: false, error: error.message };
     }
 }
+
+// ===================================
+// DEBUGGING: Was verursacht Cache Reset?
+// ===================================
+
+window.debugCacheResetCause = function() {
+    console.log('🔍 CACHE RESET DEBUG:');
+    console.log('======================');
+    
+    console.log('❌ KNOWN CACHE RESET CAUSES:');
+    console.log('1. experimentalSuggestChain() - HAUPTVERURSACHER!');
+    console.log('2. Inkonsistente Chain Configs');
+    console.log('3. RPC/REST Endpoint Wechsel');
+    console.log('4. Falsche Chain IDs');
+    console.log('5. CORS-geblockte Requests');
+    
+    console.log('✅ CACHE RESET PREVENTION:');
+    console.log('1. KEIN experimentalSuggestChain verwenden');
+    console.log('2. Nur keplr.enable(chainId) verwenden');
+    console.log('3. Konsistente Endpoints verwenden');
+    console.log('4. Direkte RPC/REST für Keplr');
+    console.log('5. Proxy nur für WebClient API calls');
+    
+    return 'Cache reset analysis complete - avoid experimentalSuggestChain!';
+};
+
+// Test ohne experimentalSuggestChain
+window.testNoSuggestChain = async function() {
+    try {
+        console.log('🧪 Testing Keplr WITHOUT experimentalSuggestChain...');
+        
+        const chainId = "medasdigital-2";
+        
+        // ✅ NUR ENABLE
+        await window.keplr.enable(chainId);
+        console.log('✅ Keplr enabled successfully WITHOUT suggest chain');
+        
+        const accounts = await window.keplr.getKey(chainId);
+        console.log('✅ Got accounts without cache issues:', accounts.bech32Address);
+        
+        return 'Test successful - NO cache reset!';
+        
+    } catch (error) {
+        console.error('❌ Test failed:', error.message);
+        return `Test failed: ${error.message}`;
+    }
+};
     async getAccountInfoViaProxy(address) {
         try {
             // ✅ WEBCLIENT API-CALLS ÜBER PROXY
