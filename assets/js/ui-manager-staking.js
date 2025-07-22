@@ -9,7 +9,7 @@ if (typeof UIManager !== 'undefined' && UIManager.prototype) {
     
 // ERSETZE die performStaking Funktion in ui-manager-staking.js:
 
-// DELEGATE TOKENS (Staking) - KORRIGIERTE KEPLR API
+// DELEGATE TOKENS (Staking) - CORS-FREIE LÖSUNG
 UIManager.prototype.performStaking = async function() {
     const validatorSelect = document.getElementById('validator-select');
     const stakeAmountInput = document.getElementById('stake-amount');
@@ -50,10 +50,10 @@ UIManager.prototype.performStaking = async function() {
         // ✅ ENABLE KEPLR FÜR CHAIN
         await window.keplr.enable(chainId);
         
-        // ✅ VERWENDE STANDARD getOfflineSigner (nicht Auto)
+        // ✅ VERWENDE STANDARD getOfflineSigner
         const offlineSigner = window.getOfflineSigner(chainId);
         
-        // Account Info holen mit korrekter API
+        // Account Info holen
         const accounts = await offlineSigner.getAccounts();
         if (!accounts.length) {
             throw new Error('No accounts found in Keplr wallet');
@@ -92,7 +92,7 @@ UIManager.prototype.performStaking = async function() {
             gas: gasLimit.toString(),
         };
         
-        // ✅ ERSTELLE AMINO MESSAGE (LEGACY ABER FUNKTIONAL)
+        // ✅ ERSTELLE AMINO MESSAGE
         const msg = {
             type: "cosmos-sdk/MsgDelegate",
             value: {
@@ -115,10 +115,9 @@ UIManager.prototype.performStaking = async function() {
             memo: ""
         };
         
-        console.log('📋 TX Document:', txDoc);
         console.log('📝 Signing transaction with Amino...');
         
-        // ✅ SIGNIERE MIT AMINO (LEGACY ABER ZUVERLÄSSIG)
+        // ✅ SIGNIERE MIT AMINO
         const signature = await window.keplr.signAmino(
             chainId,
             delegatorAddress,
@@ -127,55 +126,67 @@ UIManager.prototype.performStaking = async function() {
         
         console.log('✅ Transaction signed successfully');
         
-        // ✅ BROADCAST ÜBER REST API
+        // ✅ VERWENDE KEPLR'S EIGENES BROADCASTING (UMGEHT CORS)
         try {
-            const txBytes = this.encodeTxForBroadcast(signature, txDoc);
+            // Methode 1: Verwende Keplr's sendTx für Broadcasting
+            const txBytes = this.createTxBytes(signature, txDoc);
             
-            const broadcastResponse = await fetch(`${restUrl}/cosmos/tx/v1beta1/txs`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    tx_bytes: txBytes,
-                    mode: 'BROADCAST_MODE_SYNC'
-                })
-            });
+            console.log('📡 Broadcasting via Keplr...');
             
-            if (!broadcastResponse.ok) {
-                throw new Error(`Broadcast failed: ${broadcastResponse.status}`);
+            // Verwende Keplr's sendTx API
+            const keplrResult = await window.keplr.sendTx(
+                chainId,
+                txBytes,
+                "sync" // sync mode für bessere Kompatibilität
+            );
+            
+            console.log('✅ Keplr broadcast result:', keplrResult);
+            
+            // Erfolg!
+            this.showNotification(`✅ Delegation successful! TX: ${keplrResult}`, 'success');
+            
+            // Längere Wartezeit für Blockchain Update
+            setTimeout(() => {
+                this.populateUserDelegations(delegatorAddress);
+                if (this.updateBalanceOverview) {
+                    this.updateBalanceOverview();
+                }
+            }, 8000);
+            
+            // Reset Form
+            stakeAmountInput.value = '';
+            validatorSelect.value = 'Select a validator...';
+            
+        } catch (keplrBroadcastError) {
+            console.warn('❌ Keplr broadcast failed:', keplrBroadcastError);
+            
+            // Methode 2: Fallback zu RPC Broadcasting (CORS-frei)
+            try {
+                const rpcResult = await this.broadcastViaRPC(signature, txDoc);
+                
+                if (rpcResult.success) {
+                    this.showNotification(`✅ Delegation successful! TX: ${rpcResult.txHash}`, 'success');
+                    
+                    setTimeout(() => {
+                        this.populateUserDelegations(delegatorAddress);
+                        if (this.updateBalanceOverview) {
+                            this.updateBalanceOverview();
+                        }
+                    }, 8000);
+                    
+                    // Reset Form
+                    stakeAmountInput.value = '';
+                    validatorSelect.value = 'Select a validator...';
+                } else {
+                    throw new Error(rpcResult.error);
+                }
+                
+            } catch (rpcError) {
+                console.warn('❌ RPC broadcast also failed:', rpcError);
+                
+                // Methode 3: Benutzer-Anweisungen (Immer funktioniert)
+                this.showStakingInstructions(amount, validatorAddress, validatorSelect);
             }
-            
-            const result = await broadcastResponse.json();
-            console.log('📡 Broadcast result:', result);
-            
-            if (result.tx_response?.code === 0) {
-                this.showNotification(`✅ Delegation successful! TX: ${result.tx_response.txhash}`, 'success');
-                
-                // Längere Wartezeit für Blockchain Update
-                setTimeout(() => {
-                    this.populateUserDelegations(delegatorAddress);
-                    if (this.updateBalanceOverview) {
-                        this.updateBalanceOverview();
-                    }
-                }, 8000);
-                
-                // Reset Form
-                stakeAmountInput.value = '';
-                validatorSelect.value = 'Select a validator...';
-                
-            } else {
-                const errorLog = result.tx_response?.raw_log || 'Unknown error';
-                throw new Error(`Transaction failed: ${errorLog}`);
-            }
-            
-        } catch (broadcastError) {
-            console.error('❌ Broadcasting failed:', broadcastError);
-            
-            // Fallback: Zeige Benutzer-Anweisungen
-            this.showNotification('❌ Direct broadcasting failed', 'error');
-            this.showNotification('💡 Please complete the transaction in Keplr Dashboard:', 'info');
-            this.showNotification(`🎯 Delegate ${amount} MEDAS to ${validatorAddress.slice(-8)}`, 'info');
         }
         
     } catch (error) {
@@ -189,17 +200,100 @@ UIManager.prototype.performStaking = async function() {
             errorMessage = 'Transaction cancelled by user';
         } else if (errorMessage.includes('Request rejected')) {
             errorMessage = 'Transaction rejected - please try again';
-        } else if (errorMessage.includes('getAccounts is not a function')) {
-            errorMessage = 'Keplr compatibility issue - please update Keplr extension';
         } else if (errorMessage.includes('enable')) {
             errorMessage = 'Failed to connect to Keplr - please unlock your wallet';
         }
         
         this.showNotification(`❌ Staking failed: ${errorMessage}`, 'error');
         
-        // Fallback Info
-        this.showNotification('💡 Alternative: Use Keplr Dashboard for manual staking', 'info');
+        // Fallback: Zeige Benutzer-Anweisungen
+        const validatorName = validatorSelect.options[validatorSelect.selectedIndex]?.text || 'Selected Validator';
+        this.showStakingInstructions(amount, validatorAddress, validatorSelect, validatorName);
     }
+};
+
+// ✅ HELPER: ERSTELLE TX BYTES FÜR KEPLR
+UIManager.prototype.createTxBytes = function(signature, txDoc) {
+    // Erstelle Standard Cosmos TX Format
+    const tx = {
+        msg: txDoc.msgs,
+        fee: txDoc.fee,
+        signatures: [signature],
+        memo: txDoc.memo
+    };
+    
+    // Konvertiere zu Uint8Array (wie Keplr es erwartet)
+    const txString = JSON.stringify(tx);
+    return new TextEncoder().encode(txString);
+};
+
+// ✅ HELPER: RPC BROADCASTING (CORS-frei)
+UIManager.prototype.broadcastViaRPC = async function(signature, txDoc) {
+    try {
+        const rpcUrl = MEDAS_CHAIN_CONFIG?.rpc || 'https://rpc.medas-digital.io:26657';
+        
+        // Erstelle TX für RPC
+        const tx = {
+            msg: txDoc.msgs,
+            fee: txDoc.fee,
+            signatures: [signature],
+            memo: txDoc.memo
+        };
+        
+        const txBytes = new TextEncoder().encode(JSON.stringify(tx));
+        const txBase64 = btoa(String.fromCharCode(...txBytes));
+        
+        const rpcResponse = await fetch(`${rpcUrl}/broadcast_tx_sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                id: 1,
+                method: "broadcast_tx_sync",
+                params: {
+                    tx: txBase64
+                }
+            })
+        });
+        
+        if (rpcResponse.ok) {
+            const result = await rpcResponse.json();
+            
+            if (result.result && result.result.code === 0) {
+                return {
+                    success: true,
+                    txHash: result.result.hash
+                };
+            } else {
+                return {
+                    success: false,
+                    error: result.result?.log || 'RPC broadcast failed'
+                };
+            }
+        }
+        
+        return { success: false, error: 'RPC endpoint not reachable' };
+        
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+};
+
+// ✅ HELPER: ZEIGE STAKING-ANWEISUNGEN
+UIManager.prototype.showStakingInstructions = function(amount, validatorAddress, validatorSelect, validatorName) {
+    const shortValidator = validatorAddress.slice(-8);
+    const displayName = validatorName || `Validator ${shortValidator}`;
+    
+    this.showNotification('❌ Automatic staking failed due to CORS restrictions', 'error');
+    this.showNotification('💡 Please complete staking manually:', 'info');
+    this.showNotification(`🎯 Delegate ${amount} MEDAS to ${displayName}`, 'info');
+    this.showNotification(`🔗 Validator: ${shortValidator}`, 'info');
+    this.showNotification('📱 Use: Keplr Dashboard → Stake → Select Validator → Delegate', 'info');
+    
+    // Form zurücksetzen
+    const stakeAmountInput = document.getElementById('stake-amount');
+    if (stakeAmountInput) stakeAmountInput.value = '';
+    if (validatorSelect) validatorSelect.value = 'Select a validator...';
 };
 
 // ✅ ENCODING HELPER FÜR TX BROADCAST
