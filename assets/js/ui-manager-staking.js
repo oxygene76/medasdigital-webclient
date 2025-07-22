@@ -517,9 +517,7 @@ if (typeof UIManager !== 'undefined' && UIManager.prototype) {
     };
 
     
-    // POPULATE VALIDATORS WITH ACTIONS
-// ERSETZE DIESE FUNKTION in ui-manager-staking.js (um Zeile 240-290)
-// POPULATE VALIDATORS WITH ACTIONS
+// POPULATE VALIDATORS WITH ACTIONS - FIXED mit echten Namen
 UIManager.prototype.populateValidatorsWithActions = function(validators) {
     const validatorsContainer = document.getElementById('validators-list');
     if (!validatorsContainer) {
@@ -529,14 +527,25 @@ UIManager.prototype.populateValidatorsWithActions = function(validators) {
 
     console.log('📊 Displaying validators with actions:', validators.length);
 
+    // ERST: Cache alle Validator-Namen mit echten Daten
+    validators.forEach(validator => {
+        if (validator.description?.moniker) {
+            this.validatorNameCache.set(validator.operator_address, validator.description.moniker);
+            console.log(`💾 Cached validator name: ${validator.description.moniker} for ${validator.operator_address.slice(-8)}`);
+        }
+    });
+
     validatorsContainer.innerHTML = validators.map((validator, index) => {
         const commission = parseFloat(validator.commission?.commission_rates?.rate || 0) * 100;
         const votingPower = this.formatTokenAmount(validator.tokens, 6);
         const status = validator.status === 'BOND_STATUS_BONDED' ? 'Active' : 'Inactive';
         const jailed = validator.jailed ? 'Jailed' : 'OK';
         
-        // FIX: Validator Name außerhalb des Template String berechnen
-        const validatorName = this.getValidatorName(validator.operator_address);
+        // ✅ VERWENDE ECHTE VALIDATOR-NAMEN DIREKT AUS DEN API-DATEN
+        const validatorName = validator.description?.moniker || 
+                             this.getValidatorName(validator.operator_address, validator);
+        
+        console.log(`🏷️ Displaying validator: ${validatorName} (was: ${this.getValidatorName(validator.operator_address)})`);
         
         return `
             <div class="delegation-item">
@@ -571,7 +580,7 @@ UIManager.prototype.populateValidatorsWithActions = function(validators) {
         `;
     }).join('');
 
-    console.log('✅ Validators HTML generated and inserted');
+    console.log('✅ Validators HTML generated with REAL validator names');
 };
 
     console.log('🎯 UI-Manager Staking extensions loaded');
