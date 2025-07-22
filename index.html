@@ -11,6 +11,364 @@
     <link rel="stylesheet" href="assets/css/mobile.css">
     <link rel="stylesheet" href="assets/css/mobile-enhancements.css">
 </head>
+    <!-- Fügen Sie diese Script-Tags VOR dem schließenden </body> Tag hinzu -->
+
+<!-- Staking Helper Functions (Global) -->
+<script>
+// ===================================
+// GLOBALE STAKING-FUNKTIONEN
+// ===================================
+
+// Redelegate from form inputs
+async function performRedelegationFromForm() {
+    const fromSelect = document.getElementById('redelegate-from-select');
+    const toSelect = document.getElementById('redelegate-to-select');
+    const amountInput = document.getElementById('redelegate-amount');
+    
+    if (!fromSelect.value || fromSelect.value === 'Select source validator...') {
+        window.terminal?.ui?.showNotification('❌ Please select source validator', 'error');
+        return;
+    }
+    
+    if (!toSelect.value || toSelect.value === 'Select destination validator...') {
+        window.terminal?.ui?.showNotification('❌ Please select destination validator', 'error');
+        return;
+    }
+    
+    const amount = parseFloat(amountInput.value || '0');
+    if (amount <= 0) {
+        window.terminal?.ui?.showNotification('❌ Please enter valid amount', 'error');
+        return;
+    }
+    
+    await window.terminal?.ui?.performRedelegation(fromSelect.value, toSelect.value, amount);
+    
+    // Reset form
+    fromSelect.value = 'Select source validator...';
+    toSelect.value = 'Select destination validator...';
+    amountInput.value = '';
+}
+
+// Undelegate from form inputs
+async function performUndelegationFromForm() {
+    const fromSelect = document.getElementById('undelegate-from-select');
+    const amountInput = document.getElementById('undelegate-amount');
+    
+    if (!fromSelect.value || fromSelect.value === 'Select validator to unstake from...') {
+        window.terminal?.ui?.showNotification('❌ Please select validator', 'error');
+        return;
+    }
+    
+    const amount = parseFloat(amountInput.value || '0');
+    if (amount <= 0) {
+        window.terminal?.ui?.showNotification('❌ Please enter valid amount', 'error');
+        return;
+    }
+    
+    const confirmed = confirm(`Are you sure you want to undelegate ${amount} MEDAS?\n\nThis will start a 21-day unbonding period during which you won't earn rewards and cannot redelegate these tokens.`);
+    if (!confirmed) return;
+    
+    await window.terminal?.ui?.performUnstaking(fromSelect.value, amount);
+    
+    // Reset form
+    fromSelect.value = 'Select validator to unstake from...';
+    amountInput.value = '';
+}
+
+// Quick Stake aus Validator-Liste
+async function quickStake(validatorAddress, validatorName) {
+    const amount = prompt(`Quick Stake to ${validatorName}\n\nEnter amount in MEDAS:`);
+    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+        return;
+    }
+    
+    // Auto-fill form
+    selectValidator(validatorAddress, validatorName);
+    
+    const stakeAmountInput = document.getElementById('stake-amount');
+    if (stakeAmountInput) {
+        stakeAmountInput.value = amount;
+    }
+    
+    // Trigger staking
+    if (window.terminal?.ui?.performStaking) {
+        await window.terminal.ui.performStaking();
+    }
+}
+
+// Add More Stake zu bestehendem Validator
+async function addMoreStake(validatorAddress, validatorName) {
+    const amount = prompt(`Add more stake to ${validatorName}\n\nEnter additional amount in MEDAS:`);
+    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+        return;
+    }
+    
+    selectValidator(validatorAddress, validatorName);
+    
+    const stakeAmountInput = document.getElementById('stake-amount');
+    if (stakeAmountInput) {
+        stakeAmountInput.value = amount;
+    }
+    
+    if (window.terminal?.ui?.performStaking) {
+        await window.terminal.ui.performStaking();
+    }
+}
+
+// Claim Rewards von einzelnem Validator
+async function claimRewards(validatorAddress, validatorName) {
+    if (window.terminal?.ui?.claimSingleValidatorRewards) {
+        await window.terminal.ui.claimSingleValidatorRewards(validatorAddress, validatorName);
+    }
+}
+
+// Unstake from specific Validator
+async function unstakeFrom(validatorAddress, validatorName, currentAmount) {
+    const maxAmount = parseFloat(currentAmount);
+    const amount = prompt(`Unstake from ${validatorName}\n\nCurrent delegation: ${currentAmount} MEDAS\nEnter amount to unstake (max ${currentAmount}):`);
+    
+    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+        return;
+    }
+    
+    const unstakeAmount = parseFloat(amount);
+    if (unstakeAmount > maxAmount) {
+        window.terminal?.ui?.showNotification(`❌ Cannot unstake more than ${currentAmount} MEDAS`, 'error');
+        return;
+    }
+    
+    const confirmed = confirm(`Are you sure you want to unstake ${amount} MEDAS from ${validatorName}?\n\nThis will start a 21-day unbonding period during which you won't earn rewards and cannot redelegate these tokens.`);
+    if (!confirmed) return;
+    
+    if (window.terminal?.ui?.performUnstaking) {
+        await window.terminal.ui.performUnstaking(validatorAddress, amount);
+    }
+}
+
+// Enhanced Validator Selection
+window.selectValidator = function(validatorAddress, validatorName) {
+    // Standard validator select
+    const validatorSelect = document.getElementById('validator-select');
+    if (validatorSelect) {
+        let option = Array.from(validatorSelect.options).find(opt => opt.value === validatorAddress);
+        if (!option) {
+            option = new Option(validatorName, validatorAddress);
+            validatorSelect.add(option);
+        }
+        validatorSelect.value = validatorAddress;
+    }
+    
+    // Redelegate To select
+    const redelegateToSelect = document.getElementById('redelegate-to-select');
+    if (redelegateToSelect) {
+        let option = Array.from(redelegateToSelect.options).find(opt => opt.value === validatorAddress);
+        if (!option) {
+            option = new Option(validatorName, validatorAddress);
+            redelegateToSelect.add(option);
+        }
+    }
+    
+    console.log(`📊 Selected validator: ${validatorName} (${validatorAddress})`);
+};
+
+// Keyboard Shortcuts für Staking
+document.addEventListener('keydown', function(event) {
+    // Nur wenn Staking Tab aktiv ist
+    if (window.terminal?.ui?.activeTab !== 'staking') return;
+    
+    // Ctrl/Cmd + S = Quick Stake
+    if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+        event.preventDefault();
+        if (window.terminal?.ui?.performStaking) {
+            window.terminal.ui.performStaking();
+        }
+    }
+    
+    // Ctrl/Cmd + R = Claim All Rewards
+    if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
+        event.preventDefault();
+        if (window.terminal?.ui?.claimAllRewards) {
+            window.terminal.ui.claimAllRewards();
+        }
+    }
+});
+
+console.log('🎯 Enhanced staking functions loaded');
+</script>
+
+<!-- CSS Styles für Advanced Staking Features -->
+<style>
+/* Advanced Operations Styling */
+details summary {
+    list-style: none;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+    user-select: none;
+}
+
+details summary::-webkit-details-marker {
+    display: none;
+}
+
+details[open] summary::after {
+    content: ' ▼';
+}
+
+details summary::after {
+    content: ' ▶';
+    color: #00ffff;
+}
+
+details[open] {
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    padding: 12px;
+    margin-top: 16px;
+    background: rgba(0, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+/* Button Styling für Staking Actions */
+.btn-small {
+    padding: 6px 12px;
+    font-size: 11px;
+    border: 1px solid;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.btn-small:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.btn-small.btn-primary {
+    border-color: #00ffff;
+    color: #00ffff;
+}
+
+.btn-small.btn-success {
+    border-color: #00ff00;
+    color: #00ff00;
+}
+
+.btn-small.btn-warning {
+    border-color: #ffaa00;
+    color: #ffaa00;
+}
+
+.btn-small.btn-danger {
+    border-color: #ff0000;
+    color: #ff0000;
+}
+
+/* Delegation Item Styling */
+.delegation-item {
+    background: rgba(0, 255, 255, 0.05);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.validator-info {
+    flex: 1;
+}
+
+.validator-name {
+    color: #00ffff;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.validator-details {
+    color: #999;
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.validator-address {
+    font-size: 10px;
+    color: #666;
+    margin-top: 4px;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.stake-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Notification System */
+#notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    max-width: 400px;
+}
+
+.notification {
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    animation: slideInRight 0.3s ease-out;
+}
+
+.notification-success {
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid #00ff00;
+    color: #00ff00;
+}
+
+.notification-error {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid #ff0000;
+    color: #ff0000;
+}
+
+.notification-info {
+    background: rgba(0, 255, 255, 0.1);
+    border: 1px solid #00ffff;
+    color: #00ffff;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .delegation-item {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+    }
+    
+    .stake-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    details[open] {
+        padding: 8px;
+    }
+}
+</style>
 <body>
     <div class="stars" id="stars"></div>
     
@@ -360,49 +718,124 @@
                     </div>
                 </div>
 
-                <div id="staking-tab" class="tab-content">
-                    <div class="comm-header">
-                        <div class="comm-title">Staking Interface</div>
-                        <div class="comm-subtitle">Delegate tokens & earn rewards</div>
-                    </div>
-                    
-                    <div class="content-area">
-                        <div class="explorer-section" style="display: none;" id="my-delegations-section">
-                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">MY DELEGATIONS</div>
-                            <div id="current-delegations">
-                            </div>
-                            <div style="text-align: center; margin-top: 12px;">
-                                <span style="color: #00ff00; font-weight: 700;">Total Pending Rewards: </span>
-                                <span id="total-rewards" style="color: #00ff00; font-family: 'Share Tech Mono', monospace;">0.000000 MEDAS</span>
-                                <button class="terminal-button btn-success" style="width: auto; padding: 8px 16px; margin-left: 12px; font-size: 11px;">Claim All Rewards</button>
-                            </div>
-                        </div>
+                <!-- Ersetzen Sie nur Ihre bestehende Staking-Section (div id="staking-tab") mit diesem Code -->
 
-                        <div class="explorer-section">
-                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">TOP VALIDATORS</div>
-                            <div id="validators-list">
-                            </div>
-                        </div>
+<div id="staking-tab" class="tab-content">
+    <div class="comm-header">
+        <div class="comm-title">Staking Interface</div>
+        <div class="comm-subtitle">Delegate tokens & earn rewards</div>
+    </div>
+    
+    <div class="content-area">
+        <!-- MY DELEGATIONS SECTION (Erweitert) -->
+        <div class="explorer-section" style="display: none;" id="my-delegations-section">
+            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">MY DELEGATIONS</div>
+            <div id="current-delegations">
+                <!-- Wird dynamisch gefüllt -->
+            </div>
+            <div style="text-align: center; margin-top: 12px;">
+                <span style="color: #00ff00; font-weight: 700;">Total Pending Rewards: </span>
+                <span id="total-rewards" style="color: #00ff00; font-family: 'Share Tech Mono', monospace;">0.000000 MEDAS</span>
+                <button id="claim-all-rewards-btn" class="terminal-button btn-success" style="width: auto; padding: 8px 16px; margin-left: 12px; font-size: 11px;" onclick="window.terminal?.ui?.claimAllRewards()">
+                    Claim All Rewards
+                </button>
+            </div>
+        </div>
 
-                        <div class="explorer-section">
-                            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">QUICK STAKE</div>
-                            <div class="form-group">
-                                <label class="form-label">Select Validator</label>
-                                <select id="validator-select" class="form-input">
-                                    <option>Select a validator...</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Amount (MEDAS)</label>
-                                <div class="input-wrapper">
-                                    <input type="number" id="stake-amount" class="form-input" placeholder="0.000000" step="0.000001" min="0">
-                                    <button class="max-button" onclick="setMaxStakeAmount()">MAX</button>
-                                </div>
-                            </div>
-                            <button class="terminal-button btn-primary" onclick="delegateTokens()" style="margin-top: 8px;">Delegate Tokens</button>
-                        </div>
-                    </div>
+        <!-- TOP VALIDATORS SECTION (Erweitert) -->
+        <div class="explorer-section">
+            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">TOP VALIDATORS</div>
+            <div id="validators-list">
+                <!-- Wird dynamisch gefüllt mit erweiterten Actions -->
+            </div>
+        </div>
+
+        <!-- QUICK STAKE SECTION (Erweitert) -->
+        <div class="explorer-section">
+            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">QUICK STAKE</div>
+            <div class="form-group">
+                <label class="form-label">Select Validator</label>
+                <select id="validator-select" class="form-input">
+                    <option>Select a validator...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Amount (MEDAS)</label>
+                <div class="input-wrapper">
+                    <input type="number" id="stake-amount" class="form-input" placeholder="0.000000" step="0.000001" min="0">
+                    <button class="max-button" onclick="window.terminal?.ui?.setMaxStakeAmount()">MAX</button>
                 </div>
+            </div>
+            <button class="terminal-button btn-primary" onclick="window.terminal?.ui?.performStaking()" style="width: 100%; margin-top: 8px;">
+                🥩 Delegate Tokens
+            </button>
+
+            <!-- ADVANCED STAKING OPERATIONS (NEU) -->
+            <details style="margin-top: 16px;">
+                <summary style="color: #00ffff; cursor: pointer; margin-bottom: 12px; font-size: 14px;">Advanced Operations</summary>
+                
+                <!-- REDELEGATION -->
+                <div class="form-group">
+                    <label class="form-label">Redelegate From</label>
+                    <select id="redelegate-from-select" class="form-input">
+                        <option>Select source validator...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Redelegate To</label>
+                    <select id="redelegate-to-select" class="form-input">
+                        <option>Select destination validator...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Redelegation Amount (MEDAS)</label>
+                    <input type="number" id="redelegate-amount" class="form-input" placeholder="0.000000" step="0.000001" min="0">
+                </div>
+                <button id="redelegate-btn" class="terminal-button btn-warning" style="width: 100%; margin-bottom: 8px;" onclick="performRedelegationFromForm()">
+                    🔄 Redelegate Tokens
+                </button>
+
+                <!-- UNDELEGATION -->
+                <div class="form-group" style="margin-top: 16px;">
+                    <label class="form-label">Undelegate From</label>
+                    <select id="undelegate-from-select" class="form-input">
+                        <option>Select validator to unstake from...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Undelegation Amount (MEDAS)</label>
+                    <input type="number" id="undelegate-amount" class="form-input" placeholder="0.000000" step="0.000001" min="0">
+                </div>
+                <button id="undelegate-btn" class="terminal-button btn-danger" style="width: 100%;" onclick="performUndelegationFromForm()">
+                    📤 Undelegate Tokens (21 day unbonding)
+                </button>
+            </details>
+        </div>
+
+        <!-- STAKING STATISTICS (NEU) -->
+        <div class="explorer-section">
+            <div style="position: absolute; top: -8px; left: 12px; background: #0a0a0a; padding: 0 8px; font-size: 10px; color: #00cc66; letter-spacing: 1px;">STAKING STATISTICS</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div style="text-align: center; padding: 12px; background: rgba(0, 0, 0, 0.6); border: 1px solid #333;">
+                    <div style="font-size: 10px; color: #999; text-transform: uppercase; margin-bottom: 5px;">Your Total Staked</div>
+                    <div style="font-size: 14px; color: #00ffff; font-family: 'Share Tech Mono', monospace; font-weight: bold;" id="user-total-staked">0.000000 MEDAS</div>
+                </div>
+                <div style="text-align: center; padding: 12px; background: rgba(0, 0, 0, 0.6); border: 1px solid #333;">
+                    <div style="font-size: 10px; color: #999; text-transform: uppercase; margin-bottom: 5px;">Pending Rewards</div>
+                    <div style="font-size: 14px; color: #00ffff; font-family: 'Share Tech Mono', monospace; font-weight: bold;" id="user-total-rewards">0.000000 MEDAS</div>
+                </div>
+                <div style="text-align: center; padding: 12px; background: rgba(0, 0, 0, 0.6); border: 1px solid #333;">
+                    <div style="font-size: 10px; color: #999; text-transform: uppercase; margin-bottom: 5px;">Active Delegations</div>
+                    <div style="font-size: 14px; color: #00ffff; font-family: 'Share Tech Mono', monospace; font-weight: bold;" id="user-delegation-count">0</div>
+                </div>
+                <div style="text-align: center; padding: 12px; background: rgba(0, 0, 0, 0.6); border: 1px solid #333;">
+                    <div style="font-size: 10px; color: #999; text-transform: uppercase; margin-bottom: 5px;">Est. Monthly Rewards</div>
+                    <div style="font-size: 14px; color: #00ffff; font-family: 'Share Tech Mono', monospace; font-weight: bold;" id="user-monthly-estimate">0.000000 MEDAS</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
                 <div id="wallet-tab" class="tab-content">
                     <div class="comm-header">
@@ -472,12 +905,16 @@
         </div>
     </div>
 
-    <!-- JavaScript Modules -->
-    <script src="assets/js/config.js"></script>
-    <script src="assets/js/keplr-manager.js"></script>
-    <script src="assets/js/ui-manager.js"></script>
-    <script src="assets/js/mock-data.js"></script>
-    <script src="assets/js/main.js"></script>
-    <script src="assets/js/mobile-navigation.js"></script>
+   <!-- Ersetzen Sie Ihre bestehenden JavaScript-Includes mit diesen -->
+
+<!-- JavaScript Modules -->
+<script src="assets/js/config.js"></script>
+<script src="assets/js/mock-data.js"></script>
+<script src="assets/js/keplr-manager.js"></script>
+<script src="assets/js/ui-manager.js"></script>
+<script src="assets/js/ui-manager-staking.js"></script>
+<script src="assets/js/staking-helpers.js"></script>
+<script src="assets/js/main.js"></script>
+<script src="assets/js/mobile-navigation.js"></script>
 </body>
 </html>
