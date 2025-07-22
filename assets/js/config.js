@@ -44,7 +44,30 @@ const MEDAS_CHAIN_CONFIG = {
         coinDecimals: 6,
         coinGeckoId: "medas-digital",
     },
-    coinType: 118,
+    // ✅ NEU: Features für Cosmos SDK 0.50
+    features: [
+        "cosmwasm",
+        "ibc-transfer", 
+        "ibc-go",
+        "stargate",       // Protobuf support
+        "no-legacy-stdTx" // Kein Legacy Amino
+    ],
+    // ✅ NEU: Transaction Explorer
+    txExplorer: {
+        name: "Medas Explorer", 
+        txUrl: "https://explorer.medas-digital.io/tx/{txHash}"
+    },
+    // ✅ NEU: Gas-Einstellungen für verschiedene Transaktionen
+    gas: {
+        defaults: {
+            delegate: 250000,
+            undelegate: 300000,
+            redelegate: 350000,
+            claimRewards: 150000,
+            send: 80000
+        },
+        multiplier: 1.3 // Safety margin
+    }
 };
 
 // API Configuration
@@ -311,6 +334,28 @@ const FEATURE_FLAGS = {
     networkDebug: false
 };
 
+// ✅ NEU: Keplr Compatibility Check
+window.checkKeplrCompatibility = function() {
+    console.log('🔍 KEPLR COMPATIBILITY CHECK:');
+    console.log('Keplr version:', window.keplr?.version || 'unknown');
+    console.log('Keplr mode:', window.keplr?.mode || 'unknown');
+    console.log('experimentalSignTx available:', !!window.keplr?.experimentalSignTx);
+    console.log('sendTx available:', !!window.keplr?.sendTx);
+    console.log('signAmino available:', !!window.keplr?.signAmino);
+    
+    // Test Chain Info
+    const chainInfo = MEDAS_CHAIN_CONFIG;
+    console.log('Chain config features:', chainInfo.features);
+    console.log('Chain config gas defaults:', chainInfo.gas?.defaults);
+    
+    return {
+        version: window.keplr?.version,
+        modern: !!window.keplr?.experimentalSignTx,
+        legacy: !!window.keplr?.sendTx,
+        recommended: 'Update to Keplr v0.12+ for best compatibility with Cosmos SDK 0.50'
+    };
+};
+
 // Export configurations for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
     // Node.js environment
@@ -367,6 +412,19 @@ const ConfigUtils = {
     // Get theme color
     getThemeColor(color) {
         return UI_CONFIG.theme[color] || '#ffffff';
+    },
+    
+    // ✅ NEU: Get Gas Configuration
+    getGasConfig(txType = 'delegate') {
+        const gasDefaults = MEDAS_CHAIN_CONFIG.gas?.defaults || {};
+        const multiplier = MEDAS_CHAIN_CONFIG.gas?.multiplier || 1.3;
+        const baseGas = gasDefaults[txType] || 250000;
+        
+        return {
+            gas: Math.floor(baseGas * multiplier).toString(),
+            gasPrice: MEDAS_CHAIN_CONFIG.feeCurrencies[0].gasPriceStep.average,
+            fee: Math.floor(baseGas * multiplier * MEDAS_CHAIN_CONFIG.feeCurrencies[0].gasPriceStep.average).toString()
+        };
     },
     
     // Validate environment
