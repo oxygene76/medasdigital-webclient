@@ -593,41 +593,94 @@ updateNetworkOverviewData(networkData) {
         }
     }
 
-    async populateValidators() {
-    const validatorsContainer = document.getElementById('validators-list');
-    if (!validatorsContainer) return;
-
+    / 1. ERSETZEN Sie Ihre populateValidators() Funktion mit dieser:
+async populateValidators() {
+    console.log('🔍 Loading validators...');
+    
     try {
-        // Hole echte Validators von der API
         const validators = await this.fetchRealValidators();
         
         if (validators && validators.length > 0) {
-            console.log(`📊 Loaded ${validators.length} real validators`);
+            console.log('✅ Loaded validators:', validators.length);
             
-            validatorsContainer.innerHTML = validators.map(validator => `
-                <div class="delegation-item">
-                    <div class="validator-info">
-                        <div class="validator-name">${validator.name}</div>
-                        <div class="validator-details">
-                            Commission: ${validator.commission} | Voting Power: ${validator.voting_power}
-                        </div>
+            // WICHTIG: Verwende die neue populateValidatorsWithActions Funktion
+            this.populateValidatorsWithActions(validators);
+            
+            // Update auch die Validator-Selects
+            this.updateValidatorSelect(validators);
+            
+            return;
+        }
+        
+        // Fallback zu MockData
+        console.warn('⚠️ No real validators found, using fallback');
+        this.populateValidatorsFallback();
+        
+    } catch (error) {
+        console.error('❌ Failed to load validators:', error);
+        this.populateValidatorsFallback();
+    }
+}
+// 2. FÜGEN Sie diese populateValidatorsWithActions Funktion HINZU:
+populateValidatorsWithActions(validators) {
+    const validatorsContainer = document.getElementById('validators-list');
+    if (!validatorsContainer) return;
+
+    console.log('📊 Displaying validators with actions:', validators.length);
+
+    validatorsContainer.innerHTML = validators.map(validator => {
+        const commission = parseFloat(validator.commission?.commission_rates?.rate || 0) * 100;
+        const votingPower = this.formatTokenAmount(validator.tokens, 6);
+        const status = validator.status === 'BOND_STATUS_BONDED' ? 'Active' : 'Inactive';
+        const jailed = validator.jailed ? 'Jailed' : 'OK';
+        const validatorName = this.getValidatorName(validator.operator_address);
+        
+        return `
+            <div class="delegation-item">
+                <div class="validator-info">
+                    <div class="validator-name">${validatorName}</div>
+                    <div class="validator-details">
+                        Commission: ${commission.toFixed(2)}% | 
+                        Voting Power: ${votingPower} MEDAS | 
+                        Status: ${status} ${jailed !== 'OK' ? '(' + jailed + ')' : ''}
                     </div>
-                    <div class="stake-actions">
-                        <button class="btn-small btn-primary" style="border-color: #00ffff; color: #00ffff;" 
-                                onclick="selectValidator('${validator.address}', '${validator.name}')">
-                            Select
-                        </button>
+                    <div class="validator-address" style="font-size: 10px; color: #666; margin-top: 4px;">
+                        ${validator.operator_address}
                     </div>
                 </div>
-            `).join('');
-        } else {
-            // Fallback zu Mock-Data
-            console.warn('⚠️ No real validators found, using mock data');
-            this.populateValidatorsFallback();
-        }
-    } catch (error) {
-        console.error('❌ Failed to load real validators:', error);
-        this.populateValidatorsFallback();
+                <div class="stake-actions">
+                    <button class="btn-small btn-primary" style="border-color: #00ffff; color: #00ffff; margin-right: 8px;" 
+                            onclick="selectValidator('${validator.operator_address}', '${validatorName}')">
+                        Select
+                    </button>
+                    <button class="btn-small btn-success" style="border-color: #00ff00; color: #00ff00;" 
+                            onclick="quickStake('${validator.operator_address}', '${validatorName}')">
+                        Quick Stake
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 3. FÜGEN Sie diese updateValidatorSelect Funktion HINZU:
+updateValidatorSelect(validators) {
+    const validatorSelect = document.getElementById('validator-select');
+    if (!validatorSelect) return;
+    
+    // Behalte aktuelle Auswahl
+    const currentValue = validatorSelect.value;
+    
+    validatorSelect.innerHTML = '<option>Select a validator...</option>' +
+        validators.slice(0, 30).map(validator => { // Top 30 für Performance
+            const validatorName = this.getValidatorName(validator.operator_address);
+            const commission = parseFloat(validator.commission?.commission_rates?.rate || 0) * 100;
+            return `<option value="${validator.operator_address}">${validatorName} (${commission.toFixed(1)}%)</option>`;
+        }).join('');
+    
+    // Restore selection wenn möglich
+    if (currentValue && currentValue !== 'Select a validator...') {
+        validatorSelect.value = currentValue;
     }
 }
 
@@ -825,30 +878,33 @@ updateBalanceOverviewFallback() {
 
 
     
-    async fetchRealValidators() {
+    // 4. VERBESSERN Sie Ihre fetchRealValidators() Funktion:
+async fetchRealValidators() {
+    console.log('🔍 Fetching real validators from blockchain...');
+    
     try {
         const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
         const response = await fetch(`${restUrl}/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED&pagination.limit=100`, {
             method: 'GET',
-            signal: AbortSignal.timeout(10000)
+            signal: AbortSignal.timeout(10000) // 10s timeout
         });
         
         if (!response.ok) {
-            throw new Error(`Validators API failed: ${response.status}`);
+            throw new Error(`API failed: ${response.status}`);
         }
         
         const data = await response.json();
         
-        return data.validators?.filter(v => v.status === 'BOND_STATUS_BONDED' && !v.jailed)
-            .map(validator => ({
-                name: validator.description?.moniker || 'Unknown Validator',
-                address: validator.operator_address,
-                commission: `${(parseFloat(validator.commission?.commission_rates?.rate || 0) * 100).toFixed(1)}%`,
-                voting_power: this.formatTokenAmount(validator.tokens),
-                status: 'Active',
-                jailed: validator.jailed,
-                tokens: validator.tokens // Für Sortierung
-            }))
+        if (!data.validators || data.validators.length === 0) {
+            console.warn('⚠️ No validators returned from API');
+            return null;
+        }
+        
+        console.log(`📊 Raw validators from API: ${data.validators.length}`);
+        
+        // Sortiere nach Voting Power (tokens) - KORRIGIERT
+        return data.validators
+            .filter(validator => validator.status === 'BOND_STATUS_BONDED') // Nur aktive
             .sort((a, b) => {
                 // KORREKTUR: Sortiere nach Voting Power (tokens)
                 const aTokens = parseInt(a.tokens || 0);
@@ -861,6 +917,7 @@ updateBalanceOverviewFallback() {
         return null;
     }
 }
+
 async fetchUserDelegations(delegatorAddress) {
     try {
         const restUrl = MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
@@ -992,37 +1049,26 @@ formatTokenAmount(amount, decimals = 6) {
     return value.toFixed(6);
 }
 
-getValidatorName(validatorAddress) {
-    // Einfacher Cache für Validator Namen
+// 5. VERBESSERN Sie Ihre getValidatorName() Funktion:
+getValidatorName(operatorAddress) {
+    // Cache für Validator-Namen
     if (!this.validatorNameCache) {
         this.validatorNameCache = new Map();
     }
     
-    // Rückgabe aus Cache wenn vorhanden
-    if (this.validatorNameCache.has(validatorAddress)) {
-        return this.validatorNameCache.get(validatorAddress);
+    // Prüfe Cache zuerst
+    if (this.validatorNameCache.has(operatorAddress)) {
+        return this.validatorNameCache.get(operatorAddress);
     }
     
-    // Versuche aus der aktuellen Validator-Liste zu holen
-    const validatorsList = document.getElementById('validators-list');
-    if (validatorsList) {
-        const validatorItems = validatorsList.querySelectorAll('.delegation-item');
-        for (const item of validatorItems) {
-            const button = item.querySelector('button[onclick*="selectValidator"]');
-            if (button && button.onclick.toString().includes(validatorAddress)) {
-                const name = item.querySelector('.validator-name')?.textContent;
-                if (name) {
-                    this.validatorNameCache.set(validatorAddress, name);
-                    return name;
-                }
-            }
-        }
-    }
+    // Generiere Name basierend auf Adresse
+    const shortAddress = operatorAddress.slice(-8).toUpperCase();
+    const name = `Validator ${shortAddress}`;
     
-    // Fallback: Gekürzte Adresse
-    const shortAddress = validatorAddress.substring(0, 20) + '...';
-    this.validatorNameCache.set(validatorAddress, shortAddress);
-    return shortAddress;
+    // Speichere im Cache
+    this.validatorNameCache.set(operatorAddress, name);
+    
+    return name;
 }
 
  async setMaxSendAmount() {
