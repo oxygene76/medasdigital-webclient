@@ -806,44 +806,49 @@ populateValidatorsWithActions(validators) {
         }
     }
 
-    // FALLBACK USER DELEGATIONS
-    populateUserDelegationsFallback() {
-        const delegationsContainer = document.getElementById('current-delegations');
-        if (!delegationsContainer || !window.MockData) return;
+   // 1. FIX: populateUserDelegationsFallback - NUR FALLBACK wenn wirklich keine Verbindung
+UIManager.prototype.populateUserDelegationsFallback = function() {
+    const delegationsContainer = document.getElementById('current-delegations');
+    if (!delegationsContainer) return;
 
-        console.warn('⚠️ Using fallback delegation data (MockData)');
-        
-        delegationsContainer.innerHTML = window.MockData.delegations.map(delegation => `
-            <div class="delegation-item">
-                <div class="validator-info">
-                    <div class="validator-name">${delegation.validator}</div>
-                    <div class="validator-details">Delegated: ${delegation.amount} MEDAS</div>
-                </div>
-                <div class="delegation-amount">
-                    <div style="color: #00ff00;">+${delegation.rewards} MEDAS</div>
-                    <div style="font-size: 10px; color: #999;">Pending Rewards</div>
-                </div>
-                <div class="stake-actions">
-                    <button class="btn-small" style="border-color: #ff00ff; color: #ff00ff;">
-                        Claim
-                    </button>
-                    <button class="btn-small" style="border-color: #ffaa00; color: #ffaa00;">
-                        Undelegate
-                    </button>
-                </div>
-            </div>
-        `).join('');
+    console.warn('⚠️ No real delegations found - showing empty state instead of mock data');
+    
+    // ANSTATT MOCK DATEN -> ZEIGE EMPTY STATE
+    delegationsContainer.innerHTML = `
+        <div class="empty-state" style="text-align: center; padding: 40px 20px; color: #666;">
+            <div style="font-size: 48px; margin-bottom: 16px;">🎯</div>
+            <h3 style="color: #00ffff; margin-bottom: 8px;">No Delegations Yet</h3>
+            <p style="margin-bottom: 16px;">You haven't staked any MEDAS tokens yet.</p>
+            <p style="font-size: 12px;">Select a validator below and start staking to earn rewards!</p>
+        </div>
+    `;
 
-        const totalRewards = window.MockData.delegations.reduce((sum, d) => {
-            return sum + parseFloat(d.rewards.replace(' MEDAS', ''));
-        }, 0);
-        
-        const totalRewardsEl = document.getElementById('total-rewards');
-        if (totalRewardsEl) {
-            totalRewardsEl.textContent = `${totalRewards.toFixed(6)} MEDAS`;
-        }
+    // SETZE ALLE STATS AUF NULL
+    const totalRewardsEl = document.getElementById('total-rewards');
+    if (totalRewardsEl) {
+        totalRewardsEl.textContent = '0.000000 MEDAS';
     }
-
+    
+    const totalStakedEl = document.getElementById('user-total-staked');
+    if (totalStakedEl) {
+        totalStakedEl.textContent = '0.000000 MEDAS';
+    }
+    
+    const totalRewardsStatsEl = document.getElementById('user-total-rewards');
+    if (totalRewardsStatsEl) {
+        totalRewardsStatsEl.textContent = '0.000000 MEDAS';
+    }
+    
+    const delegationCountEl = document.getElementById('user-delegation-count');
+    if (delegationCountEl) {
+        delegationCountEl.textContent = '0';
+    }
+    
+    const monthlyEstimateEl = document.getElementById('user-monthly-estimate');
+    if (monthlyEstimateEl) {
+        monthlyEstimateEl.textContent = '0.000000 MEDAS';
+    }
+};
     // UPDATE DELEGATION SELECTS FOR ADVANCED OPERATIONS
     updateDelegationSelects(delegations) {
         const redelegateFromSelect = document.getElementById('redelegate-from-select');
