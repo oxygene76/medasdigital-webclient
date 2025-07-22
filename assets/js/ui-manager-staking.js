@@ -7,7 +7,9 @@
 // Erweitere UIManager um Staking-Funktionen
 if (typeof UIManager !== 'undefined' && UIManager.prototype) {
     
-  // DELEGATE TOKENS (Staking) - FIXED Broadcasting
+// ERSETZE die performStaking Funktion in ui-manager-staking.js:
+
+// DELEGATE TOKENS (Staking) - MODERN PROTOBUF VERSION
 UIManager.prototype.performStaking = async function() {
     const validatorSelect = document.getElementById('validator-select');
     const stakeAmountInput = document.getElementById('stake-amount');
@@ -41,72 +43,102 @@ UIManager.prototype.performStaking = async function() {
         console.log('🔧 Transaction details:', {
             delegator: delegatorAddress,
             validator: validatorAddress,
-            amount: `${amountInUmedas} umedas (${amount} MEDAS)`
+            amount: `${amountInUmedas} umedas (${amount} MEDAS)`,
+            chainId: chainId
         });
         
-        // ✅ VERWENDE KEPLR'S DIREKTE BROADCAST API
+        // ✅ MODERNE PROTOBUF MESSAGE STRUKTUR (Cosmos SDK 0.50+)
+        const msgDelegate = {
+            typeUrl: "/cosmos.staking.v1beta1.MsgDelegate",
+            value: {
+                delegatorAddress: delegatorAddress,
+                validatorAddress: validatorAddress,
+                amount: {
+                    denom: "umedas",
+                    amount: amountInUmedas,
+                },
+            },
+        };
+        
+        // ✅ MODERNE FEE STRUKTUR
+        const fee = {
+            amount: [{ 
+                denom: "umedas", 
+                amount: "6250" // 250k gas * 0.025 price
+            }],
+            gas: "250000",
+        };
+        
+        console.log('📋 Protobuf message:', msgDelegate);
+        console.log('📋 Fee structure:', fee);
+        
+        // ✅ VERWENDE KEPLR'S MODERNE API
         await window.keplr.enable(chainId);
         
-        // Erstelle die Delegation Message im Amino Format
-        const msgDelegate = {
-            type: 'cosmos-sdk/MsgDelegate',
-            value: {
-                delegator_address: delegatorAddress,
-                validator_address: validatorAddress,
-                amount: {
-                    denom: 'umedas',
-                    amount: amountInUmedas
-                }
-            }
-        };
+        // Prüfe Keplr Version
+        if (window.keplr.version && parseFloat(window.keplr.version) < 0.12) {
+            console.warn('⚠️ Old Keplr version detected, using fallback method');
+            return await this.performStakingLegacy();
+        }
         
-        // Gas und Fee berechnen
-        const gasLimit = '250000';
-        const gasPrice = '0.025';
-        const feeAmount = Math.floor(parseInt(gasLimit) * parseFloat(gasPrice)).toString();
-        
-        const fee = {
-            amount: [{ denom: 'umedas', amount: feeAmount }],
-            gas: gasLimit
-        };
-        
-        console.log('📋 Fee calculation:', fee);
-        
-        // ✅ VERWENDE KEPLR'S sendTx MIT KORREKTER STRUKTUR
-        const result = await window.keplr.sendTx(
+        // ✅ VERWENDE experimentalSignTx FÜR MODERNE CHAINS
+        const result = await window.keplr.experimentalSignTx(
             chainId,
-            {
-                msg: [msgDelegate],
-                fee: fee,
-                memo: ''
-            },
-            'sync'  // broadcast mode
+            delegatorAddress,
+            [msgDelegate],
+            fee,
+            "" // memo
         );
         
-        console.log('✅ Broadcast result:', result);
+        console.log('✅ Delegation result:', result);
         
-        if (result && result.code === 0) {
-            this.showNotification(`✅ Delegation successful! TX: ${result.txhash || result.transactionHash}`, 'success');
+        // Prüfe verschiedene Result-Strukturen
+        const txHash = result?.transactionHash || result?.txhash || result?.hash;
+        const code = result?.code || (result?.result ? 0 : 1);
+        
+        if (code === 0 && txHash) {
+            this.showNotification(`✅ Delegation successful! TX: ${txHash}`, 'success');
             
-            // Aktualisiere UI nach 5 Sekunden (Keplr braucht Zeit)
+            // Warte länger für Cosmos SDK 0.50 Block-Finalization
             setTimeout(() => {
                 this.populateUserDelegations(delegatorAddress);
                 if (this.updateBalanceOverview) {
                     this.updateBalanceOverview();
                 }
-            }, 5000);
+            }, 8000); // 8 Sekunden warten
             
             // Reset Form
             stakeAmountInput.value = '';
             validatorSelect.value = 'Select a validator...';
             
+        } else if (result && !txHash) {
+            // Transaction wurde erstellt, aber noch nicht finalized
+            this.showNotification('✅ Transaction submitted! Waiting for confirmation...', 'success');
+            
+            setTimeout(() => {
+                this.populateUserDelegations(delegatorAddress);
+                if (this.updateBalanceOverview) {
+                    this.updateBalanceOverview();
+                }
+            }, 10000);
+            
+            stakeAmountInput.value = '';
+            validatorSelect.value = 'Select a validator...';
+            
         } else {
-            const errorMsg = result?.log || result?.raw_log || 'Transaction failed';
+            const errorMsg = result?.log || result?.rawLog || 'Transaction failed';
             throw new Error(errorMsg);
         }
         
     } catch (error) {
-        console.error('❌ Staking failed:', error);
+        console.error('❌ Modern staking failed:', error);
+        
+        // Fallback für ältere Keplr Versionen
+        if (error.message.includes('experimentalSignTx') || 
+            error.message.includes('not supported')) {
+            console.log('🔄 Falling back to legacy method...');
+            return await this.performStakingLegacy();
+        }
         
         // Detaillierte Fehlermeldung
         let errorMessage = error.message;
@@ -122,6 +154,68 @@ UIManager.prototype.performStaking = async function() {
     }
 };
 
+// LEGACY FALLBACK für ältere Keplr Versionen
+UIManager.prototype.performStakingLegacy = async function() {
+    try {
+        console.log('🔄 Using legacy Keplr method...');
+        
+        const validatorSelect = document.getElementById('validator-select');
+        const stakeAmountInput = document.getElementById('stake-amount');
+        const validatorAddress = validatorSelect.value;
+        const delegatorAddress = window.terminal.account.address;
+        const chainId = MEDAS_CHAIN_CONFIG?.chainId || "medasdigital-2";
+        const amount = parseFloat(stakeAmountInput.value);
+        const amountInUmedas = Math.floor(amount * 1000000).toString();
+        
+        // ✅ VERWENDE signAmino + Manual Broadcast
+        const msgDelegate = {
+            type: 'cosmos-sdk/MsgDelegate',
+            value: {
+                delegator_address: delegatorAddress,
+                validator_address: validatorAddress,
+                amount: {
+                    denom: 'umedas',
+                    amount: amountInUmedas
+                }
+            }
+        };
+        
+        // Vereinfachter Broadcast über Keplr's interne APIs
+        const result = await window.keplr.sendTx(
+            chainId,
+            {
+                msg: [msgDelegate],
+                fee: {
+                    amount: [{ denom: 'umedas', amount: '6250' }],
+                    gas: '250000'
+                },
+                memo: ''
+            },
+            'block' // Warte auf Block-Bestätigung
+        );
+        
+        if (result && result.code === 0) {
+            this.showNotification(`✅ Delegation successful! TX: ${result.txhash}`, 'success');
+            
+            setTimeout(() => {
+                this.populateUserDelegations(delegatorAddress);
+                if (this.updateBalanceOverview) this.updateBalanceOverview();
+            }, 5000);
+            
+            stakeAmountInput.value = '';
+            validatorSelect.value = 'Select a validator...';
+        } else {
+            throw new Error(result?.log || 'Legacy transaction failed');
+        }
+        
+    } catch (legacyError) {
+        console.error('❌ Legacy method also failed:', legacyError);
+        this.showNotification(`❌ Staking failed: ${legacyError.message}`, 'error');
+        
+        // Als letzter Ausweg: Info für manuellen Keplr-Einsatz
+        this.showNotification('💡 Try staking directly through Keplr extension', 'info');
+    }
+};
     // CLAIM ALL REWARDS
     UIManager.prototype.claimAllRewards = async function() {
         if (!window.terminal?.connected || !window.terminal?.account?.address) {
