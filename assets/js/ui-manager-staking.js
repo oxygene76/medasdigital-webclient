@@ -451,43 +451,61 @@ if (typeof UIManager !== 'undefined' && UIManager.prototype) {
     };
 
     // POPULATE VALIDATORS WITH ACTIONS
-    UIManager.prototype.populateValidatorsWithActions = function(validators) {
-        const validatorsContainer = document.getElementById('validators-list');
-        if (!validatorsContainer) return;
+// ERSETZE DIESE FUNKTION in ui-manager-staking.js (um Zeile 240-290)
+// POPULATE VALIDATORS WITH ACTIONS
+UIManager.prototype.populateValidatorsWithActions = function(validators) {
+    const validatorsContainer = document.getElementById('validators-list');
+    if (!validatorsContainer) {
+        console.error('❌ validators-list container not found!');
+        return;
+    }
 
-        validatorsContainer.innerHTML = validators.map(validator => {
-            const commission = parseFloat(validator.commission?.commission_rates?.rate || 0) * 100;
-            const votingPower = this.formatTokenAmount(validator.tokens, 6);
-            const status = validator.status === 'BOND_STATUS_BONDED' ? 'Active' : 'Inactive';
-            const jailed = validator.jailed ? 'Jailed' : 'OK';
-            
-            return `
-                <div class="delegation-item">
-                    <div class="validator-info">
-                        <div class="validator-name">${this.getValidatorName(validator.operator_address)}</div>
-                        <div class="validator-details">
-                            Commission: ${commission.toFixed(2)}% | 
-                            Voting Power: ${votingPower} MEDAS | 
-                            Status: ${status} ${jailed !== 'OK' ? '(' + jailed + ')' : ''}
-                        </div>
-                        <div class="validator-address" style="font-size: 10px; color: #666; margin-top: 4px;">
-                            ${validator.operator_address}
-                        </div>
+    console.log('📊 Displaying validators with actions:', validators.length);
+
+    validatorsContainer.innerHTML = validators.map((validator, index) => {
+        const commission = parseFloat(validator.commission?.commission_rates?.rate || 0) * 100;
+        const votingPower = this.formatTokenAmount(validator.tokens, 6);
+        const status = validator.status === 'BOND_STATUS_BONDED' ? 'Active' : 'Inactive';
+        const jailed = validator.jailed ? 'Jailed' : 'OK';
+        
+        // FIX: Validator Name außerhalb des Template String berechnen
+        const validatorName = this.getValidatorName(validator.operator_address);
+        
+        return `
+            <div class="delegation-item">
+                <div class="validator-info">
+                    <div class="validator-name">${validatorName}</div>
+                    <div class="validator-details">
+                        Commission: ${commission.toFixed(2)}% | 
+                        Voting Power: ${votingPower} MEDAS | 
+                        Status: ${status} ${jailed !== 'OK' ? '(' + jailed + ')' : ''}
                     </div>
-                    <div class="stake-actions">
-                        <button class="btn-small btn-primary" style="border-color: #00ffff; color: #00ffff; margin-right: 8px;" 
-                                onclick="selectValidator('${validator.operator_address}', '${this.getValidatorName(validator.operator_address)}')">
-                            Select
-                        </button>
-                        <button class="btn-small btn-success" style="border-color: #00ff00; color: #00ff00;" 
-                                onclick="quickStake('${validator.operator_address}', '${this.getValidatorName(validator.operator_address)}')">
-                            Quick Stake
-                        </button>
+                    <div class="validator-address" style="font-size: 10px; color: #666; margin-top: 4px;">
+                        ${validator.operator_address}
                     </div>
                 </div>
-            `;
-        }).join('');
-    };
+                <div class="stake-actions">
+                    <button class="btn-small btn-primary" 
+                            style="border-color: #00ffff; color: #00ffff; margin-right: 8px;" 
+                            data-validator-address="${validator.operator_address}"
+                            data-validator-name="${validatorName}"
+                            onclick="window.selectValidatorAction(this)">
+                        Select
+                    </button>
+                    <button class="btn-small btn-success" 
+                            style="border-color: #00ff00; color: #00ff00;" 
+                            data-validator-address="${validator.operator_address}"
+                            data-validator-name="${validatorName}"
+                            onclick="window.quickStakeAction(this)">
+                        Quick Stake
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    console.log('✅ Validators HTML generated and inserted');
+};
 
     console.log('🎯 UI-Manager Staking extensions loaded');
     
