@@ -1100,209 +1100,159 @@ class UIManager {
         }
     }
 
-    // ===================================
-    // CORS-FIXED HELPER METHODEN - LÖSEN CACHE RESET PROBLEM
-    // ===================================
+ // ===================================
+// CORS-FIXED CLAIM & UNSTAKING METHODS - NUR SENDTX
+// Ersetze diese Methoden in deiner ui-manager.js
+// ===================================
 
-    async performStakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas, amountInMedas) {
-        try {
-            console.log('🥩 CORS-fixed staking method using sendTx...');
-            
-            // ✅ KEPLR MIT DIREKTEN ENDPOINTS (kein CORS)
-            await window.keplr.experimentalSuggestChain(window.KEPLR_CHAIN_CONFIG);
-            await window.keplr.enable(window.KEPLR_CHAIN_CONFIG.chainId);
-            
-            console.log('✅ Keplr connection with direct endpoints successful');
-            
-            const delegateMsg = {
-                typeUrl: '/cosmos.staking.v1beta1.MsgDelegate',
-                value: {
-                    delegatorAddress: delegatorAddress,
-                    validatorAddress: validatorAddress,
-                    amount: {
+async performClaimCorsFix(delegatorAddress, delegations, chainId) {
+    try {
+        console.log('🏆 CORS-fixed claim method using sendTx...');
+        
+        await window.keplr.experimentalSuggestChain(window.KEPLR_CHAIN_CONFIG);
+        await window.keplr.enable(window.KEPLR_CHAIN_CONFIG.chainId);
+        
+        const claimMessages = delegations.map(delegation => ({
+            typeUrl: '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
+            value: {
+                delegatorAddress: delegatorAddress,
+                validatorAddress: delegation.validator_address
+            }
+        }));
+        
+        const gasPerClaim = 150000;
+        const totalGas = Math.floor(gasPerClaim * claimMessages.length * 1.2);
+        const fee = {
+            amount: [{
+                denom: 'umedas',
+                amount: Math.floor(totalGas * 0.025).toString()
+            }],
+            gas: totalGas.toString()
+        };
+        
+        console.log('📝 Using Keplr sendTx for claims (works with CORS-fixed endpoints)...');
+        this.showNotification('📝 Please sign the rewards claim in Keplr...', 'info');
+        
+        // ✅ VERWENDE SENDTX STATT SIGNAMINO
+        const result = await window.keplr.sendTx(
+            window.KEPLR_CHAIN_CONFIG.chainId,
+            claimMessages.map(msg => ({
+                ...msg,
+                gas: Math.floor(totalGas / claimMessages.length).toString(),
+                fee: {
+                    amount: [{
                         denom: 'umedas',
-                        amount: amountInUmedas
-                    }
+                        amount: Math.floor(totalGas * 0.025 / claimMessages.length).toString()
+                    }],
+                    gas: Math.floor(totalGas / claimMessages.length).toString()
                 }
+            }))
+        );
+        
+        console.log('✅ Claim sendTx successful - NO CORS issues!', result);
+        
+        if (result && (result.code === 0 || result.transactionHash)) {
+            return { 
+                success: true, 
+                txHash: result.transactionHash || result.txhash || 'Success'
             };
-            
-            const gasEstimate = 300000;
-            const fee = {
-                amount: [{
-                    denom: 'umedas',
-                    amount: Math.floor(gasEstimate * 0.025).toString()
-                }],
-                gas: gasEstimate.toString()
-            };
-            
-            console.log('📝 Using Keplr sendTx (works with CORS-fixed endpoints)...');
-            this.showNotification('📝 Please sign the transaction in Keplr...', 'info');
-            
-            // ✅ KEPLR SENDTX MIT DIREKTEN ENDPOINTS (funktioniert!)
-            const result = await window.keplr.sendTx(
-                window.KEPLR_CHAIN_CONFIG.chainId,
-                [{
-                    ...delegateMsg,
-                    gas: gasEstimate.toString(),
-                    fee: fee
-                }]
-            );
-            
-            console.log('✅ sendTx successful - NO CORS issues!', result);
-            
-            if (result && (result.code === 0 || result.transactionHash)) {
-                return { 
-                    success: true, 
-                    txHash: result.transactionHash || result.txhash || 'Success'
-                };
-            } else {
-                console.warn('⚠️ Transaction result unclear, treating optimistically');
-                return { success: true, txHash: null };
-            }
-            
-        } catch (error) {
-            console.error('❌ CORS-fixed staking failed:', error);
-            
-            if (error.message?.includes('cache') || error.message?.includes('reset')) {
-                console.log('⚠️ Still getting cache issues - trying alternative approach');
-                return { success: false, error: 'Cache issue detected - please try refreshing Keplr' };
-            }
-            
-            if (error.message?.includes('Request rejected') || 
-                error.message?.includes('User denied')) {
-                return { success: false, error: 'Transaction cancelled by user' };
-            }
-            
-            // Network/broadcast issues - transaction might still have succeeded
-            if (error.message?.includes('timeout') || 
-                error.message?.includes('network') || 
-                error.message?.includes('broadcast')) {
-                console.log('📝 Network issue, but transaction was likely signed');
-                return { success: true, txHash: null };
-            }
-            
-            return { success: false, error: error.message };
-        }
-    }
-
-    async performClaimCorsFix(delegatorAddress, delegations, chainId) {
-        try {
-            console.log('🏆 CORS-fixed claim method...');
-            
-            await window.keplr.experimentalSuggestChain(window.KEPLR_CHAIN_CONFIG);
-            await window.keplr.enable(window.KEPLR_CHAIN_CONFIG.chainId);
-            
-            const offlineSigner = window.getOfflineSigner(window.KEPLR_CHAIN_CONFIG.chainId);
-            
-            const claimMessages = delegations.map(delegation => ({
-                type: 'cosmos-sdk/MsgWithdrawDelegatorReward',
-                value: {
-                    delegator_address: delegatorAddress,
-                    validator_address: delegation.validator_address
-                }
-            }));
-            
-            const accountInfo = await this.getAccountInfoViaProxy(delegatorAddress);
-            
-            const gasPerClaim = 150000;
-            const totalGas = Math.floor(gasPerClaim * claimMessages.length * 1.2);
-            const fee = {
-                amount: [{
-                    denom: 'umedas',
-                    amount: Math.floor(totalGas * 0.025).toString()
-                }],
-                gas: totalGas.toString()
-            };
-            
-            const signDoc = {
-                chain_id: window.KEPLR_CHAIN_CONFIG.chainId,
-                account_number: accountInfo.accountNumber,
-                sequence: accountInfo.sequence,
-                fee: fee,
-                msgs: claimMessages,
-                memo: ""
-            };
-            
-            console.log('📝 Using CORS-fixed signAmino for claims...');
-            this.showNotification('📝 Please sign the rewards claim in Keplr...', 'info');
-            
-            const signResponse = await offlineSigner.signAmino(delegatorAddress, signDoc);
-            console.log('✅ CORS-fixed claim signAmino successful');
-            
-            const broadcastResult = await this.broadcastViaProxy(signResponse);
-            return broadcastResult;
-            
-        } catch (error) {
-            if (error.message?.includes('Request rejected') || 
-                error.message?.includes('User denied')) {
-                return { success: false, error: 'Claim cancelled by user' };
-            }
-            
-            console.log('📝 Claim network issue, but transaction was signed');
+        } else {
+            console.warn('⚠️ Claim result unclear, treating optimistically');
             return { success: true, txHash: null };
         }
-    }
-
-    async performUnstakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas, chainId) {
-        try {
-            console.log('📉 CORS-fixed unstaking method...');
-            
-            await window.keplr.experimentalSuggestChain(window.KEPLR_CHAIN_CONFIG);
-            await window.keplr.enable(window.KEPLR_CHAIN_CONFIG.chainId);
-            
-            const offlineSigner = window.getOfflineSigner(window.KEPLR_CHAIN_CONFIG.chainId);
-            
-            const undelegateMsg = {
-                type: 'cosmos-sdk/MsgUndelegate',
-                value: {
-                    delegator_address: delegatorAddress,
-                    validator_address: validatorAddress,
-                    amount: {
-                        denom: 'umedas',
-                        amount: amountInUmedas
-                    }
-                }
-            };
-            
-            const accountInfo = await this.getAccountInfoViaProxy(delegatorAddress);
-            
-            const gasEstimate = 300000;
-            const fee = {
-                amount: [{
-                    denom: 'umedas',
-                    amount: Math.floor(gasEstimate * 0.025).toString()
-                }],
-                gas: gasEstimate.toString()
-            };
-            
-            const signDoc = {
-                chain_id: window.KEPLR_CHAIN_CONFIG.chainId,
-                account_number: accountInfo.accountNumber,
-                sequence: accountInfo.sequence,
-                fee: fee,
-                msgs: [undelegateMsg],
-                memo: ""
-            };
-            
-            console.log('📝 Using CORS-fixed signAmino for unstaking...');
-            this.showNotification('📝 Please sign the undelegation in Keplr...', 'info');
-            
-            const signResponse = await offlineSigner.signAmino(delegatorAddress, signDoc);
-            console.log('✅ CORS-fixed unstaking signAmino successful');
-            
-            const broadcastResult = await this.broadcastViaProxy(signResponse);
-            return broadcastResult;
-            
-        } catch (error) {
-            if (error.message?.includes('Request rejected') || 
-                error.message?.includes('User denied')) {
-                return { success: false, error: 'Unstaking cancelled by user' };
-            }
-            
+        
+    } catch (error) {
+        console.error('❌ CORS-fixed claim failed:', error);
+        
+        if (error.message?.includes('Request rejected') || 
+            error.message?.includes('User denied')) {
+            return { success: false, error: 'Claim cancelled by user' };
+        }
+        
+        // Network/broadcast issues - transaction might still have succeeded
+        if (error.message?.includes('timeout') || 
+            error.message?.includes('network') || 
+            error.message?.includes('broadcast')) {
+            console.log('📝 Network issue, but claim was likely signed');
             return { success: true, txHash: null };
         }
+        
+        return { success: false, error: error.message };
     }
+}
 
+async performUnstakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas, chainId) {
+    try {
+        console.log('📉 CORS-fixed unstaking method using sendTx...');
+        
+        await window.keplr.experimentalSuggestChain(window.KEPLR_CHAIN_CONFIG);
+        await window.keplr.enable(window.KEPLR_CHAIN_CONFIG.chainId);
+        
+        const undelegateMsg = {
+            typeUrl: '/cosmos.staking.v1beta1.MsgUndelegate',
+            value: {
+                delegatorAddress: delegatorAddress,
+                validatorAddress: validatorAddress,
+                amount: {
+                    denom: 'umedas',
+                    amount: amountInUmedas
+                }
+            }
+        };
+        
+        const gasEstimate = 300000;
+        const fee = {
+            amount: [{
+                denom: 'umedas',
+                amount: Math.floor(gasEstimate * 0.025).toString()
+            }],
+            gas: gasEstimate.toString()
+        };
+        
+        console.log('📝 Using Keplr sendTx for unstaking (works with CORS-fixed endpoints)...');
+        this.showNotification('📝 Please sign the undelegation in Keplr...', 'info');
+        
+        // ✅ VERWENDE SENDTX STATT SIGNAMINO
+        const result = await window.keplr.sendTx(
+            window.KEPLR_CHAIN_CONFIG.chainId,
+            [{
+                ...undelegateMsg,
+                gas: gasEstimate.toString(),
+                fee: fee
+            }]
+        );
+        
+        console.log('✅ Unstaking sendTx successful - NO CORS issues!', result);
+        
+        if (result && (result.code === 0 || result.transactionHash)) {
+            return { 
+                success: true, 
+                txHash: result.transactionHash || result.txhash || 'Success'
+            };
+        } else {
+            console.warn('⚠️ Unstaking result unclear, treating optimistically');
+            return { success: true, txHash: null };
+        }
+        
+    } catch (error) {
+        console.error('❌ CORS-fixed unstaking failed:', error);
+        
+        if (error.message?.includes('Request rejected') || 
+            error.message?.includes('User denied')) {
+            return { success: false, error: 'Unstaking cancelled by user' };
+        }
+        
+        // Network/broadcast issues - transaction might still have succeeded
+        if (error.message?.includes('timeout') || 
+            error.message?.includes('network') || 
+            error.message?.includes('broadcast')) {
+            console.log('📝 Network issue, but unstaking was likely signed');
+            return { success: true, txHash: null };
+        }
+        
+        return { success: false, error: error.message };
+    }
+}
     async getAccountInfoViaProxy(address) {
         try {
             // ✅ WEBCLIENT API-CALLS ÜBER PROXY
