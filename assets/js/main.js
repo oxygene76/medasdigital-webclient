@@ -1808,94 +1808,10 @@ console.log('🎮 Terminal will be initialized from main.js');
 // Event für bestehenden Code
 window.dispatchEvent(new Event('app-ready'));
 
+
 // ===================================
-// GLOBALE HELPER FUNKTIONEN FÜR HTML ONCLICK EVENTS
-// Diese Funktionen am Ende Ihrer assets/js/main.js hinzufügen
+// NOTE: Globale Helper-Funktionen sind bereits in staking-helpers.js definiert
 // ===================================
-
-// Global helper functions für HTML onclick handlers
-window.performRedelegationFromForm = async function() {
-    const fromSelect = document.getElementById('redelegate-from-select');
-    const toSelect = document.getElementById('redelegate-to-select');
-    const amountInput = document.getElementById('redelegate-amount');
-    
-    if (!fromSelect?.value || fromSelect.value === 'Select source validator...') {
-        window.terminal?.ui?.showNotification('❌ Please select source validator', 'error');
-        return;
-    }
-    
-    if (!toSelect?.value || toSelect.value === 'Select destination validator...') {
-        window.terminal?.ui?.showNotification('❌ Please select destination validator', 'error');
-        return;
-    }
-    
-    const amount = parseFloat(amountInput?.value || '0');
-    if (amount <= 0) {
-        window.terminal?.ui?.showNotification('❌ Please enter valid amount', 'error');
-        return;
-    }
-    
-    await window.terminal?.ui?.performRedelegation(fromSelect.value, toSelect.value, amount);
-    
-    fromSelect.value = 'Select source validator...';
-    toSelect.value = 'Select destination validator...';
-    amountInput.value = '';
-};
-
-window.performUndelegationFromForm = async function() {
-    const fromSelect = document.getElementById('undelegate-from-select');
-    const amountInput = document.getElementById('undelegate-amount');
-    
-    if (!fromSelect?.value || fromSelect.value === 'Select validator to unstake from...') {
-        window.terminal?.ui?.showNotification('❌ Please select validator', 'error');
-        return;
-    }
-    
-    const amount = parseFloat(amountInput?.value || '0');
-    if (amount <= 0) {
-        window.terminal?.ui?.showNotification('❌ Please enter valid amount', 'error');
-        return;
-    }
-    
-    const confirmed = confirm(`Are you sure you want to undelegate ${amount} MEDAS?\n\nThis will start a 21-day unbonding period.`);
-    
-    if (confirmed) {
-        await window.terminal?.ui?.performUndelegation(fromSelect.value, amount);
-        fromSelect.value = 'Select validator to unstake from...';
-        amountInput.value = '';
-    }
-};
-
-window.sendTokens = async function() {
-    const addressInput = document.getElementById('send-address');
-    const amountInput = document.getElementById('send-amount');
-    const memoInput = document.getElementById('send-memo');
-    
-    if (!addressInput?.value) {
-        window.terminal?.ui?.showNotification('❌ Please enter recipient address', 'error');
-        return;
-    }
-    
-    const amount = parseFloat(amountInput?.value || '0');
-    if (amount <= 0) {
-        window.terminal?.ui?.showNotification('❌ Please enter valid amount', 'error');
-        return;
-    }
-    
-    await window.terminal?.ui?.sendTokens(addressInput.value, amount, memoInput?.value);
-    
-    addressInput.value = '';
-    amountInput.value = '';
-    if (memoInput) memoInput.value = '';
-};
-
-window.setMaxSendAmount = function() {
-    const amountInput = document.getElementById('send-amount');
-    const balance = window.terminal?.ui?.currentBalance || 0;
-    const fee = 0.01;
-    const maxAmount = Math.max(0, balance - fee);
-    if (amountInput) amountInput.value = maxAmount.toFixed(6);
-};
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
