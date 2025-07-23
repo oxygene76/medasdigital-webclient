@@ -220,100 +220,180 @@ async encodeTxForBroadcast(signedTx) {
     }
 }
 
+// ===================================
+// 🎯 PROBLEM GEFUNDEN: RPC Format ist falsch!
+// ===================================
+
+// Das Problem: broadcast_tx_sync erwartet RAW PROTOBUF, aber wir senden Amino JSON!
+// Die Lösung: Verwenden Sie broadcast_tx_async oder anderen Endpoint
+
+// Ersetzen Sie Ihre broadcastTransaction Methode:
+
 async broadcastTransaction(signedTx) {
     try {
-        console.log('🔍 VOLLSTÄNDIGES BROADCAST DEBUG:');
-        console.log('==================================');
+        console.log('📡 Broadcasting with corrected RPC format...');
         
-        // ✅ SCHRITT 1: Encoding mit Debug
-        const aminoTxString = await this.encodeTxForBroadcast(signedTx);
-        const txBytes = btoa(aminoTxString);
-        
-        // ✅ SCHRITT 2: RPC Request Body erstellen
-        const rpcRequestBody = {
-            jsonrpc: "2.0",
-            id: 1,
-            method: "broadcast_tx_sync",
-            params: {
-                tx: txBytes
-            }
+        // ✅ SCHRITT 1: Erstelle das KORREKTE Amino Format für RPC
+        const aminoTx = {
+            msg: signedTx.signed.msgs,
+            fee: signedTx.signed.fee,
+            signatures: [signedTx.signature],
+            memo: signedTx.signed.memo || ""
         };
         
-        console.log('📊 RPC REQUEST DEBUG:');
-        console.log('- Request body:', rpcRequestBody);
-        console.log('- Request body JSON:', JSON.stringify(rpcRequestBody));
-        console.log('- TX bytes in request:', rpcRequestBody.params.tx);
-        console.log('- TX bytes length:', rpcRequestBody.params.tx.length);
+        console.log('📊 Amino TX for RPC:', aminoTx);
         
-        // ✅ SCHRITT 3: Decodiere TX bytes zurück zum Testen
+        // ✅ METHODE 1: Versuche broadcast_tx_async (nimmt oft JSON)
         try {
-            const decodedTx = atob(rpcRequestBody.params.tx);
-            const parsedTx = JSON.parse(decodedTx);
-            console.log('📊 VERIFICATION - Decoded TX:');
-            console.log('- Decoded tx:', parsedTx);
-            console.log('- Decoded msg count:', parsedTx.msg?.length);
-            console.log('- Decoded first message:', parsedTx.msg?.[0]);
-        } catch (decodeError) {
-            console.error('❌ Could not decode TX for verification:', decodeError);
+            console.log('📡 Trying broadcast_tx_async...');
+            
+            const asyncResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_async', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    id: 1,
+                    method: "broadcast_tx_async",
+                    params: {
+                        tx: btoa(JSON.stringify(aminoTx))
+                    }
+                })
+            });
+            
+            if (asyncResponse.ok) {
+                const asyncResult = await asyncResponse.json();
+                console.log('📡 broadcast_tx_async result:', asyncResult);
+                
+                if (!asyncResult.error && asyncResult.result) {
+                    console.log('✅ broadcast_tx_async successful!');
+                    return {
+                        success: true,
+                        txHash: asyncResult.result.hash,
+                        code: 0,
+                        rawLog: 'Transaction submitted async',
+                        endpoint: 'broadcast_tx_async'
+                    };
+                }
+            }
+        } catch (asyncError) {
+            console.log('⚠️ broadcast_tx_async failed:', asyncError.message);
         }
         
-        // ✅ SCHRITT 4: RPC Call
-        console.log('📡 Making RPC call...');
-        const rpcResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_sync', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(rpcRequestBody)
-        });
-
-        console.log('📡 RPC Response status:', rpcResponse.status);
-        
-        if (!rpcResponse.ok) {
-            const errorText = await rpcResponse.text();
-            console.error('❌ RPC HTTP Error:', errorText);
-            throw new Error(`RPC HTTP failed: ${rpcResponse.status} - ${errorText}`);
+        // ✅ METHODE 2: Versuche broadcast_tx_commit (vollständige Verarbeitung)
+        try {
+            console.log('📡 Trying broadcast_tx_commit...');
+            
+            const commitResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_commit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    id: 1,
+                    method: "broadcast_tx_commit",
+                    params: {
+                        tx: btoa(JSON.stringify(aminoTx))
+                    }
+                })
+            });
+            
+            if (commitResponse.ok) {
+                const commitResult = await commitResponse.json();
+                console.log('📡 broadcast_tx_commit result:', commitResult);
+                
+                if (!commitResult.error && commitResult.result) {
+                    const deliverTx = commitResult.result.deliver_tx;
+                    
+                    if (deliverTx && deliverTx.code === 0) {
+                        console.log('✅ broadcast_tx_commit successful!');
+                        return {
+                            success: true,
+                            txHash: commitResult.result.hash,
+                            code: deliverTx.code,
+                            rawLog: deliverTx.log || 'Transaction committed',
+                            height: commitResult.result.height,
+                            endpoint: 'broadcast_tx_commit'
+                        };
+                    } else {
+                        throw new Error(`Transaction failed: ${deliverTx?.log || 'Unknown error'}`);
+                    }
+                }
+            }
+        } catch (commitError) {
+            console.log('⚠️ broadcast_tx_commit failed:', commitError.message);
         }
-
-        const rpcResult = await rpcResponse.json();
-        console.log('📊 VOLLSTÄNDIGES RPC RESULT:');
-        console.log('- RPC result:', rpcResult);
-        console.log('- RPC result.result:', rpcResult.result);
-        console.log('- RPC result.result.hash:', rpcResult.result?.hash);
-        console.log('- RPC result.result.log:', rpcResult.result?.log);
         
-        // ✅ Prüfe auf Empty Hash (SHA256 von leerem String)
-        const emptyHash = "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855";
-        if (rpcResult.result?.hash === emptyHash) {
-            console.error('❌ EMPTY HASH DETECTED: Transaction arrived empty at server!');
-            console.error('❌ This means the encoding or transmission failed');
+        // ✅ METHODE 3: Fallback zu LCD /txs (Legacy aber zuverlässig)
+        try {
+            console.log('📡 Trying legacy LCD /txs...');
+            
+            const lcdResponse = await fetch('https://lcd.medas-digital.io:1317/txs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(aminoTx)
+            });
+            
+            if (lcdResponse.ok) {
+                const lcdResult = await lcdResponse.json();
+                console.log('📡 LCD /txs result:', lcdResult);
+                
+                if (lcdResult.code === 0) {
+                    console.log('✅ LCD /txs successful!');
+                    return {
+                        success: true,
+                        txHash: lcdResult.txhash,
+                        code: lcdResult.code,
+                        rawLog: lcdResult.raw_log,
+                        height: lcdResult.height,
+                        endpoint: 'lcd-legacy'
+                    };
+                } else {
+                    throw new Error(`Transaction failed: ${lcdResult.raw_log}`);
+                }
+            }
+        } catch (lcdError) {
+            console.log('⚠️ LCD /txs failed:', lcdError.message);
         }
         
-        if (rpcResult.error) {
-            console.error('❌ RPC Error:', rpcResult.error);
-            throw new Error(`RPC Error: ${rpcResult.error.message || rpcResult.error.data}`);
+        // ✅ METHODE 4: Experimentell - Versuche JSON direkt an RPC
+        try {
+            console.log('📡 Trying direct JSON to broadcast_tx_sync...');
+            
+            const directResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    id: 1,
+                    method: "broadcast_tx_sync",
+                    params: {
+                        tx: JSON.stringify(aminoTx)  // ← JSON direkt, nicht Base64!
+                    }
+                })
+            });
+            
+            if (directResponse.ok) {
+                const directResult = await directResponse.json();
+                console.log('📡 Direct JSON result:', directResult);
+                
+                if (!directResult.error && directResult.result && directResult.result.code === 0) {
+                    console.log('✅ Direct JSON successful!');
+                    return {
+                        success: true,
+                        txHash: directResult.result.hash,
+                        code: directResult.result.code,
+                        rawLog: directResult.result.log || 'Transaction successful',
+                        endpoint: 'direct-json'
+                    };
+                }
+            }
+        } catch (directError) {
+            console.log('⚠️ Direct JSON failed:', directError.message);
         }
         
-        if (!rpcResult.result) {
-            throw new Error('Invalid RPC response: missing result');
-        }
-        
-        if (rpcResult.result.code !== 0) {
-            const errorMsg = rpcResult.result.log || 'Unknown transaction error';
-            console.error('❌ Transaction failed:', errorMsg);
-            throw new Error(`Transaction failed: ${errorMsg}`);
-        }
-
-        console.log('🎉 RPC broadcast successful!');
-        return {
-            success: true,
-            txHash: rpcResult.result.hash,
-            code: rpcResult.result.code,
-            rawLog: rpcResult.result.log || 'Transaction successful'
-        };
+        throw new Error('All broadcast methods failed - RPC format incompatibility');
 
     } catch (error) {
-        console.error('❌ Broadcast failed with full debug:', error);
+        console.error('❌ All broadcast attempts failed:', error);
         return {
             success: false,
             error: error.message
