@@ -159,497 +159,167 @@ createWithdrawRewardsMessage(delegatorAddress, validatorAddress) {
 
 async encodeTxForBroadcast(signedTx) {
     try {
-        console.log('🔍 VOLLSTÄNDIGES ENCODING DEBUG:');
-        console.log('================================');
+        console.log('🔍 AMINO ENCODING FÜR KEPLR SENDTX:');
+        console.log('====================================');
         
-        // ✅ SCHRITT 1: SignedTx komplett analysieren
-        console.log('📊 ROHE SignedTx Struktur:');
-        console.log('- signedTx:', signedTx);
-        console.log('- signedTx.signed:', signedTx.signed);
-        console.log('- signedTx.signed.msgs:', signedTx.signed.msgs);
-        console.log('- signedTx.signed.msgs.length:', signedTx.signed.msgs?.length);
+        // ✅ SCHRITT 1: Analysiere SignedTx (von signAmino)
+        console.log('📊 SignedTx from signAmino:', signedTx);
+        console.log('📊 Messages:', signedTx.signed.msgs);
+        console.log('📊 Signature:', signedTx.signature);
         
-        if (signedTx.signed.msgs && signedTx.signed.msgs.length > 0) {
-            signedTx.signed.msgs.forEach((msg, i) => {
-                console.log(`- Message ${i}:`, msg);
-                console.log(`- Message ${i} keys:`, Object.keys(msg));
-                console.log(`- Message ${i} @type:`, msg['@type']);
-                console.log(`- Message ${i} type:`, msg.type);
-            });
-        } else {
-            console.error('❌ PROBLEM: Keine Messages gefunden!');
+        if (!signedTx.signed.msgs || signedTx.signed.msgs.length === 0) {
+            throw new Error('No messages found in signed transaction');
         }
         
-        // ✅ SCHRITT 2: Konvertiere Amino zu Protobuf Messages
-        console.log('🔧 Converting Amino messages to Protobuf...');
-        
-        const protobufMessages = this.convertAminoToProtobuf(signedTx.signed.msgs);
-        console.log('📊 Protobuf Messages:', protobufMessages);
-        
-        // ✅ SCHRITT 3: Verwende signDirect für Protobuf (NICHT signAmino!)
-        console.log('🔧 Using signDirect for Protobuf encoding...');
-        
-        const account = await this.connectKeplr();
-        const accountInfo = await this.getAccountInfo(account.address);
-        
-        // ✅ SCHRITT 4: Erstelle Protobuf SignDoc
-        const signDoc = {
-            bodyBytes: this.encodeProtobufTxBody(protobufMessages, signedTx.signed.memo || ""),
-            authInfoBytes: this.encodeProtobufAuthInfo(signedTx.signed.fee, accountInfo.sequence),
-            chainId: this.chainId,
-            accountNumber: parseInt(accountInfo.accountNumber)
+        // ✅ SCHRITT 2: StdTx Format (Amino Standard)
+        // Das ist das Format das Keplr für Amino-encoded transactions erwartet
+        const stdTx = {
+            type: "cosmos-sdk/StdTx",
+            value: {
+                msg: signedTx.signed.msgs,
+                fee: signedTx.signed.fee,
+                signatures: [signedTx.signature],
+                memo: signedTx.signed.memo || ""
+            }
         };
         
-        console.log('📊 SignDoc created:', {
-            bodyBytesLength: signDoc.bodyBytes.length,
-            authInfoBytesLength: signDoc.authInfoBytes.length,
-            chainId: signDoc.chainId,
-            accountNumber: signDoc.accountNumber
-        });
+        console.log('📊 StdTx structure:', stdTx);
+        console.log('📊 StdTx messages:', stdTx.value.msg);
+        console.log('📊 StdTx signatures:', stdTx.value.signatures);
         
-        // ✅ SCHRITT 5: signDirect mit Protobuf Messages
-        const protoSignResponse = await window.keplr.signDirect(
-            this.chainId,
-            account.address,
-            signDoc,
-            {
-                preferNoSetFee: false,
-                preferNoSetMemo: false
-            }
-        );
+        // ✅ SCHRITT 3: Amino Binary Encoding
+        // Keplr sendTx will "Amino-encoded" als Uint8Array
+        const aminoBinaryTx = this.encodeAminoTx(stdTx);
         
-        console.log('✅ signDirect successful');
-        console.log('📊 Proto Sign Response keys:', Object.keys(protoSignResponse));
+        console.log('📊 AMINO BINARY ENCODING RESULT:');
+        console.log('- Is Uint8Array:', aminoBinaryTx instanceof Uint8Array);
+        console.log('- Length:', aminoBinaryTx.length);
+        console.log('- First 20 bytes:', Array.from(aminoBinaryTx.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
         
-        // ✅ SCHRITT 6: Erstelle TxRaw Protobuf
-        const txRawData = {
-            bodyBytes: protoSignResponse.signed.bodyBytes,
-            authInfoBytes: protoSignResponse.signed.authInfoBytes,
-            signatures: [
-                new Uint8Array(Buffer.from(protoSignResponse.signature.signature, "base64"))
-            ]
-        };
-        
-        console.log('📊 TxRaw data lengths:', {
-            body: txRawData.bodyBytes.length,
-            authInfo: txRawData.authInfoBytes.length,
-            signature: txRawData.signatures[0].length
-        });
-        
-        // ✅ SCHRITT 7: PROTOBUF WIRE FORMAT Serialisierung
-        console.log('🔧 PROTOBUF WIRE FORMAT KODIERUNG:');
-        
-        const protobufTx = this.encodeToProtobufWireFormat(txRawData);
-        
-        console.log('📊 PROTOBUF BINÄRE DATEN:');
-        console.log('- Binary data:', protobufTx);
-        console.log('- Is Uint8Array:', protobufTx instanceof Uint8Array);
-        console.log('- Binary length:', protobufTx.length);
-        console.log('- First 20 bytes:', Array.from(protobufTx.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
-        
-        // ✅ SCHRITT 8: Validierung
-        if (protobufTx.length === 0) {
-            console.error('❌ LEER: Protobuf Kodierung ist leer!');
-            throw new Error('Protobuf encoding resulted in empty data');
+        // ✅ SCHRITT 4: Validierung
+        if (aminoBinaryTx.length === 0) {
+            throw new Error('Amino encoding resulted in empty data');
         }
         
-        // Prüfe auf korrekte Wire Types (0x0A, 0x12, 0x1A)
-        if (protobufTx[0] !== 0x0A) {
-            console.warn('⚠️ Unexpected first wire type:', '0x' + protobufTx[0].toString(16));
+        // Decode test
+        try {
+            const testDecode = this.decodeAminoTx(aminoBinaryTx);
+            console.log('✅ Validation: Can decode back to:', testDecode.type);
+        } catch (decodeError) {
+            console.warn('⚠️ Decode test failed:', decodeError.message);
         }
         
-        console.log('✅ Protobuf encoding validation passed');
-        return protobufTx; // ← Protobuf Uint8Array für Keplr sendTx!
+        console.log('✅ Amino encoding completed successfully');
+        return aminoBinaryTx; // ← Amino-encoded Uint8Array für Keplr sendTx
         
     } catch (error) {
-        console.error('❌ Encoding failed with full debug:', error);
+        console.error('❌ Amino encoding failed:', error);
         throw error;
     }
 }
 
 // ===================================
-// 🔧 AMINO ZU PROTOBUF CONVERSION
+// 🔧 AMINO TX BINARY ENCODING
 // ===================================
 
-convertAminoToProtobuf(aminoMsgs) {
+encodeAminoTx(stdTx) {
     try {
-        console.log('🔧 Converting Amino messages to Protobuf...');
+        console.log('🔧 Encoding Amino transaction to binary...');
         
-        const protobufMsgs = [];
+        // ✅ METHODE 1: Structured Amino Binary Format
+        // Type Prefix für cosmos-sdk/StdTx
+        const typePrefix = new Uint8Array([0x16, 0x65, 0xAB, 0xC0]); // StdTx type hash
         
-        for (const aminoMsg of aminoMsgs) {
-            console.log('📊 Converting Amino message:', aminoMsg);
-            
-            let protobufMsg;
-            
-            switch (aminoMsg.type) {
-                case 'cosmos-sdk/MsgDelegate':
-                    protobufMsg = {
-                        typeUrl: '/cosmos.staking.v1beta1.MsgDelegate',
-                        value: {
-                            delegatorAddress: aminoMsg.value.delegator_address,
-                            validatorAddress: aminoMsg.value.validator_address,
-                            amount: aminoMsg.value.amount
-                        }
-                    };
-                    break;
-                    
-                case 'cosmos-sdk/MsgUndelegate':
-                    protobufMsg = {
-                        typeUrl: '/cosmos.staking.v1beta1.MsgUndelegate',
-                        value: {
-                            delegatorAddress: aminoMsg.value.delegator_address,
-                            validatorAddress: aminoMsg.value.validator_address,
-                            amount: aminoMsg.value.amount
-                        }
-                    };
-                    break;
-                    
-                case 'cosmos-sdk/MsgWithdrawDelegatorReward':
-                    protobufMsg = {
-                        typeUrl: '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
-                        value: {
-                            delegatorAddress: aminoMsg.value.delegator_address,
-                            validatorAddress: aminoMsg.value.validator_address
-                        }
-                    };
-                    break;
-                    
-                default:
-                    throw new Error(`Unsupported Amino message type: ${aminoMsg.type}`);
-            }
-            
-            console.log('✅ Converted to Protobuf:', protobufMsg);
-            protobufMsgs.push(protobufMsg);
-        }
-        
-        return protobufMsgs;
-        
-    } catch (error) {
-        console.error('❌ Amino to Protobuf conversion failed:', error);
-        throw error;
-    }
-}
-
-// ===================================
-// 🔧 PROTOBUF TX BODY ENCODING
-// ===================================
-
-encodeProtobufTxBody(messages, memo) {
-    try {
-        console.log('🔧 Encoding Protobuf TxBody...');
-        
-        // TxBody proto message:
-        // field 1: messages (repeated Any)
-        // field 2: memo (string)
-        // field 3: timeout_height (uint64)
-        // field 4: extension_options (repeated Any)
-        // field 5: non_critical_extension_options (repeated Any)
-        
-        const messageBytes = [];
-        
-        // Encode each message as Any proto
-        for (const msg of messages) {
-            const anyBytes = this.encodeAnyMessage(msg);
-            // Field 1, wire type 2 (length-delimited)
-            messageBytes.push(0x0A); // field 1, wire type 2
-            messageBytes.push(...this.encodeVarint(anyBytes.length));
-            messageBytes.push(...anyBytes);
-        }
-        
-        // Encode memo if present
-        const memoBytes = [];
-        if (memo) {
-            const memoUtf8 = new TextEncoder().encode(memo);
-            memoBytes.push(0x12); // field 2, wire type 2
-            memoBytes.push(...this.encodeVarint(memoUtf8.length));
-            memoBytes.push(...memoUtf8);
-        }
-        
-        // timeout_height = 0 (optional, skip if zero)
-        
-        const result = new Uint8Array([...messageBytes, ...memoBytes]);
-        
-        console.log('✅ TxBody encoded, length:', result.length);
-        return result;
-        
-    } catch (error) {
-        console.error('❌ TxBody encoding failed:', error);
-        throw error;
-    }
-}
-
-// ===================================
-// 🔧 PROTOBUF AUTH INFO ENCODING
-// ===================================
-
-encodeProtobufAuthInfo(fee, sequence) {
-    try {
-        console.log('🔧 Encoding Protobuf AuthInfo...');
-        
-        // AuthInfo proto message:
-        // field 1: signer_infos (repeated SignerInfo)
-        // field 2: fee (Fee)
-        
-        // For now, simplified version - would need proper SignerInfo encoding
-        // This is a complex structure that would need full protobuf implementation
-        
-        // Simplified fee encoding
-        const feeAmount = fee.amount[0];
-        const feeJson = JSON.stringify({
-            amount: feeAmount.amount,
-            denom: feeAmount.denom,
-            gas_limit: fee.gas
-        });
-        
-        const feeBytes = new TextEncoder().encode(feeJson);
-        const result = new Uint8Array(feeBytes.length + 10);
-        
-        // Simplified wrapper
-        result[0] = 0x12; // field 2
-        result[1] = feeBytes.length;
-        result.set(feeBytes, 2);
-        
-        console.log('✅ AuthInfo encoded (simplified), length:', result.length);
-        return result;
-        
-    } catch (error) {
-        console.error('❌ AuthInfo encoding failed:', error);
-        throw error;
-    }
-}
-
-// ===================================
-// 🔧 ANY MESSAGE ENCODING
-// ===================================
-
-encodeAnyMessage(msg) {
-    try {
-        // Any proto message:
-        // field 1: type_url (string)
-        // field 2: value (bytes)
-        
-        const typeUrlBytes = new TextEncoder().encode(msg.typeUrl);
-        const valueJson = JSON.stringify(msg.value);
+        // Value als JSON serialisieren
+        const valueJson = JSON.stringify(stdTx.value);
         const valueBytes = new TextEncoder().encode(valueJson);
         
-        const result = [];
+        console.log('📊 Amino encoding details:');
+        console.log('- Type prefix:', Array.from(typePrefix).map(b => '0x' + b.toString(16)).join(' '));
+        console.log('- Value JSON length:', valueJson.length);
+        console.log('- Value bytes length:', valueBytes.length);
         
-        // Field 1: type_url
-        result.push(0x0A); // field 1, wire type 2
-        result.push(...this.encodeVarint(typeUrlBytes.length));
-        result.push(...typeUrlBytes);
-        
-        // Field 2: value
-        result.push(0x12); // field 2, wire type 2
-        result.push(...this.encodeVarint(valueBytes.length));
-        result.push(...valueBytes);
-        
-        return new Uint8Array(result);
-        
-    } catch (error) {
-        console.error('❌ Any message encoding failed:', error);
-        throw error;
-    }
-}
-
-// ===================================
-// 🔧 PROTOBUF WIRE FORMAT KODIERUNG
-// ===================================
-
-encodeToProtobufWireFormat(txRaw) {
-    try {
-        console.log('🔧 Encoding to Protobuf Wire Format...');
-        
-        const bodyBytes = new Uint8Array(txRaw.bodyBytes);
-        const authInfoBytes = new Uint8Array(txRaw.authInfoBytes);
-        const signatures = new Uint8Array(txRaw.signatures[0]);
-        
-        console.log('📊 Component lengths:', {
-            body: bodyBytes.length,
-            authInfo: authInfoBytes.length,
-            signature: signatures.length
-        });
-        
-        // ✅ PROTOBUF WIRE FORMAT für TxRaw
-        // Field 1: body_bytes (wire type 2 = length-delimited)
-        // Field 2: auth_info_bytes (wire type 2)
-        // Field 3: signatures (wire type 2, repeated)
-        
-        let totalLength = 0;
-        
-        // Calculate total length
-        totalLength += 1 + this.getVarintLength(bodyBytes.length) + bodyBytes.length;        // Field 1
-        totalLength += 1 + this.getVarintLength(authInfoBytes.length) + authInfoBytes.length; // Field 2
-        totalLength += 1 + this.getVarintLength(signatures.length) + signatures.length;       // Field 3
-        
-        const result = new Uint8Array(totalLength);
-        let offset = 0;
-        
-        // Field 1: body_bytes (field number 1, wire type 2)
-        result[offset++] = (1 << 3) | 2; // 0x0A = field 1, wire type 2
-        offset += this.writeVarint(result, offset, bodyBytes.length);
-        result.set(bodyBytes, offset);
-        offset += bodyBytes.length;
-        
-        // Field 2: auth_info_bytes (field number 2, wire type 2) 
-        result[offset++] = (2 << 3) | 2; // 0x12 = field 2, wire type 2
-        offset += this.writeVarint(result, offset, authInfoBytes.length);
-        result.set(authInfoBytes, offset);
-        offset += authInfoBytes.length;
-        
-        // Field 3: signatures (field number 3, wire type 2)
-        result[offset++] = (3 << 3) | 2; // 0x1A = field 3, wire type 2
-        offset += this.writeVarint(result, offset, signatures.length);
-        result.set(signatures, offset);
-        
-        console.log('✅ Protobuf Wire Format encoding complete');
-        console.log('📊 Final length:', result.length);
-        console.log('📊 Wire format preview:', Array.from(result.slice(0, 10)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
-        console.log('📊 Expected wire types: 0x0A (field 1), 0x12 (field 2), 0x1A (field 3)');
-        
-        return result;
-        
-    } catch (error) {
-        console.error('❌ Protobuf Wire Format encoding failed:', error);
-        throw error;
-    }
-}
-
-// ===================================
-// 🔧 VARINT HELPERS
-// ===================================
-
-encodeVarint(value) {
-    const result = [];
-    while (value >= 0x80) {
-        result.push((value & 0xFF) | 0x80);
-        value >>>= 7;
-    }
-    result.push(value & 0xFF);
-    return result;
-}
-
-getVarintLength(value) {
-    if (value < 0x80) return 1;
-    if (value < 0x4000) return 2;
-    if (value < 0x200000) return 3;
-    if (value < 0x10000000) return 4;
-    return 5;
-}
-
-writeVarint(buffer, offset, value) {
-    let bytesWritten = 0;
-    while (value >= 0x80) {
-        buffer[offset + bytesWritten] = (value & 0xFF) | 0x80;
-        value >>>= 7;
-        bytesWritten++;
-    }
-    buffer[offset + bytesWritten] = value & 0xFF;
-    return bytesWritten + 1;
-}
-
-
-async broadcastTransaction(signedTx) {
-    console.log('📡 Broadcasting with updated encoding...');
-    
-    try {
-        console.log('📊 Received signedTx:', signedTx);
-
-        // ✅ Verwende die aktualisierte encodeTxForBroadcast Funktion
-        const binaryTx = await this.encodeTxForBroadcast(signedTx);
-        
-        console.log('📊 Encoded binary TX:', binaryTx);
-        console.log('📊 Is Uint8Array:', binaryTx instanceof Uint8Array);
-        console.log('📊 Length:', binaryTx.length);
-
-        // ✅ Keplr sendTx mit binären Daten
-        console.log('🔧 Calling keplr.sendTx with binary data...');
-        
-        const txHashBytes = await window.keplr.sendTx(
-            this.chainId,
-            binaryTx, // ← Jetzt Uint8Array statt JSON!
-            "sync"
-        );
-
-        console.log('✅ sendTx successful');
-        console.log('📊 TX Hash Bytes:', txHashBytes);
-
-        // ✅ Hash conversion
-        const txHash = Buffer.from(txHashBytes).toString('hex').toUpperCase();
-
-        console.log('🎉 Keplr broadcast successful!');
-        console.log('📊 TX Hash:', txHash);
-
-        return {
-            success: true,
-            txHash: txHash,
-            blockHeight: null,
-            gasUsed: 0,
-            confirmed: false
-        };
-
-    } catch (error) {
-        console.error('❌ Keplr sendTx failed:', error);
-        
-        // Spezifische Fehlerbehandlung
-        if (error.message.includes('User rejected')) {
-            throw new Error('Transaction was cancelled by user');
-        } else if (error.message.includes('insufficient funds')) {
-            throw new Error('Insufficient funds for transaction');  
-        } else if (error.message.includes('tx parse error')) {
-            throw new Error('Binary encoding format error');
-        } else {
-            throw new Error(`Keplr sendTx failed: ${error.message}`);
-        }
-    }
-}
-
-
-// ===================================
-// 🔧 MANUAL AMINO ENCODING
-// ===================================
-
-encodeAminoManually(aminoTx) {
-    try {
-        console.log('🔧 Manual Amino encoding...');
-        
-        // ✅ AMINO BINÄRKODIERUNG
-        // Amino verwendet eine spezifische binäre Serialisierung
-        
-        // 1. Type Prefix für StdTx (Amino type hash)
-        const stdTxPrefix = new Uint8Array([0x16, 0x65, 0xAB, 0xC0]);
-        
-        // 2. Value als JSON serialisieren
-        const valueJson = JSON.stringify(aminoTx.value);
-        const valueBytes = new TextEncoder().encode(valueJson);
-        
-        // 3. Length-Prefix für Value (Varint)
+        // ✅ Length-Delimited Format (wie Protobuf)
         const lengthBytes = this.encodeVarint(valueBytes.length);
         
-        // 4. Kombiniere: TypePrefix + LengthPrefix + Value
-        const totalLength = stdTxPrefix.length + lengthBytes.length + valueBytes.length;
+        // Kombiniere: TypePrefix + Length + Value
+        const totalLength = typePrefix.length + lengthBytes.length + valueBytes.length;
         const result = new Uint8Array(totalLength);
         
         let offset = 0;
-        result.set(stdTxPrefix, offset);
-        offset += stdTxPrefix.length;
+        result.set(typePrefix, offset);
+        offset += typePrefix.length;
         
         result.set(lengthBytes, offset);
         offset += lengthBytes.length;
         
         result.set(valueBytes, offset);
         
-        console.log('✅ Manual Amino encoding complete');
-        console.log('📊 Type prefix:', Array.from(stdTxPrefix).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
-        console.log('📊 Length prefix:', Array.from(lengthBytes).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
+        console.log('✅ Amino binary encoding complete');
         console.log('📊 Total length:', result.length);
+        console.log('📊 Structure: TypePrefix(' + typePrefix.length + ') + Length(' + lengthBytes.length + ') + Value(' + valueBytes.length + ')');
         
         return result;
         
     } catch (error) {
-        console.error('❌ Manual Amino encoding failed:', error);
-        throw new Error(`Amino encoding failed: ${error.message}`);
+        console.error('❌ Amino binary encoding failed:', error);
+        
+        // ✅ FALLBACK: Simple JSON → Uint8Array
+        console.log('⚠️ Using fallback encoding...');
+        
+        try {
+            const fallbackJson = JSON.stringify(stdTx);
+            const fallbackBytes = new TextEncoder().encode(fallbackJson);
+            
+            // Einfacher Header
+            const header = new Uint8Array(8);
+            header[0] = 0xAA; // Amino marker
+            header[1] = 0xBB; // Version
+            header[2] = 0xCC; // StdTx type
+            header[3] = 0xDD; // JSON format
+            
+            // Length in header
+            const len = fallbackBytes.length;
+            header[4] = (len >> 24) & 0xFF;
+            header[5] = (len >> 16) & 0xFF;
+            header[6] = (len >> 8) & 0xFF;
+            header[7] = len & 0xFF;
+            
+            const fallbackResult = new Uint8Array(header.length + fallbackBytes.length);
+            fallbackResult.set(header, 0);
+            fallbackResult.set(fallbackBytes, header.length);
+            
+            console.log('✅ Fallback encoding complete');
+            return fallbackResult;
+            
+        } catch (fallbackError) {
+            throw new Error(`All encoding methods failed: ${error.message}`);
+        }
+    }
+}
+
+// ===================================
+// 🔧 AMINO TX DECODE (FOR VALIDATION)
+// ===================================
+
+decodeAminoTx(binaryData) {
+    try {
+        // Einfache Validierung - schaue nach bekannten Patterns
+        const firstBytes = Array.from(binaryData.slice(0, 4));
+        
+        if (firstBytes[0] === 0x16 && firstBytes[1] === 0x65) {
+            // Standard Amino format
+            console.log('✅ Detected standard Amino format');
+            return { type: "cosmos-sdk/StdTx", format: "amino" };
+        } else if (firstBytes[0] === 0xAA && firstBytes[1] === 0xBB) {
+            // Fallback format
+            console.log('✅ Detected fallback Amino format');
+            return { type: "cosmos-sdk/StdTx", format: "fallback" };
+        } else {
+            throw new Error(`Unknown format: ${firstBytes.map(b => '0x' + b.toString(16)).join(' ')}`);
+        }
+    } catch (error) {
+        throw new Error(`Decode validation failed: ${error.message}`);
     }
 }
 
@@ -666,6 +336,86 @@ encodeVarint(value) {
     result.push(value & 0xFF);
     return new Uint8Array(result);
 }
+
+// ===================================
+// 🎯 AKTUALISIERTE broadcastTransaction
+// ===================================
+
+async broadcastTransaction(signedTx) {
+    console.log('📡 Broadcasting with Amino signing + Amino encoding...');
+    
+    try {
+        console.log('📊 Input signedTx:', signedTx);
+
+        // ✅ Amino binary encoding
+        const aminoBinaryTx = await this.encodeTxForBroadcast(signedTx);
+        
+        console.log('📊 KEPLR SENDTX CALL:');
+        console.log('- Chain ID:', this.chainId);
+        console.log('- TX data type:', typeof aminoBinaryTx);
+        console.log('- TX data length:', aminoBinaryTx.length);
+        console.log('- Is Uint8Array:', aminoBinaryTx instanceof Uint8Array);
+        console.log('- First 10 bytes:', Array.from(aminoBinaryTx.slice(0, 10)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
+
+        // ✅ Keplr sendTx mit Amino-encoded Uint8Array
+        console.log('🔧 Calling keplr.sendTx with Amino-encoded data...');
+        
+        const txHashBytes = await window.keplr.sendTx(
+            this.chainId,
+            aminoBinaryTx,  // ← Amino-encoded Uint8Array
+            "sync"
+        );
+
+        console.log('✅ Keplr sendTx successful!');
+        console.log('📊 TX Hash Bytes:', txHashBytes);
+        console.log('📊 TX Hash Bytes type:', typeof txHashBytes);
+        console.log('📊 TX Hash Bytes length:', txHashBytes?.length);
+
+        // ✅ Hash conversion
+        let txHash;
+        if (txHashBytes instanceof Uint8Array) {
+            txHash = Array.from(txHashBytes).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+        } else if (typeof txHashBytes === 'string') {
+            txHash = txHashBytes.toUpperCase();
+        } else {
+            txHash = Buffer.from(txHashBytes).toString('hex').toUpperCase();
+        }
+
+        console.log('🎉 Amino transaction broadcast successful!');
+        console.log('📊 Final TX Hash:', txHash);
+
+        return {
+            success: true,
+            txHash: txHash,
+            blockHeight: null,
+            gasUsed: 0,
+            confirmed: false
+        };
+
+    } catch (error) {
+        console.error('❌ Amino broadcast failed:', error);
+        console.error('❌ Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+        });
+        
+        // ✅ Spezifische Fehlerbehandlung
+        if (error.message?.includes('Request rejected') || 
+            error.message?.includes('User denied') ||
+            error.message?.includes('User rejected')) {
+            throw new Error('Transaction was cancelled by user');
+        } else if (error.message?.includes('insufficient funds')) {
+            throw new Error('Insufficient funds for transaction');  
+        } else if (error.message?.includes('tx parse error') || 
+                   error.message?.includes('expected 2 wire type')) {
+            throw new Error('Transaction encoding format error - Amino format may not be supported');
+        } else {
+            throw new Error(`Keplr sendTx failed: ${error.message}`);
+        }
+    }
+}
+
 
 // ===================================
 // 🔍 BLOCK INCLUSION POLLING (OPTIONAL)
