@@ -137,8 +137,8 @@ class StakingManager {
         }
     }
 
-    / Fügen Sie diese Methode zu Ihrer StakingManager Klasse hinzu:
-encodeTxForBroadcast(signedTx) {
+    // Fügen Sie diese Methode zu Ihrer StakingManager Klasse hinzu:
+    encodeTxForBroadcast(signedTx) {
     try {
         console.log('🔧 Encoding transaction for Cosmos SDK 0.50...');
         console.log('🔍 SignedTx structure:', signedTx);
