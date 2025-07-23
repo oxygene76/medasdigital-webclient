@@ -1,0 +1,21 @@
+{
+  "watch": [
+    "server.js",
+    "package.json"
+  ],
+  "ignore": [
+    "node_modules/**/*",
+    "dist/**/*",
+    "assets/**/*",
+    "src/**/*",
+    "index.html",
+    "vite.config.js",
+    ".vite/**/*"
+  ],
+  "ext": "js,json",
+  "delay": 2000,
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "verbose": true
+}
