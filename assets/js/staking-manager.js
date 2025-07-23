@@ -1,77 +1,86 @@
 // ===================================
-// STAKING-MANAGER.JS - WIE OSMOSIS ES MACHT!
-// Basierend auf osmosis-labs/osmojs Architektur
+// MEDAS DIGITAL STAKING MANAGER
+// Browser-Compatible Version (No ES6 imports)
+// Uses global CosmJS objects loaded by HTML
 // ===================================
-
-import { SigningStargateClient } from "@cosmjs/stargate";
-import { coins } from "@cosmjs/stargate";
-import { Registry } from "@cosmjs/proto-signing";
 
 class StakingManager {
     constructor() {
-        this.chainId = "medasdigital-2";
-        this.rpcEndpoint = "https://rpc.medas-digital.io:26657";
-        this.denom = "umedas";
-        this.decimals = 6;
-        this.client = null;
-        this.account = null;
+        this.chainId = 'medasdigital-2';
+        this.rpcEndpoint = 'https://rpc.medas-digital.io:26657';
+        this.lcdEndpoint = 'https://lcd.medas-digital.io:1317';
         
-        console.log('🥩 MedasDigital StakingManager - Osmosis Style Architecture');
+        this.gasPrice = '0.025umedas';
+        this.defaultGas = '200000';
+        
+        // Wait for CosmJS to be available
+        this.waitForCosmJS();
+        
+        console.log('🚀 StakingManager initialized (Browser Compatible Version)');
     }
 
-    // ===================================
-    // 🎯 OSMOSIS-STYLE CLIENT SETUP
-    // Genau wie getSigningOsmosisClient aus osmojs
-    // ===================================
-
-    async getMedasSigningClient(signer) {
-        try {
-            // ✅ Custom registry für Medas (wie Osmosis es macht)
-            const registry = new Registry();
-            
-            // ✅ SigningStargateClient mit custom config (Osmosis style)
-            const client = await SigningStargateClient.connectWithSigner(
-                this.rpcEndpoint,
-                signer,
-                {
-                    registry,
-                    gasPrice: "0.025umedas", // Osmosis-style gas config
-                    broadcastTimeoutMs: 30000,
-                    broadcastPollIntervalMs: 1000
-                }
-            );
-
-            console.log('✅ Medas Signing Client connected (Osmosis architecture)');
-            return client;
-
-        } catch (error) {
-            console.error('❌ Failed to get Medas signing client:', error);
-            throw error;
+    async waitForCosmJS() {
+        // Check if CosmJS is already loaded
+        if (window.SigningStargateClient && window.coins) {
+            console.log('✅ CosmJS already available');
+            return;
         }
+
+        // Wait for CosmJS to load
+        let attempts = 0;
+        const maxAttempts = 30; // 3 seconds
+        
+        while (attempts < maxAttempts) {
+            if (window.SigningStargateClient && window.coins) {
+                console.log('✅ CosmJS became available');
+                return;
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        
+        console.warn('⚠️ CosmJS not available after timeout - some features may not work');
     }
 
+    // ===================================
+    // KEPLR CONNECTION
+    // ===================================
+    
     async connectKeplr() {
         try {
             if (!window.keplr) {
                 throw new Error('Keplr extension not found. Please install Keplr.');
             }
 
-            console.log('🔗 Connecting to Keplr (Osmosis style)...');
+            console.log('🔗 Connecting to Keplr...');
 
-            // ✅ Keplr enable
+            // Enable Keplr for this chain
             await window.keplr.enable(this.chainId);
             
-            // ✅ Get OfflineSigner (genau wie Osmosis)
+            // Get the offline signer
             const offlineSigner = window.keplr.getOfflineSigner(this.chainId);
             
-            // ✅ Get our custom signing client (wie getSigningOsmosisClient)
-            this.client = await this.getMedasSigningClient(offlineSigner);
-            
-            // ✅ Get accounts
+            // Get account info
             const accounts = await offlineSigner.getAccounts();
             this.account = accounts[0];
             
-            console.log('✅ Keplr + Medas Client connected!');
+            // Create signing client if CosmJS is available
+            if (window.SigningStargateClient) {
+                this.client = await window.SigningStargateClient.connectWithSigner(
+                    this.rpcEndpoint, 
+                    offlineSigner,
+                    {
+                        gasPrice: this.gasPrice
+                    }
+                );
+                console.log('✅ CosmJS SigningStargateClient connected');
+            } else {
+                console.warn('⚠️ CosmJS not available - using fallback methods');
+                this.offlineSigner = offlineSigner;
+            }
+            
+            console.log('✅ Keplr connected!');
             console.log('📊 Account:', this.account.address);
             
             return {
@@ -87,371 +96,428 @@ class StakingManager {
     }
 
     // ===================================
-    // 🔥 OSMOSIS-STYLE MESSAGE COMPOSERS
-    // Ähnlich wie osmosis.gamm.v1beta1.MessageComposer
+    // STAKING OPERATIONS (COSMJS STYLE)
     // ===================================
 
-    createDelegateMessage(delegatorAddress, validatorAddress, amount) {
-        // ✅ Osmosis-style message composition
-        return {
-            typeUrl: "/cosmos.staking.v1beta1.MsgDelegate",
-            value: {
-                delegatorAddress,
-                validatorAddress,
-                amount: {
-                    denom: this.denom,
-                    amount: amount.toString()
-                }
-            }
-        };
-    }
-
-    createUndelegateMessage(delegatorAddress, validatorAddress, amount) {
-        return {
-            typeUrl: "/cosmos.staking.v1beta1.MsgUndelegate", 
-            value: {
-                delegatorAddress,
-                validatorAddress,
-                amount: {
-                    denom: this.denom,
-                    amount: amount.toString()
-                }
-            }
-        };
-    }
-
-    createWithdrawRewardsMessage(delegatorAddress, validatorAddress) {
-        return {
-            typeUrl: "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
-            value: {
-                delegatorAddress,
-                validatorAddress
-            }
-        };
-    }
-
-    // ===================================
-    // 🚀 OSMOSIS-STYLE TRANSACTION METHODS  
-    // Genau wie Osmosis swap/pool functions
-    // ===================================
-
-    async delegate(delegatorAddress, validatorAddress, amountInMedas) {
+    async delegate(delegatorAddress, validatorAddress, amount) {
         try {
-            console.log('🥩 Starting delegation (Osmosis style)...');
-            console.log(`📊 Delegating ${amountInMedas} MEDAS to ${validatorAddress}`);
+            console.log('🔄 Starting delegation...', { delegatorAddress, validatorAddress, amount });
             
-            // ✅ Ensure connection
-            if (!this.client || !this.account) {
-                await this.connectKeplr();
+            // Ensure we have a client
+            if (!this.client) {
+                if (window.SigningStargateClient && this.account) {
+                    // Try to reconnect
+                    await this.connectKeplr();
+                } else {
+                    throw new Error('Not connected to Keplr or CosmJS not available');
+                }
             }
-
-            // ✅ Create message (Osmosis message composer style)
-            const amountInUmedas = this.formatUmedas(amountInMedas);
-            const msg = this.createDelegateMessage(
-                this.account.address,
-                validatorAddress,
-                amountInUmedas
-            );
-
-            console.log('📊 Message created:', msg.typeUrl);
-
-            // ✅ Sign and broadcast (genau wie Osmosis)
-            const fee = "auto"; // Osmosis uses auto fee calculation
-            const memo = `Stake ${amountInMedas} MEDAS via MedasDigital`;
-
+            
+            // Create delegation message
+            const amountInUmedas = this.parseAmount(amount);
+            const coin = window.coins ? 
+                window.coins(amountInUmedas, "umedas")[0] : 
+                { denom: "umedas", amount: amountInUmedas.toString() };
+            
+            const msg = {
+                typeUrl: "/cosmos.staking.v1beta1.MsgDelegate",
+                value: {
+                    delegatorAddress,
+                    validatorAddress,
+                    amount: coin
+                }
+            };
+            
+            // Sign and broadcast
             const result = await this.client.signAndBroadcast(
-                this.account.address,
+                delegatorAddress,
                 [msg],
-                fee,
-                memo
+                "auto",
+                "Delegation via MedasDigital WebClient"
             );
-
-            console.log('🎉 Delegation successful (Osmosis style)!');
-            console.log('📊 TX Hash:', result.transactionHash);
-            console.log('📊 Block Height:', result.height);
-            console.log('📊 Gas Used:', result.gasUsed);
-
+            
+            console.log('✅ Delegation successful:', result);
+            
             return {
                 success: true,
                 txHash: result.transactionHash,
-                blockHeight: result.height,
-                gasUsed: result.gasUsed,
-                gasWanted: result.gasWanted,
-                message: `Successfully delegated ${amountInMedas} MEDAS`
+                height: result.height,
+                gasUsed: result.gasUsed
             };
-
+            
         } catch (error) {
             console.error('❌ Delegation failed:', error);
-            return this.handleTransactionError(error, 'delegation');
+            return {
+                success: false,
+                error: this.parseError(error)
+            };
         }
     }
 
-    async undelegate(delegatorAddress, validatorAddress, amountInMedas) {
+    async undelegate(delegatorAddress, validatorAddress, amount) {
         try {
-            console.log('📉 Starting undelegation (Osmosis style)...');
+            console.log('🔄 Starting undelegation...', { delegatorAddress, validatorAddress, amount });
             
-            if (!this.client || !this.account) {
+            if (!this.client) {
                 await this.connectKeplr();
             }
-
-            // ✅ Create message (Osmosis style)
-            const amountInUmedas = this.formatUmedas(amountInMedas);
-            const msg = this.createUndelegateMessage(
-                this.account.address,
-                validatorAddress,
-                amountInUmedas
-            );
-
-            // ✅ Sign and broadcast (Osmosis pattern)
+            
+            const amountInUmedas = this.parseAmount(amount);
+            const coin = window.coins ? 
+                window.coins(amountInUmedas, "umedas")[0] : 
+                { denom: "umedas", amount: amountInUmedas.toString() };
+            
+            const msg = {
+                typeUrl: "/cosmos.staking.v1beta1.MsgUndelegate",
+                value: {
+                    delegatorAddress,
+                    validatorAddress,
+                    amount: coin
+                }
+            };
+            
             const result = await this.client.signAndBroadcast(
-                this.account.address,
+                delegatorAddress,
                 [msg],
                 "auto",
-                `Unstake ${amountInMedas} MEDAS via MedasDigital`
+                "Undelegation via MedasDigital WebClient"
             );
-
-            console.log('✅ Undelegation successful!');
+            
+            console.log('✅ Undelegation successful:', result);
             
             return {
                 success: true,
                 txHash: result.transactionHash,
-                blockHeight: result.height,
-                gasUsed: result.gasUsed,
-                message: `Successfully undelegated ${amountInMedas} MEDAS (21-day unbonding period starts now)`
+                height: result.height,
+                gasUsed: result.gasUsed
             };
-
+            
         } catch (error) {
             console.error('❌ Undelegation failed:', error);
-            return this.handleTransactionError(error, 'undelegation');
+            return {
+                success: false,
+                error: this.parseError(error)
+            };
+        }
+    }
+
+    async redelegate(delegatorAddress, srcValidatorAddress, dstValidatorAddress, amount) {
+        try {
+            console.log('🔄 Starting redelegation...', { delegatorAddress, srcValidatorAddress, dstValidatorAddress, amount });
+            
+            if (!this.client) {
+                await this.connectKeplr();
+            }
+            
+            const amountInUmedas = this.parseAmount(amount);
+            const coin = window.coins ? 
+                window.coins(amountInUmedas, "umedas")[0] : 
+                { denom: "umedas", amount: amountInUmedas.toString() };
+            
+            const msg = {
+                typeUrl: "/cosmos.staking.v1beta1.MsgBeginRedelegate",
+                value: {
+                    delegatorAddress,
+                    validatorSrcAddress: srcValidatorAddress,
+                    validatorDstAddress: dstValidatorAddress,
+                    amount: coin
+                }
+            };
+            
+            const result = await this.client.signAndBroadcast(
+                delegatorAddress,
+                [msg],
+                "auto",
+                "Redelegation via MedasDigital WebClient"
+            );
+            
+            console.log('✅ Redelegation successful:', result);
+            
+            return {
+                success: true,
+                txHash: result.transactionHash,
+                height: result.height,
+                gasUsed: result.gasUsed
+            };
+            
+        } catch (error) {
+            console.error('❌ Redelegation failed:', error);
+            return {
+                success: false,
+                error: this.parseError(error)
+            };
         }
     }
 
     async claimRewards(delegatorAddress, validatorAddresses) {
         try {
-            console.log('🏆 Starting rewards claim (Osmosis style)...');
-            console.log(`📊 Claiming from ${validatorAddresses.length} validators`);
+            console.log('🔄 Starting rewards claim...', { delegatorAddress, validatorAddresses });
             
-            if (!this.client || !this.account) {
+            if (!this.client) {
                 await this.connectKeplr();
             }
-
-            // ✅ Create multiple messages (wie Osmosis multi-pool operations)
-            const messages = validatorAddresses.map(validatorAddress => 
-                this.createWithdrawRewardsMessage(this.account.address, validatorAddress)
-            );
-
-            console.log('📊 Created', messages.length, 'withdraw messages');
-
-            // ✅ Batch transaction (Osmosis style)
+            
+            // Create claim messages for each validator
+            const messages = validatorAddresses.map(validatorAddress => ({
+                typeUrl: "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+                value: {
+                    delegatorAddress,
+                    validatorAddress
+                }
+            }));
+            
             const result = await this.client.signAndBroadcast(
-                this.account.address,
+                delegatorAddress,
                 messages,
                 "auto",
-                `Claim rewards from ${validatorAddresses.length} validators via MedasDigital`
+                "Claim rewards via MedasDigital WebClient"
             );
-
-            console.log('🎉 Rewards claiming successful!');
+            
+            console.log('✅ Rewards claim successful:', result);
             
             return {
                 success: true,
                 txHash: result.transactionHash,
-                blockHeight: result.height,
-                gasUsed: result.gasUsed,
-                message: `Successfully claimed rewards from ${validatorAddresses.length} validators`
+                height: result.height,
+                gasUsed: result.gasUsed
             };
-
+            
         } catch (error) {
-            console.error('❌ Rewards claiming failed:', error);
-            return this.handleTransactionError(error, 'rewards claiming');
+            console.error('❌ Rewards claim failed:', error);
+            return {
+                success: false,
+                error: this.parseError(error)
+            };
         }
     }
 
-    async sendTokens(recipientAddress, amountInMedas) {
+    async sendTokens(fromAddress, toAddress, amount, memo = "") {
         try {
-            console.log('💸 Starting token transfer (Osmosis style)...');
+            console.log('🔄 Starting token transfer...', { fromAddress, toAddress, amount });
             
-            if (!this.client || !this.account) {
+            if (!this.client) {
                 await this.connectKeplr();
             }
-
-            // ✅ Direkte CosmJS sendTokens (wie Osmosis für Bank transfers)
-            const amountInUmedas = this.formatUmedas(amountInMedas);
-            const coinAmount = coins(amountInUmedas, this.denom);
-
+            
+            const amountInUmedas = this.parseAmount(amount);
+            const coins = window.coins ? 
+                window.coins(amountInUmedas, "umedas") : 
+                [{ denom: "umedas", amount: amountInUmedas.toString() }];
+            
             const result = await this.client.sendTokens(
-                this.account.address,
-                recipientAddress,
-                coinAmount,
+                fromAddress,
+                toAddress,
+                coins,
                 "auto",
-                "Transfer via MedasDigital"
+                memo || "Transfer via MedasDigital WebClient"
             );
-
-            console.log('✅ Transfer successful!');
+            
+            console.log('✅ Transfer successful:', result);
             
             return {
                 success: true,
                 txHash: result.transactionHash,
-                message: `Successfully sent ${amountInMedas} MEDAS to ${recipientAddress}`
+                height: result.height,
+                gasUsed: result.gasUsed
             };
-
+            
         } catch (error) {
             console.error('❌ Transfer failed:', error);
-            return this.handleTransactionError(error, 'transfer');
+            return {
+                success: false,
+                error: this.parseError(error)
+            };
         }
     }
 
     // ===================================
-    // 🔍 OSMOSIS-STYLE QUERY METHODS
+    // QUERY FUNCTIONS
     // ===================================
 
-    async getBalance(address = null) {
+    async getValidators() {
         try {
-            if (!this.client) {
-                await this.connectKeplr();
-            }
-
-            const queryAddress = address || this.account?.address;
-            if (!queryAddress) {
-                throw new Error('No address provided and not connected');
-            }
-
-            // ✅ CosmJS balance query (Osmosis style)
-            const balance = await this.client.getBalance(queryAddress, this.denom);
+            const response = await fetch(`${this.lcdEndpoint}/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED&pagination.limit=200`);
+            const data = await response.json();
             
-            const balanceInMedas = this.formatMedas(balance.amount);
-            console.log(`📊 Balance: ${balanceInMedas} MEDAS`);
-            
-            return balanceInMedas;
-
+            return data.validators || [];
         } catch (error) {
-            console.error('❌ Balance query failed:', error);
-            return 'ERROR';
-        }
-    }
-
-    async getAllBalances(address = null) {
-        try {
-            if (!this.client) {
-                await this.connectKeplr();
-            }
-
-            const queryAddress = address || this.account?.address;
-            const balances = await this.client.getAllBalances(queryAddress);
-            
-            return balances;
-
-        } catch (error) {
-            console.error('❌ All balances query failed:', error);
+            console.error('❌ Failed to fetch validators:', error);
             return [];
         }
     }
 
-    // ===================================
-    // 🛠️ OSMOSIS-STYLE ERROR HANDLING
-    // ===================================
+    async getDelegations(delegatorAddress) {
+        try {
+            const response = await fetch(`${this.lcdEndpoint}/cosmos/staking/v1beta1/delegations/${delegatorAddress}`);
+            const data = await response.json();
+            
+            return data.delegation_responses || [];
+        } catch (error) {
+            console.error('❌ Failed to fetch delegations:', error);
+            return [];
+        }
+    }
 
-    handleTransactionError(error, operation) {
-        // ✅ Spezifische Fehlerbehandlung wie bei Osmosis
-        if (error.message?.includes('Request rejected') || 
-            error.message?.includes('User denied')) {
-            return {
-                success: false,
-                error: 'Transaction was cancelled by user'
-            };
-        } else if (error.message?.includes('insufficient funds')) {
-            return {
-                success: false,
-                error: 'Insufficient balance for this transaction'
-            };
-        } else if (error.message?.includes('out of gas')) {
-            return {
-                success: false,
-                error: 'Transaction ran out of gas - try increasing gas limit'
-            };
-        } else if (error.message?.includes('sequence mismatch')) {
-            return {
-                success: false,
-                error: 'Account sequence mismatch - please try again'
-            };
-        } else {
-            return {
-                success: false,
-                error: `${operation} failed: ${error.message}`
-            };
+    async getRewards(delegatorAddress) {
+        try {
+            const response = await fetch(`${this.lcdEndpoint}/cosmos/distribution/v1beta1/delegators/${delegatorAddress}/rewards`);
+            const data = await response.json();
+            
+            return data.rewards || [];
+        } catch (error) {
+            console.error('❌ Failed to fetch rewards:', error);
+            return [];
+        }
+    }
+
+    async getBalance(address) {
+        try {
+            if (this.client) {
+                // Use CosmJS if available
+                const balance = await this.client.getBalance(address, "umedas");
+                return this.formatAmount(balance.amount);
+            } else {
+                // Fallback to LCD API
+                const response = await fetch(`${this.lcdEndpoint}/cosmos/bank/v1beta1/balances/${address}/by_denom?denom=umedas`);
+                const data = await response.json();
+                
+                return data.balance ? this.formatAmount(data.balance.amount) : "0.000000";
+            }
+        } catch (error) {
+            console.error('❌ Failed to fetch balance:', error);
+            return "0.000000";
         }
     }
 
     // ===================================
-    // 🔧 UTILITY FUNCTIONS
+    // HELPER FUNCTIONS
     // ===================================
-
-    formatMedas(amountInUmedas) {
-        if (!amountInUmedas || amountInUmedas === '0') return '0.000000';
-        return (parseInt(amountInUmedas) / Math.pow(10, this.decimals)).toFixed(6);
+    
+    formatAmount(amount, decimals = 6) {
+        if (!amount || amount === '0') return '0.000000';
+        return (parseFloat(amount) / Math.pow(10, decimals)).toFixed(6);
+    }
+    
+    parseAmount(amount, decimals = 6) {
+        return Math.floor(parseFloat(amount) * Math.pow(10, decimals));
     }
 
-    formatUmedas(amountInMedas) {
-        return Math.floor(parseFloat(amountInMedas) * Math.pow(10, this.decimals)).toString();
+    parseError(error) {
+        if (error.message?.includes('Request rejected') || 
+            error.message?.includes('User denied')) {
+            return 'Transaction was cancelled by user';
+        } else if (error.message?.includes('insufficient funds')) {
+            return 'Insufficient balance for this transaction';
+        } else if (error.message?.includes('out of gas')) {
+            return 'Transaction ran out of gas';
+        } else if (error.message?.includes('sequence mismatch')) {
+            return 'Account sequence mismatch - please try again';
+        } else {
+            return error.message || 'Unknown error occurred';
+        }
     }
 
-    disconnect() {
-        this.client = null;
-        this.account = null;
-        console.log('🔌 Medas StakingManager disconnected');
-    }
-
+    // Connection status
     isConnected() {
-        return !!(this.client && this.account);
+        return !!(this.client && this.account) || !!(this.offlineSigner && this.account);
     }
 
     getConnectionStatus() {
         return {
             hasClient: !!this.client,
             hasAccount: !!this.account,
+            hasOfflineSigner: !!this.offlineSigner,
             address: this.account?.address,
             chainId: this.chainId,
-            rpcEndpoint: this.rpcEndpoint
+            cosmjsAvailable: !!(window.SigningStargateClient && window.coins)
         };
     }
 }
 
 // ===================================
-// 🧪 OSMOSIS-STYLE TESTING
+// GLOBAL VALIDATOR BUTTON ACTIONS
+// ===================================
+
+window.selectValidatorAction = function(button) {
+    const validatorAddress = button.dataset.validatorAddress;
+    const validatorName = button.dataset.validatorName;
+    
+    console.log('📊 Validator selected via button:', validatorName, validatorAddress);
+    
+    if (window.selectValidator) {
+        window.selectValidator(validatorAddress, validatorName);
+    } else {
+        const validatorSelect = document.getElementById('validator-select');
+        if (validatorSelect) {
+            let option = Array.from(validatorSelect.options).find(opt => opt.value === validatorAddress);
+            if (!option) {
+                option = new Option(validatorName, validatorAddress);
+                validatorSelect.add(option);
+            }
+            validatorSelect.value = validatorAddress;
+            
+            button.textContent = 'Selected!';
+            button.style.borderColor = '#00ff00';
+            button.style.color = '#00ff00';
+            
+            setTimeout(() => {
+                button.textContent = 'Select';
+                button.style.borderColor = '#00ffff';
+                button.style.color = '#00ffff';
+            }, 1500);
+            
+            console.log(`📊 Selected validator: ${validatorName} (${validatorAddress})`);
+        }
+    }
+};
+
+window.quickStakeAction = function(button) {
+    const validatorAddress = button.dataset.validatorAddress;
+    const validatorName = button.dataset.validatorName;
+    
+    console.log('🚀 Quick stake for validator:', validatorName);
+    
+    const selectButton = button.parentElement.querySelector('[data-validator-address="' + validatorAddress + '"]');
+    if (selectButton && selectButton !== button) {
+        window.selectValidatorAction(selectButton);
+    } else {
+        window.selectValidatorAction(button);
+    }
+    
+    setTimeout(() => {
+        const stakeInput = document.getElementById('stake-amount');
+        if (stakeInput) {
+            stakeInput.focus();
+            stakeInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 100);
+};
+
+// ===================================
+// TEST FUNCTION
 // ===================================
 
 window.testMedasOsmosisStyle = async function() {
-    console.log('🧪 TESTING MEDAS STAKING MANAGER (OSMOSIS ARCHITECTURE)...');
-    console.log('=========================================================');
-    
-    const stakingManager = new StakingManager();
+    console.log('🧪 Testing Medas StakingManager (Browser Compatible)...');
     
     try {
-        // Test connection
-        console.log('🔸 Test 1: Keplr Connection');
-        const account = await stakingManager.connectKeplr();
-        console.log('✅ Connected:', account.address);
+        const stakingManager = new StakingManager();
         
-        // Test client status
-        console.log('🔸 Test 2: Client Status');
-        const status = stakingManager.getConnectionStatus();
-        console.log('✅ Status:', status);
+        // Test CosmJS availability
+        console.log('CosmJS available:', !!(window.SigningStargateClient && window.coins));
+        console.log('Connection status:', stakingManager.getConnectionStatus());
         
-        // Test balance
-        console.log('🔸 Test 3: Balance Query');
-        const balance = await stakingManager.getBalance();
-        console.log('✅ Balance:', balance, 'MEDAS');
+        // Test validators fetch
+        const validators = await stakingManager.getValidators();
+        console.log(`✅ Fetched ${validators.length} validators`);
         
-        // Test message creation
-        console.log('🔸 Test 4: Message Creation');
-        const testMsg = stakingManager.createDelegateMessage(
-            account.address,
-            'medasvaloperTest',
-            '1000000' // 1 MEDAS in umedas
-        );
-        console.log('✅ Message created:', testMsg.typeUrl);
+        if (window.keplr && window.terminal?.connected) {
+            console.log('✅ Keplr connected, ready for transactions');
+        } else {
+            console.log('ℹ️ Connect Keplr to test transactions');
+        }
         
-        console.log('🎉 ALL TESTS PASSED! Osmosis-style architecture working!');
-        return 'Medas StakingManager (Osmosis architecture) ready for production!';
+        return 'StakingManager test completed - check console for details';
         
     } catch (error) {
         console.error('❌ Test failed:', error);
@@ -459,9 +525,10 @@ window.testMedasOsmosisStyle = async function() {
     }
 };
 
-// Export (ES Module style wie Osmosis)
-export default StakingManager;
-
-// Global availability
-window.StakingManager = StakingManager;
-console.log('🚀 Medas StakingManager loaded - Osmosis Labs inspired architecture!');
+// Export for modules
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = StakingManager;
+} else {
+    window.StakingManager = StakingManager;
+    console.log('🚀 StakingManager loaded (Browser Compatible Version)');
+}
