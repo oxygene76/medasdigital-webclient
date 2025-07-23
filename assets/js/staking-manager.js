@@ -137,12 +137,66 @@ class StakingManager {
         }
     }
 
+    / Fügen Sie diese Methode zu Ihrer StakingManager Klasse hinzu:
+encodeTxForBroadcast(signedTx) {
+    try {
+        console.log('🔧 Encoding transaction for Cosmos SDK 0.50...');
+        console.log('🔍 SignedTx structure:', signedTx);
+        
+        // ✅ KORREKTE COSMOS SDK 0.50 STRUKTUR
+        const txWrapper = {
+            body: {
+                messages: signedTx.signed.msgs,
+                memo: signedTx.signed.memo || "",
+                timeout_height: "0",
+                extension_options: [],
+                non_critical_extension_options: []
+            },
+            auth_info: {
+                signer_infos: [{
+                    public_key: {
+                        "@type": "/cosmos.crypto.secp256k1.PubKey",
+                        key: signedTx.signature.pub_key.value
+                    },
+                    mode_info: {
+                        single: {
+                            mode: "SIGN_MODE_LEGACY_AMINO_JSON"
+                        }
+                    },
+                    sequence: signedTx.signed.sequence.toString()
+                }],
+                fee: {
+                    amount: signedTx.signed.fee.amount,
+                    gas_limit: signedTx.signed.fee.gas.toString(),
+                    payer: "",
+                    granter: ""
+                }
+            },
+            signatures: [signedTx.signature.signature]
+        };
+        
+        console.log('🔧 TX Wrapper for SDK 0.50:', txWrapper);
+        
+        // Base64 encoding
+        const txBytes = btoa(JSON.stringify(txWrapper));
+        console.log('🔧 Encoded tx_bytes length:', txBytes.length);
+        
+        return txBytes;
+        
+    } catch (error) {
+        console.error('❌ Transaction encoding failed:', error);
+        console.error('❌ SignedTx was:', signedTx);
+        throw new Error(`Encoding failed: ${error.message}`);
+    }
+}
+
+    
     async broadcastTransaction(signedTx) {
         try {
             const restUrl = window.MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
             
             const broadcastReq = {
-                tx: signedTx.signed,
+                tx_bytes: this.encodeTxForBroadcast(signedTx),
                 mode: "BROADCAST_MODE_SYNC"
             };
 
