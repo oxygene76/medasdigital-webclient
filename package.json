@@ -7,14 +7,18 @@
   "scripts": {
     "start": "NODE_ENV=production node server.js",
     "dev": "NODE_ENV=development nodemon server.js",
-    "dev-express-vite": "NODE_ENV=development node server.js",
+    "dev-stable": "NODE_ENV=development node server.js",
     "build": "vite build",
     "preview": "NODE_ENV=production node server.js",
     "legacy-start": "python -m http.server 8000",
     "live-dev": "live-server --port=8000 --open=/",
     "deploy": "./scripts/deploy.sh",
     "daemon": "docker run -d --name medas-digital-daemon -p 8080:8080 medas-digital/daemon:latest",
-    "test-cosmjs": "echo 'Server: http://localhost:8080 | Test: window.testMedasOsmosisStyle()'"
+    "test-cosmjs": "echo 'Stable Server: http://localhost:8080 | Test: window.testMedasOsmosisStyle()'",
+    "vite-dev": "vite --port 3000",
+    "vite-build": "vite build",
+    "full-dev": "concurrently \"npm run dev\" \"npm run vite-dev\"",
+    "stop": "pkill -f 'node server.js' || true"
   },
   "keywords": [
     "blockchain",
@@ -31,7 +35,8 @@
     "cosmjs",
     "osmosis-style",
     "express",
-    "vite"
+    "vite",
+    "stable"
   ],
   "author": "Medas Digital Team",
   "license": "MIT",
@@ -75,7 +80,8 @@
     "assert": "^2.0.0",
     "util": "^0.12.0",
     "events": "^3.3.0",
-    "path-browserify": "^1.0.1"
+    "path-browserify": "^1.0.1",
+    "concurrently": "^8.0.0"
   },
   "engines": {
     "node": ">=16.0.0"
