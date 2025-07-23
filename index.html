@@ -737,23 +737,32 @@ details[open] {
 <script>
 console.log('📚 Setting up CosmJS...');
 
-// Function to find and setup CosmJS
 function setupCosmJS() {
     console.log('🔍 Searching for CosmJS in window object...');
     
-    // List all available properties
+    // DIREKTE LÖSUNG - Die _1 Objekte finden!
+    if (window.signingstargateclient_1 && window.signingstargateclient_1.SigningStargateClient) {
+        console.log('✅ Found CosmJS with _1 suffix (UMD build)');
+        window.SigningStargateClient = window.signingstargateclient_1.SigningStargateClient;
+        window.coins = window.amino_1?.coins || function() { return []; };
+        window.cosmjsReady = true;
+        window.dispatchEvent(new Event('cosmjs-loaded'));
+        return true;
+    }
+    
+    // List all available properties for debugging
     const allKeys = Object.keys(window);
     const cosmjsKeys = allKeys.filter(key => 
         key.toLowerCase().includes('cosmjs') || 
         key.toLowerCase().includes('stargate') ||
         key.toLowerCase().includes('amino') ||
-        key.includes('Build')
+        key.includes('Build') ||
+        key.includes('_1')
     );
     
     console.log('🔍 Found potential CosmJS objects:', cosmjsKeys);
-    console.log('🔍 All window keys:', allKeys.slice(0, 20), '... (' + allKeys.length + ' total)');
     
-    // Try different possible locations
+    // Try other possible locations
     const possibleLocations = [
         'cosmjsStargate',
         'StargateBuild',
