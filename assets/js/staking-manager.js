@@ -221,88 +221,95 @@ async encodeTxForBroadcast(signedTx) {
 }
 
 // ===================================
-// 🎯 PROBLEM GEFUNDEN: RPC Format ist falsch!
+// 🚀 PRODUCTION-READY BROADCAST SOLUTION
 // ===================================
 
-// Das Problem: broadcast_tx_sync erwartet RAW PROTOBUF, aber wir senden Amino JSON!
-// Die Lösung: Verwenden Sie broadcast_tx_async oder anderen Endpoint
-
 // Ersetzen Sie Ihre broadcastTransaction Methode:
-
 async broadcastTransaction(signedTx) {
-    console.log('📡 Broadcasting with CometBFT 0.37 format - FINAL FIX...');
+    console.log('📡 Broadcasting with production-ready broadcast_tx_sync...');
     
     try {
-        // ✅ LÖSUNG: Verwenden Sie Keplr's tx_bytes direkt (falls verfügbar)
-        if (signedTx.tx_bytes) {
-            console.log('✅ Using Keplr tx_bytes directly (Protobuf format)');
-            const txBytesBase64 = btoa(String.fromCharCode(...new Uint8Array(signedTx.tx_bytes)));
+        // ✅ SCHRITT 1: Protobuf → Amino Message Conversion
+        const convertedMsgs = signedTx.signed.msgs.map(msg => {
+            console.log('🔧 Converting message:', msg['@type']);
             
-            const rpcResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_commit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    jsonrpc: '2.0',
-                    id: -1,
-                    method: 'broadcast_tx_commit',
-                    params: { tx: txBytesBase64 }
-                })
-            });
-
-            const result = await rpcResponse.json();
-            
-            if (result.result && result.result.check_tx.code === 0 && result.result.deliver_tx.code === 0) {
-                console.log('🎉 Transaction confirmed in block!');
-                console.log('📊 TX Hash:', result.result.hash);
-                console.log('📊 Block Height:', result.result.height);
-                console.log('📊 Gas Used:', result.result.deliver_tx.gas_used);
-                
+            // Protobuf → Amino Type Mapping
+            if (msg['@type'] === '/cosmos.staking.v1beta1.MsgDelegate') {
                 return {
-                    success: true,
-                    txHash: result.result.hash,
-                    blockHeight: result.result.height,
-                    gasUsed: result.result.deliver_tx.gas_used,
-                    gasWanted: result.result.deliver_tx.gas_wanted
+                    type: 'cosmos-sdk/MsgDelegate',
+                    value: {
+                        delegator_address: msg.delegator_address,
+                        validator_address: msg.validator_address,
+                        amount: msg.amount
+                    }
                 };
-            } else {
-                const error = result.result?.check_tx?.log || result.result?.deliver_tx?.log || 'Unknown error';
-                throw new Error(`Transaction failed: ${error}`);
             }
-        }
+            
+            if (msg['@type'] === '/cosmos.staking.v1beta1.MsgUndelegate') {
+                return {
+                    type: 'cosmos-sdk/MsgUndelegate',
+                    value: {
+                        delegator_address: msg.delegator_address,
+                        validator_address: msg.validator_address,
+                        amount: msg.amount
+                    }
+                };
+            }
+            
+            if (msg['@type'] === '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward') {
+                return {
+                    type: 'cosmos-sdk/MsgWithdrawDelegatorReward',
+                    value: {
+                        delegator_address: msg.delegator_address,
+                        validator_address: msg.validator_address
+                    }
+                };
+            }
+            
+            console.warn('⚠️ Unknown message type:', msg['@type']);
+            return msg;
+        });
         
-        // ✅ FALLBACK: Verwenden Sie Standard Amino Format für broadcast_tx_commit
-        console.log('📊 No tx_bytes found - using StdTx Amino format');
-        
-        // Konvertieren Sie zu Standard Amino StdTx format
+        // ✅ SCHRITT 2: StdTx Format für CometBFT (laut Doku)
         const stdTx = {
-            type: "cosmos-sdk/StdTx",
-            value: {
-                msg: signedTx.signed.msgs,
-                fee: signedTx.signed.fee,
-                signatures: [{
-                    pub_key: signedTx.signature.pub_key,
-                    signature: signedTx.signature.signature
-                }],
-                memo: signedTx.signed.memo || ""
-            }
+            msg: convertedMsgs,
+            fee: {
+                amount: signedTx.signed.fee.amount,
+                gas: signedTx.signed.fee.gas
+            },
+            signatures: [{
+                pub_key: signedTx.signature.pub_key,
+                signature: signedTx.signature.signature
+            }],
+            memo: signedTx.signed.memo || ""
         };
         
-        console.log('📊 StdTx format:', stdTx);
+        console.log('📊 StdTx:', stdTx);
+        console.log('✅ Message count:', stdTx.msg.length);
         
-        // Encode zu Base64 für CometBFT
-        const txBytesJson = JSON.stringify(stdTx);
-        const txBytesBase64 = btoa(txBytesJson);
+        // ✅ SCHRITT 3: JSON Serialization + Base64 (laut CometBFT Doku)
+        const txJson = JSON.stringify(stdTx);
+        const txBase64 = btoa(txJson);  // Base64 encoding wie in Doku gezeigt
         
-        console.log('📊 TX bytes length:', txBytesBase64.length);
+        console.log('📊 TX JSON length:', txJson.length);
+        console.log('📊 TX Base64 length:', txBase64.length);
         
-        const rpcResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_commit', {
+        // ✅ SCHRITT 4: Production Broadcast mit broadcast_tx_sync
+        console.log('📡 Using broadcast_tx_sync for production...');
+        
+        const rpcResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_sync', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
             body: JSON.stringify({
                 jsonrpc: '2.0',
-                id: -1,
-                method: 'broadcast_tx_commit',
-                params: { tx: txBytesBase64 }
+                id: 1,
+                method: 'broadcast_tx_sync',
+                params: { 
+                    tx: txBase64  // Base64-encoded wie in der Doku
+                }
             })
         });
 
@@ -311,44 +318,103 @@ async broadcastTransaction(signedTx) {
         }
 
         const result = await rpcResponse.json();
-        console.log('📡 CometBFT Result:', result);
+        console.log('📡 broadcast_tx_sync Response:', result);
 
         if (result.error) {
             throw new Error(`RPC Error: ${result.error.message}`);
         }
 
-        // Prüfe CheckTx und DeliverTx
-        const checkTx = result.result?.check_tx;
-        const deliverTx = result.result?.deliver_tx;
+        // ✅ SCHRITT 5: CheckTx Validation (broadcast_tx_sync gibt nur CheckTx zurück)
+        const checkTx = result.result;
         
-        if (checkTx?.code !== 0) {
-            console.log('❌ CheckTx failed:', checkTx);
-            throw new Error(`Mempool validation failed: ${checkTx.log}`);
+        if (!checkTx) {
+            throw new Error('Invalid response: missing result');
         }
         
-        if (deliverTx?.code !== 0) {
-            console.log('❌ DeliverTx failed:', deliverTx);
-            throw new Error(`Block validation failed: ${deliverTx.log}`);
+        if (checkTx.code !== 0) {
+            console.error('❌ CheckTx failed:', checkTx);
+            throw new Error(`Transaction rejected by mempool: ${checkTx.log}`);
         }
 
-        console.log('🎉 Transaction confirmed in block!');
-        console.log('📊 TX Hash:', result.result.hash);
-        console.log('📊 Block Height:', result.result.height);
-        console.log('📊 Gas Used:', deliverTx.gas_used);
-
+        // ✅ SUCCESS - Transaction accepted by mempool
+        console.log('🎉 Transaction accepted by mempool!');
+        console.log('📊 TX Hash:', checkTx.hash);
+        console.log('📊 Gas Wanted:', checkTx.gas_wanted);
+        console.log('📊 Gas Used:', checkTx.gas_used);
+        
+        // ✅ SCHRITT 6: Wait for block inclusion (optional polling)
+        const finalResult = await this.waitForBlockInclusion(checkTx.hash);
+        
         return {
             success: true,
-            txHash: result.result.hash,
-            blockHeight: result.result.height,
-            gasUsed: deliverTx.gas_used,
-            gasWanted: deliverTx.gas_wanted
+            txHash: checkTx.hash,
+            gasWanted: parseInt(checkTx.gas_wanted || '0'),
+            gasUsed: parseInt(checkTx.gas_used || '0'),
+            blockHeight: finalResult?.blockHeight,
+            confirmed: finalResult?.confirmed || false
         };
 
     } catch (error) {
-        console.log('❌ CometBFT broadcast failed:', error);
+        console.error('❌ Production broadcast failed:', error);
         throw error;
     }
 }
+
+// ===================================
+// 🔍 BLOCK INCLUSION POLLING (OPTIONAL)
+// ===================================
+
+async waitForBlockInclusion(txHash, maxWaitSeconds = 30) {
+    console.log('⏳ Waiting for block inclusion...');
+    
+    const startTime = Date.now();
+    const maxWaitTime = maxWaitSeconds * 1000;
+    
+    while (Date.now() - startTime < maxWaitTime) {
+        try {
+            // Query transaction by hash
+            const queryResponse = await fetch(`https://rpc.medas-digital.io:26657/tx?hash=${txHash}`, {
+                method: 'GET',
+                headers: { 'Accept': 'application/json' }
+            });
+            
+            if (queryResponse.ok) {
+                const queryResult = await queryResponse.json();
+                
+                if (queryResult.result && queryResult.result.tx_result) {
+                    const txResult = queryResult.result.tx_result;
+                    
+                    if (txResult.code === 0) {
+                        console.log('✅ Transaction confirmed in block!');
+                        console.log('📊 Block Height:', queryResult.result.height);
+                        console.log('📊 Final Gas Used:', txResult.gas_used);
+                        
+                        return {
+                            confirmed: true,
+                            blockHeight: parseInt(queryResult.result.height),
+                            gasUsed: parseInt(txResult.gas_used || '0'),
+                            events: txResult.events || []
+                        };
+                    } else {
+                        console.error('❌ Transaction failed in block:', txResult.log);
+                        throw new Error(`Transaction failed in block: ${txResult.log}`);
+                    }
+                }
+            }
+            
+            // Wait 2 seconds before next check
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+        } catch (error) {
+            console.warn('⚠️ Polling error (retrying):', error.message);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+    }
+    
+    console.warn('⚠️ Block inclusion timeout - transaction may still be pending');
+    return { confirmed: false };
+}
+
 // ===================================
 // 🔧 KEPLR TX SERIALIZATION
 // ===================================
