@@ -231,9 +231,9 @@ async encodeTxForBroadcast(signedTx) {
 
 async broadcastTransaction(signedTx) {
     try {
-        console.log('📡 Broadcasting with corrected RPC format...');
+        console.log('📡 Broadcasting with broadcast_tx_commit (waits for block inclusion)...');
         
-        // ✅ SCHRITT 1: Erstelle das KORREKTE Amino Format für RPC
+        // ✅ Amino TX Format erstellen
         const aminoTx = {
             msg: signedTx.signed.msgs,
             fee: signedTx.signed.fee,
@@ -241,166 +241,99 @@ async broadcastTransaction(signedTx) {
             memo: signedTx.signed.memo || ""
         };
         
-        console.log('📊 Amino TX for RPC:', aminoTx);
+        console.log('📊 Waiting for block confirmation...');
         
-        // ✅ METHODE 1: Versuche broadcast_tx_async (nimmt oft JSON)
-        try {
-            console.log('📡 Trying broadcast_tx_async...');
-            
-            const asyncResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_async', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    jsonrpc: "2.0",
-                    id: 1,
-                    method: "broadcast_tx_async",
-                    params: {
-                        tx: btoa(JSON.stringify(aminoTx))
-                    }
-                })
-            });
-            
-            if (asyncResponse.ok) {
-                const asyncResult = await asyncResponse.json();
-                console.log('📡 broadcast_tx_async result:', asyncResult);
-                
-                if (!asyncResult.error && asyncResult.result) {
-                    console.log('✅ broadcast_tx_async successful!');
-                    return {
-                        success: true,
-                        txHash: asyncResult.result.hash,
-                        code: 0,
-                        rawLog: 'Transaction submitted async',
-                        endpoint: 'broadcast_tx_async'
-                    };
+        // ✅ BROADCAST_TX_COMMIT: Wartet auf Block-Inclusion
+        const commitResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_commit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                id: 1,
+                method: "broadcast_tx_commit",
+                params: {
+                    tx: btoa(JSON.stringify(aminoTx))
                 }
-            }
-        } catch (asyncError) {
-            console.log('⚠️ broadcast_tx_async failed:', asyncError.message);
+            })
+        });
+
+        console.log('📡 Commit Response status:', commitResponse.status);
+
+        if (!commitResponse.ok) {
+            const errorText = await commitResponse.text();
+            throw new Error(`Commit failed: HTTP ${commitResponse.status} - ${errorText}`);
+        }
+
+        const commitResult = await commitResponse.json();
+        console.log('📡 Commit Result:', commitResult);
+        
+        // ✅ RPC Error Check
+        if (commitResult.error) {
+            console.error('❌ RPC Error:', commitResult.error);
+            throw new Error(`RPC Error: ${commitResult.error.message || commitResult.error.data}`);
         }
         
-        // ✅ METHODE 2: Versuche broadcast_tx_commit (vollständige Verarbeitung)
-        try {
-            console.log('📡 Trying broadcast_tx_commit...');
-            
-            const commitResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_commit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    jsonrpc: "2.0",
-                    id: 1,
-                    method: "broadcast_tx_commit",
-                    params: {
-                        tx: btoa(JSON.stringify(aminoTx))
-                    }
-                })
-            });
-            
-            if (commitResponse.ok) {
-                const commitResult = await commitResponse.json();
-                console.log('📡 broadcast_tx_commit result:', commitResult);
-                
-                if (!commitResult.error && commitResult.result) {
-                    const deliverTx = commitResult.result.deliver_tx;
-                    
-                    if (deliverTx && deliverTx.code === 0) {
-                        console.log('✅ broadcast_tx_commit successful!');
-                        return {
-                            success: true,
-                            txHash: commitResult.result.hash,
-                            code: deliverTx.code,
-                            rawLog: deliverTx.log || 'Transaction committed',
-                            height: commitResult.result.height,
-                            endpoint: 'broadcast_tx_commit'
-                        };
-                    } else {
-                        throw new Error(`Transaction failed: ${deliverTx?.log || 'Unknown error'}`);
-                    }
-                }
-            }
-        } catch (commitError) {
-            console.log('⚠️ broadcast_tx_commit failed:', commitError.message);
+        if (!commitResult.result) {
+            throw new Error('Invalid commit response: missing result');
         }
         
-        // ✅ METHODE 3: Fallback zu LCD /txs (Legacy aber zuverlässig)
-        try {
-            console.log('📡 Trying legacy LCD /txs...');
-            
-            const lcdResponse = await fetch('https://lcd.medas-digital.io:1317/txs', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(aminoTx)
-            });
-            
-            if (lcdResponse.ok) {
-                const lcdResult = await lcdResponse.json();
-                console.log('📡 LCD /txs result:', lcdResult);
-                
-                if (lcdResult.code === 0) {
-                    console.log('✅ LCD /txs successful!');
-                    return {
-                        success: true,
-                        txHash: lcdResult.txhash,
-                        code: lcdResult.code,
-                        rawLog: lcdResult.raw_log,
-                        height: lcdResult.height,
-                        endpoint: 'lcd-legacy'
-                    };
-                } else {
-                    throw new Error(`Transaction failed: ${lcdResult.raw_log}`);
-                }
-            }
-        } catch (lcdError) {
-            console.log('⚠️ LCD /txs failed:', lcdError.message);
+        // ✅ CheckTx Validation (Mempool acceptance)
+        const checkTx = commitResult.result.check_tx;
+        if (checkTx && checkTx.code !== 0) {
+            console.error('❌ CheckTx failed:', checkTx);
+            throw new Error(`Mempool validation failed: ${checkTx.log || 'Unknown CheckTx error'}`);
         }
         
-        // ✅ METHODE 4: Experimentell - Versuche JSON direkt an RPC
-        try {
-            console.log('📡 Trying direct JSON to broadcast_tx_sync...');
-            
-            const directResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_sync', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    jsonrpc: "2.0",
-                    id: 1,
-                    method: "broadcast_tx_sync",
-                    params: {
-                        tx: JSON.stringify(aminoTx)  // ← JSON direkt, nicht Base64!
-                    }
-                })
-            });
-            
-            if (directResponse.ok) {
-                const directResult = await directResponse.json();
-                console.log('📡 Direct JSON result:', directResult);
-                
-                if (!directResult.error && directResult.result && directResult.result.code === 0) {
-                    console.log('✅ Direct JSON successful!');
-                    return {
-                        success: true,
-                        txHash: directResult.result.hash,
-                        code: directResult.result.code,
-                        rawLog: directResult.result.log || 'Transaction successful',
-                        endpoint: 'direct-json'
-                    };
-                }
-            }
-        } catch (directError) {
-            console.log('⚠️ Direct JSON failed:', directError.message);
+        // ✅ DeliverTx Validation (Block execution)
+        const deliverTx = commitResult.result.deliver_tx;
+        if (!deliverTx) {
+            throw new Error('Missing deliver_tx in commit result');
         }
         
-        throw new Error('All broadcast methods failed - RPC format incompatibility');
+        if (deliverTx.code !== 0) {
+            console.error('❌ DeliverTx failed:', deliverTx);
+            throw new Error(`Transaction failed in block: ${deliverTx.log || 'Unknown DeliverTx error'}`);
+        }
+
+        // ✅ SUCCESS: Transaction im Block bestätigt!
+        const txHash = commitResult.result.hash;
+        const blockHeight = commitResult.result.height;
+        
+        console.log('🎉 Transaction confirmed in block!');
+        console.log(`📊 TX Hash: ${txHash}`);
+        console.log(`📊 Block Height: ${blockHeight}`);
+        console.log(`📊 Gas Used: ${deliverTx.gas_used}/${deliverTx.gas_wanted}`);
+        
+        // ✅ Parse Events für erweiterte Information
+        const events = deliverTx.events || [];
+        if (events.length > 0) {
+            console.log('📊 Transaction Events:', events);
+        }
+        
+        return {
+            success: true,
+            txHash: txHash,
+            blockHeight: blockHeight,
+            code: deliverTx.code,
+            rawLog: deliverTx.log || 'Transaction successful',
+            gasUsed: parseInt(deliverTx.gas_used || '0'),
+            gasWanted: parseInt(deliverTx.gas_wanted || '0'),
+            events: events,
+            confirmed: true,
+            checkTx: checkTx,
+            deliverTx: deliverTx
+        };
 
     } catch (error) {
-        console.error('❌ All broadcast attempts failed:', error);
+        console.error('❌ broadcast_tx_commit failed:', error);
         return {
             success: false,
             error: error.message
         };
     }
 }
-
 // ===================================
 // 📝 WAS PASSIERT:
 // ===================================
