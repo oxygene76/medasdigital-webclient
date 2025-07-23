@@ -726,72 +726,143 @@ details[open] {
 </div>
     </div>
 
-<!-- ERSETZEN Sie den kompletten Script-Bereich in Ihrer index.html mit diesem: -->
+<!-- FINALER FIX: Ersetzen Sie den Script-Bereich in Ihrer index.html -->
 
-<!-- Step 1: Load CosmJS from unpkg CDN (Garantiert funktionierend) -->
+<!-- Step 1: Load CosmJS modules individually -->
 <script src="https://unpkg.com/@cosmjs/stargate@0.32.0/build/index.js"></script>
 <script src="https://unpkg.com/@cosmjs/amino@0.32.0/build/index.js"></script>
+<script src="https://unpkg.com/@cosmjs/proto-signing@0.32.0/build/index.js"></script>
 
-<!-- Step 2: Initialize CosmJS globals -->
+<!-- Step 2: Manual CosmJS initialization -->
 <script>
-console.log('📚 Initializing CosmJS...');
+console.log('📚 Setting up CosmJS...');
 
-// Wait for CosmJS to be available
-function initCosmJS() {
-    try {
-        // Check different possible global variable names
-        if (typeof StargateBuild !== 'undefined' && StargateBuild.SigningStargateClient) {
-            console.log('✅ CosmJS found as StargateBuild');
-            window.SigningStargateClient = StargateBuild.SigningStargateClient;
-            window.coins = StargateBuild.coins || aminoBuild.coins;
+// Function to find and setup CosmJS
+function setupCosmJS() {
+    console.log('🔍 Searching for CosmJS in window object...');
+    
+    // List all available properties
+    const allKeys = Object.keys(window);
+    const cosmjsKeys = allKeys.filter(key => 
+        key.toLowerCase().includes('cosmjs') || 
+        key.toLowerCase().includes('stargate') ||
+        key.toLowerCase().includes('amino') ||
+        key.includes('Build')
+    );
+    
+    console.log('🔍 Found potential CosmJS objects:', cosmjsKeys);
+    console.log('🔍 All window keys:', allKeys.slice(0, 20), '... (' + allKeys.length + ' total)');
+    
+    // Try different possible locations
+    const possibleLocations = [
+        'cosmjsStargate',
+        'StargateBuild',
+        'stargate',
+        'CosmJS',
+        'cosmjs'
+    ];
+    
+    for (const location of possibleLocations) {
+        if (window[location] && window[location].SigningStargateClient) {
+            console.log(`✅ Found CosmJS at window.${location}`);
+            window.SigningStargateClient = window[location].SigningStargateClient;
+            window.coins = window[location].coins || window.amino?.coins;
             window.cosmjsReady = true;
             window.dispatchEvent(new Event('cosmjs-loaded'));
             return true;
         }
-        
-        if (typeof cosmjsStargate !== 'undefined') {
-            console.log('✅ CosmJS found as cosmjsStargate');
-            window.SigningStargateClient = cosmjsStargate.SigningStargateClient;
-            window.coins = cosmjsStargate.coins;
-            window.cosmjsReady = true;
-            window.dispatchEvent(new Event('cosmjs-loaded'));
-            return true;
-        }
-        
-        // Check window object for CosmJS
-        const keys = Object.keys(window).filter(key => key.toLowerCase().includes('cosmjs') || key.includes('Stargate'));
-        console.log('🔍 Available window objects:', keys);
-        
-        // Manual assignment if found in window
-        if (window.SigningStargateClient) {
-            console.log('✅ CosmJS already available globally');
-            window.cosmjsReady = true;
-            window.dispatchEvent(new Event('cosmjs-loaded'));
-            return true;
-        }
-        
-        throw new Error('CosmJS not found in global scope');
-        
-    } catch (error) {
-        console.warn('⚠️ CosmJS initialization failed:', error.message);
-        return false;
     }
+    
+    // Check if already available globally
+    if (window.SigningStargateClient) {
+        console.log('✅ CosmJS already available globally');
+        window.cosmjsReady = true;
+        window.dispatchEvent(new Event('cosmjs-loaded'));
+        return true;
+    }
+    
+    // Manual search through all window properties
+    for (const key of allKeys) {
+        try {
+            const obj = window[key];
+            if (obj && typeof obj === 'object' && obj.SigningStargateClient) {
+                console.log(`✅ Found CosmJS at window.${key}`);
+                window.SigningStargateClient = obj.SigningStargateClient;
+                window.coins = obj.coins;
+                window.cosmjsReady = true;
+                window.dispatchEvent(new Event('cosmjs-loaded'));
+                return true;
+            }
+        } catch (e) {
+            // Ignore errors when checking properties
+        }
+    }
+    
+    console.warn('⚠️ CosmJS not found in any expected location');
+    return false;
 }
 
 // Try immediately
-if (!initCosmJS()) {
-    // Retry after 500ms
+if (!setupCosmJS()) {
+    // Retry after delay
     setTimeout(() => {
-        if (!initCosmJS()) {
-            // Final fallback - create mock objects
-            console.log('🔄 Using fallback mode - limited functionality');
-            window.SigningStargateClient = null;
-            window.coins = function() { return []; };
-            window.cosmjsReady = false;
-            window.dispatchEvent(new Event('cosmjs-failed'));
+        if (!setupCosmJS()) {
+            // Final attempt with longer delay
+            setTimeout(() => {
+                if (!setupCosmJS()) {
+                    console.error('❌ CosmJS setup failed - using fallback mode');
+                    window.SigningStargateClient = null;
+                    window.coins = function() { return []; };
+                    window.cosmjsReady = false;
+                    window.dispatchEvent(new Event('cosmjs-failed'));
+                }
+            }, 1000);
         }
     }, 500);
 }
+
+// Debug function
+window.debugCosmJS = function() {
+    console.log('🔍 CosmJS Debug Information:');
+    console.log('=========================');
+    console.log('window.cosmjsReady:', window.cosmjsReady);
+    console.log('window.SigningStargateClient:', window.SigningStargateClient ? 'Available' : 'Not found');
+    console.log('window.coins:', window.coins ? 'Available' : 'Not found');
+    
+    // Show all CosmJS-related properties
+    const allKeys = Object.keys(window);
+    const cosmjsKeys = allKeys.filter(key => 
+        key.toLowerCase().includes('cosmjs') || 
+        key.toLowerCase().includes('stargate') ||
+        key.toLowerCase().includes('amino') ||
+        key.includes('Build') ||
+        key.includes('Signing')
+    );
+    console.log('CosmJS-related properties:', cosmjsKeys);
+    
+    // Check content of potential CosmJS objects
+    cosmjsKeys.forEach(key => {
+        try {
+            const obj = window[key];
+            if (obj && typeof obj === 'object') {
+                const props = Object.keys(obj).slice(0, 10);
+                console.log(`window.${key} properties:`, props);
+                if (obj.SigningStargateClient) {
+                    console.log(`✅ window.${key} contains SigningStargateClient!`);
+                }
+            }
+        } catch (e) {
+            console.log(`Error checking window.${key}:`, e.message);
+        }
+    });
+    
+    return {
+        cosmjsReady: window.cosmjsReady,
+        hasSigningClient: !!window.SigningStargateClient,
+        hasCoins: !!window.coins,
+        cosmjsKeys
+    };
+};
 </script>
 
 <!-- Step 3: Load your application scripts -->
@@ -822,6 +893,13 @@ function loadScriptsInOrder() {
                 if (typeof MedasResearchTerminal !== 'undefined' && !window.terminal) {
                     window.terminal = new MedasResearchTerminal();
                     console.log('🎮 Terminal initialized');
+                    
+                    // Debug CosmJS status after terminal init
+                    console.log('🔍 CosmJS status after init:', {
+                        cosmjsReady: window.cosmjsReady,
+                        signingClient: !!window.SigningStargateClient,
+                        coins: !!window.coins
+                    });
                 }
             }, 500);
             return;
@@ -837,7 +915,7 @@ function loadScriptsInOrder() {
         script.onerror = () => {
             console.error(`❌ Failed to load: ${scriptsToLoad[currentIndex]}`);
             currentIndex++;
-            loadNextScript(); // Continue even if one fails
+            loadNextScript();
         };
         
         document.head.appendChild(script);
@@ -846,29 +924,29 @@ function loadScriptsInOrder() {
     loadNextScript();
 }
 
-// Wait for CosmJS, then load scripts
+// Event listeners
 window.addEventListener('cosmjs-loaded', () => {
-    console.log('🎉 CosmJS ready, loading application scripts');
+    console.log('🎉 CosmJS loaded successfully, starting application scripts');
     loadScriptsInOrder();
 });
 
 window.addEventListener('cosmjs-failed', () => {
-    console.log('⚠️ CosmJS failed, loading scripts anyway (limited functionality)');
+    console.log('⚠️ CosmJS failed to load, starting scripts anyway (limited functionality)');
     loadScriptsInOrder();
 });
 
-// Fallback: Load scripts anyway after timeout
+// Fallback timer
 setTimeout(() => {
     if (!window.terminal) {
-        console.log('⏰ Timeout reached, loading scripts');
+        console.log('⏰ Timeout reached, forcing script load');
         loadScriptsInOrder();
     }
-}, 2000);
+}, 3000);
 </script>
 
 <!-- Step 4: Global Staking Helper Functions -->
 <script>
-// Redelegate from form inputs
+// Global staking functions (same as before)
 async function performRedelegationFromForm() {
     const fromSelect = document.getElementById('redelegate-from-select');
     const toSelect = document.getElementById('redelegate-to-select');
@@ -892,13 +970,11 @@ async function performRedelegationFromForm() {
     
     await window.terminal?.ui?.performRedelegation(fromSelect.value, toSelect.value, amount);
     
-    // Reset form
     fromSelect.value = 'Select source validator...';
     toSelect.value = 'Select destination validator...';
     amountInput.value = '';
 }
 
-// Undelegate from form inputs
 async function performUndelegationFromForm() {
     const fromSelect = document.getElementById('undelegate-from-select');
     const amountInput = document.getElementById('undelegate-amount');
@@ -914,18 +990,15 @@ async function performUndelegationFromForm() {
         return;
     }
     
-    const confirmed = confirm(`Are you sure you want to undelegate ${amount} MEDAS?\n\nThis will start a 21-day unbonding period and you cannot use these tokens for staking during this time.`);
+    const confirmed = confirm(`Are you sure you want to undelegate ${amount} MEDAS?\n\nThis will start a 21-day unbonding period.`);
     
     if (confirmed) {
         await window.terminal?.ui?.performUndelegation(fromSelect.value, amount);
-        
-        // Reset form
         fromSelect.value = 'Select validator to unstake from...';
         amountInput.value = '';
     }
 }
 
-// Send tokens helper
 async function sendTokens() {
     const addressInput = document.getElementById('send-address');
     const amountInput = document.getElementById('send-amount');
@@ -944,44 +1017,23 @@ async function sendTokens() {
     
     await window.terminal?.ui?.sendTokens(addressInput.value, amount, memoInput.value);
     
-    // Reset form on success
     addressInput.value = '';
     amountInput.value = '';
     memoInput.value = '';
 }
 
-// Set max send amount
 function setMaxSendAmount() {
     const amountInput = document.getElementById('send-amount');
     const balance = window.terminal?.ui?.currentBalance || 0;
-    const fee = 0.01; // Reserve for fees
+    const fee = 0.01;
     const maxAmount = Math.max(0, balance - fee);
     amountInput.value = maxAmount.toFixed(6);
 }
 
-// Debug function
-window.debugCosmJS = function() {
-    console.log('🔍 CosmJS Debug:');
-    console.log('window.cosmjsReady:', window.cosmjsReady);
-    console.log('window.SigningStargateClient:', typeof window.SigningStargateClient);
-    console.log('window.coins:', typeof window.coins);
-    
-    // Check all window properties containing "cosmjs" or "stargate"
-    const cosmjsKeys = Object.keys(window).filter(key => 
-        key.toLowerCase().includes('cosmjs') || 
-        key.toLowerCase().includes('stargate') ||
-        key.toLowerCase().includes('amino')
-    );
-    console.log('CosmJS-related window properties:', cosmjsKeys);
-    
-    return 'Debug info logged to console';
-};
-
-console.log('🎯 Global functions loaded. Use window.debugCosmJS() for debugging.');
+console.log('🎯 Setup complete. Use window.debugCosmJS() in console to debug.');
 </script>
 
 <!-- Notification Container -->
 <div id="notification-container"></div>
-
 </body>
 </html>
