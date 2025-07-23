@@ -229,24 +229,33 @@ async encodeTxForBroadcast(signedTx) {
 // 🚀 PRODUCTION-READY BROADCAST SOLUTION
 // ===================================
 async broadcastTransaction(signedTx) {
-    console.log('📡 Broadcasting via Keplr sendTx...');
+    console.log('📡 Broadcasting via Keplr sendTx (modern)...');
     
     try {
         console.log('📊 Using Keplr sendTx for broadcasting...');
         console.log('📊 signedTx.signed:', signedTx.signed);
+        console.log('📊 Chain ID:', this.chainId);
         
-        // ✅ Lass Keplr das Broadcasting machen
+        // ✅ Verwende Keplr's moderne sendTx API
         const txHash = await window.keplr.sendTx(
             this.chainId,
             signedTx.signed,
-            "sync"  // oder "commit" für vollständige Bestätigung
+            "sync"  // Synchroner Broadcast (schneller)
         );
         
         console.log('🎉 Keplr broadcast successful!');
         console.log('📊 TX Hash:', txHash);
         
         // ✅ Optional: Wait for block inclusion
-        const finalResult = await this.waitForBlockInclusion(txHash, 30);
+        let finalResult = null;
+        if (this.waitForBlockInclusion) {
+            try {
+                finalResult = await this.waitForBlockInclusion(txHash, 30);
+            } catch (waitError) {
+                console.warn('⚠️ Block inclusion check failed:', waitError.message);
+                // Continue ohne finalResult - TX war trotzdem erfolgreich
+            }
+        }
         
         return {
             success: true,
@@ -258,7 +267,17 @@ async broadcastTransaction(signedTx) {
         
     } catch (error) {
         console.error('❌ Keplr broadcast failed:', error);
-        throw error;
+        
+        // Spezifische Fehlerbehandlung für bekannte Keplr-Probleme
+        if (error.message.includes('Failed to get response from')) {
+            throw new Error(`Blockchain network error: ${error.message}`);
+        } else if (error.message.includes('User rejected')) {
+            throw new Error('Transaction was cancelled by user');
+        } else if (error.message.includes('insufficient funds')) {
+            throw new Error('Insufficient funds for transaction');
+        } else {
+            throw new Error(`Transaction failed: ${error.message}`);
+        }
     }
 }
 // ===================================
