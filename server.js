@@ -1,12 +1,18 @@
 // ===================================
 // MedasDigital WebClient Hybrid Server  
 // Express Server + Vite Middleware + CosmJS Support
+// ES MODULES VERSION (import statt require)
 // Port 8080 - Alles in einem!
 // ===================================
 
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// ES Modules: __dirname alternative
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -44,6 +50,7 @@ app.use(express.urlencoded({ extended: true }));
 if (NODE_ENV === 'development') {
     const setupViteMiddleware = async () => {
         try {
+            // Dynamic import für Vite (ES modules)
             const { createServer } = await import('vite');
             
             console.log('🚀 Setting up Vite middleware...');
@@ -105,6 +112,7 @@ app.get('/api/health', (req, res) => {
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         mode: NODE_ENV,
+        moduleSystem: 'ES Modules',
         features: {
             expressServer: true,
             viteMiddleware: NODE_ENV === 'development',
@@ -112,7 +120,8 @@ app.get('/api/health', (req, res) => {
             staticFiles: true,
             blockchainProxy: false,
             directBlockchainAccess: true,
-            managementAPIs: true
+            managementAPIs: true,
+            esModules: true
         },
         endpoints: {
             health: '/api/health',
@@ -174,7 +183,7 @@ app.get('/api/blockchain-status', async (req, res) => {
     
     res.json({
         server: 'MedasDigital WebClient Hybrid Server',
-        mode: 'express-vite-cosmjs',
+        mode: 'express-vite-cosmjs-esmodules',
         timestamp: new Date().toISOString(),
         summary: {
             healthy: healthyCount,
@@ -185,7 +194,7 @@ app.get('/api/blockchain-status', async (req, res) => {
         recommendation: healthyCount === totalCount ? 
             '🎉 All blockchain endpoints healthy - CosmJS ready!' : 
             `⚠️ ${totalCount - healthyCount}/${totalCount} endpoints having issues - may affect CosmJS functionality`,
-        note: 'Blockchain APIs are accessed directly from browser with CosmJS'
+        note: 'Blockchain APIs are accessed directly from browser with CosmJS (ES Modules)'
     });
 });
 
@@ -194,19 +203,21 @@ app.get('/api/info', (req, res) => {
     res.json({
         server: 'MedasDigital WebClient Hybrid Server',
         version: '1.2.0',
-        mode: 'express-vite-cosmjs',
-        description: 'Express server with Vite middleware for CosmJS support',
+        mode: 'express-vite-cosmjs-esmodules',
+        description: 'Express server with Vite middleware for CosmJS support (ES Modules)',
         architecture: {
-            baseServer: 'Express.js',
+            baseServer: 'Express.js (ES Modules)',
             frontendBundler: NODE_ENV === 'development' ? 'Vite (middleware)' : 'Vite (built)',
             blockchainLibrary: 'CosmJS',
             walletIntegration: 'Keplr',
+            moduleSystem: 'ES Modules (import/export)',
             benefits: [
                 'Single port 8080 for everything',
                 'Hot module replacement in development',
                 'CosmJS ES modules support',
                 'No CORS issues',
-                'Production-ready builds'
+                'Production-ready builds',
+                'Modern ES modules throughout'
             ]
         },
         traffic: {
@@ -221,16 +232,16 @@ app.get('/api/info', (req, res) => {
 // ===================================
 // CACHE CONTROL HELPER
 // ===================================
-const setCustomCacheControl = (res, path) => {
-    if (path.includes('.js') || path.includes('.css')) {
+const setCustomCacheControl = (res, filePath) => {
+    if (filePath.includes('.js') || filePath.includes('.css')) {
         // KEIN CACHE für JS/CSS während Development
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');
-    } else if (path.includes('.png') || path.includes('.jpg') || path.includes('.svg') || path.includes('.ico')) {
+    } else if (filePath.includes('.png') || filePath.includes('.jpg') || filePath.includes('.svg') || filePath.includes('.ico')) {
         // CACHE für Bilder (24 Stunden)
         res.setHeader('Cache-Control', 'public, max-age=86400');
-    } else if (path.includes('.html')) {
+    } else if (filePath.includes('.html')) {
         // KEIN CACHE für HTML
         res.setHeader('Cache-Control', 'no-cache');
     } else {
@@ -241,7 +252,7 @@ const setCustomCacheControl = (res, path) => {
     // CORS und Server-Identifier
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('X-Served-By', 'MedasDigital-Hybrid-Server');
-    res.setHeader('X-Server-Mode', 'express-vite-cosmjs');
+    res.setHeader('X-Server-Mode', 'express-vite-cosmjs-esmodules');
 };
 
 // ===================================
@@ -260,6 +271,7 @@ app.use('/api/*', (req, res) => {
         ],
         note: 'Blockchain APIs are now handled by CosmJS directly in browser',
         cosmjsSupport: true,
+        moduleSystem: 'ES Modules',
         timestamp: new Date().toISOString()
     });
 });
@@ -299,7 +311,7 @@ app.use((error, req, res, next) => {
         message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong',
         timestamp: new Date().toISOString(),
         path: req.url,
-        server: 'MedasDigital Hybrid Server (Express + Vite)'
+        server: 'MedasDigital Hybrid Server (Express + Vite + ES Modules)'
     });
 });
 
@@ -311,7 +323,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log('');
     console.log('==========================================');
     console.log('🚀 MedasDigital WebClient Hybrid Server');
-    console.log('   Express + Vite + CosmJS');
+    console.log('   Express + Vite + CosmJS + ES Modules');
     console.log('==========================================');
     console.log('');
     console.log(`Server running at:`);
@@ -333,7 +345,8 @@ app.listen(PORT, '0.0.0.0', () => {
     }
     
     console.log('');
-    console.log('🚀 BLOCKCHAIN ACCESS:');
+    console.log('🚀 MODULE SYSTEM:');
+    console.log('   📡 ES Modules:       import/export (not require)');
     console.log('   📡 CosmJS Library:   Direct browser access with ES modules');
     console.log('   📡 LCD API:          https://lcd.medas-digital.io:1317 (via CosmJS)');
     console.log('   📡 RPC API:          https://rpc.medas-digital.io:26657 (via CosmJS)');
@@ -344,6 +357,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log('   🛠️ Osmosis-style CosmJS Integration');
     console.log('   🔥 ES Modules + Browser Polyfills');
     console.log('   📊 Express APIs + Vite Frontend');
+    console.log('   🚫 Keine require() Errors mehr');
     console.log('');
     console.log('🎉 Ready for CosmJS staking! Test with your Keplr wallet.');
 });
@@ -373,11 +387,13 @@ setTimeout(async () => {
         const health = await response.json();
         
         console.log(`📊 Server Mode: ${health.mode}`);
+        console.log(`📊 Module System: ${health.moduleSystem}`);
         console.log(`📊 Vite Middleware: ${health.features.viteMiddleware ? 'Active' : 'Disabled'}`);
         console.log(`📊 CosmJS Support: ${health.features.cosmjsSupport ? 'Enabled' : 'Disabled'}`);
+        console.log(`📊 ES Modules: ${health.features.esModules ? 'Enabled' : 'Disabled'}`);
         
         if (health.status === 'healthy') {
-            console.log('🎉 Hybrid server healthy - Express + Vite + CosmJS ready!');
+            console.log('🎉 Hybrid server healthy - Express + Vite + CosmJS + ES Modules ready!');
         }
     } catch (error) {
         console.log('⚠️ Could not verify server health on startup:', error.message);
