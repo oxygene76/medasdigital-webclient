@@ -228,57 +228,23 @@ async encodeTxForBroadcast(signedTx) {
 // ===================================
 // 🚀 PRODUCTION-READY BROADCAST SOLUTION
 // ===================================
-async broadcastTransaction(signedTx) {
-    console.log('📡 Broadcasting via Keplr sendTx (modern)...');
+// ✅ EINFACHSTE LÖSUNG:
+async broadcastTransaction(messages, fee, memo = "") {
+    const account = await this.connectKeplr();
     
-    try {
-        console.log('📊 Using Keplr sendTx for broadcasting...');
-        console.log('📊 signedTx.signed:', signedTx.signed);
-        console.log('📊 Chain ID:', this.chainId);
-        
-        // ✅ Verwende Keplr's moderne sendTx API
-        const txHash = await window.keplr.sendTx(
-            this.chainId,
-            signedTx.signed,
-            "sync"  // Synchroner Broadcast (schneller)
-        );
-        
-        console.log('🎉 Keplr broadcast successful!');
-        console.log('📊 TX Hash:', txHash);
-        
-        // ✅ Optional: Wait for block inclusion
-        let finalResult = null;
-        if (this.waitForBlockInclusion) {
-            try {
-                finalResult = await this.waitForBlockInclusion(txHash, 30);
-            } catch (waitError) {
-                console.warn('⚠️ Block inclusion check failed:', waitError.message);
-                // Continue ohne finalResult - TX war trotzdem erfolgreich
-            }
-        }
-        
-        return {
-            success: true,
-            txHash: txHash,
-            blockHeight: finalResult?.blockHeight || null,
-            gasUsed: finalResult?.gasUsed || 0,
-            confirmed: finalResult?.confirmed || false
-        };
-        
-    } catch (error) {
-        console.error('❌ Keplr broadcast failed:', error);
-        
-        // Spezifische Fehlerbehandlung für bekannte Keplr-Probleme
-        if (error.message.includes('Failed to get response from')) {
-            throw new Error(`Blockchain network error: ${error.message}`);
-        } else if (error.message.includes('User rejected')) {
-            throw new Error('Transaction was cancelled by user');
-        } else if (error.message.includes('insufficient funds')) {
-            throw new Error('Insufficient funds for transaction');
-        } else {
-            throw new Error(`Transaction failed: ${error.message}`);
-        }
-    }
+    // Lass Keplr alles machen:
+    const result = await window.keplr.signAndBroadcast(
+        this.chainId,
+        account.address,
+        messages,
+        fee,
+        memo
+    );
+    
+    return {
+        success: true,
+        txHash: result.transactionHash
+    };
 }
 // ===================================
 // 🔍 BLOCK INCLUSION POLLING (OPTIONAL)
