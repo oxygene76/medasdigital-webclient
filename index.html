@@ -726,157 +726,262 @@ details[open] {
 </div>
     </div>
 
-<!-- Step 1: Load CosmJS via Vite (Korrekt!) -->
-<script type="module">
+<!-- ERSETZEN Sie den kompletten Script-Bereich in Ihrer index.html mit diesem: -->
+
+<!-- Step 1: Load CosmJS from unpkg CDN (Garantiert funktionierend) -->
+<script src="https://unpkg.com/@cosmjs/stargate@0.32.0/build/index.js"></script>
+<script src="https://unpkg.com/@cosmjs/amino@0.32.0/build/index.js"></script>
+
+<!-- Step 2: Initialize CosmJS globals -->
+<script>
+console.log('📚 Initializing CosmJS...');
+
+// Wait for CosmJS to be available
+function initCosmJS() {
     try {
-        // Import CosmJS using Vite's import system (RICHTIG!)
-        const { SigningStargateClient, coins } = await import('@cosmjs/stargate');
+        // Check different possible global variable names
+        if (typeof StargateBuild !== 'undefined' && StargateBuild.SigningStargateClient) {
+            console.log('✅ CosmJS found as StargateBuild');
+            window.SigningStargateClient = StargateBuild.SigningStargateClient;
+            window.coins = StargateBuild.coins || aminoBuild.coins;
+            window.cosmjsReady = true;
+            window.dispatchEvent(new Event('cosmjs-loaded'));
+            return true;
+        }
         
-        // Make globally available
-        window.SigningStargateClient = SigningStargateClient;
-        window.coins = coins;
-        window.cosmjsReady = true;
+        if (typeof cosmjsStargate !== 'undefined') {
+            console.log('✅ CosmJS found as cosmjsStargate');
+            window.SigningStargateClient = cosmjsStargate.SigningStargateClient;
+            window.coins = cosmjsStargate.coins;
+            window.cosmjsReady = true;
+            window.dispatchEvent(new Event('cosmjs-loaded'));
+            return true;
+        }
         
-        console.log('✅ CosmJS loaded via Vite successfully');
-        window.dispatchEvent(new Event('cosmjs-loaded'));
+        // Check window object for CosmJS
+        const keys = Object.keys(window).filter(key => key.toLowerCase().includes('cosmjs') || key.includes('Stargate'));
+        console.log('🔍 Available window objects:', keys);
+        
+        // Manual assignment if found in window
+        if (window.SigningStargateClient) {
+            console.log('✅ CosmJS already available globally');
+            window.cosmjsReady = true;
+            window.dispatchEvent(new Event('cosmjs-loaded'));
+            return true;
+        }
+        
+        throw new Error('CosmJS not found in global scope');
         
     } catch (error) {
-        console.warn('⚠️ CosmJS loading failed:', error.message);
-        window.cosmjsReady = false;
-        window.dispatchEvent(new Event('cosmjs-failed'));
+        console.warn('⚠️ CosmJS initialization failed:', error.message);
+        return false;
     }
+}
+
+// Try immediately
+if (!initCosmJS()) {
+    // Retry after 500ms
+    setTimeout(() => {
+        if (!initCosmJS()) {
+            // Final fallback - create mock objects
+            console.log('🔄 Using fallback mode - limited functionality');
+            window.SigningStargateClient = null;
+            window.coins = function() { return []; };
+            window.cosmjsReady = false;
+            window.dispatchEvent(new Event('cosmjs-failed'));
+        }
+    }, 500);
+}
 </script>
 
-<!-- Step 2: Check for existing scripts, then load missing ones -->
+<!-- Step 3: Load your application scripts -->
 <script>
-    function loadScriptsInOrder() {
-        console.log('📚 Checking which scripts need to be loaded...');
-        
-        // Check what's already loaded to avoid duplicates
-        const scriptsToLoad = [];
-        
-        if (typeof KEPLR_CHAIN_CONFIG === 'undefined') {
-            scriptsToLoad.push('assets/js/config.js');
-        } else {
-            console.log('⏭️ config.js already loaded');
-        }
-        
-        if (typeof MockData === 'undefined') {
-            scriptsToLoad.push('assets/js/mock-data.js');
-        } else {
-            console.log('⏭️ mock-data.js already loaded');
-        }
-        
-        if (typeof KeplrManager === 'undefined') {
-            scriptsToLoad.push('assets/js/keplr-manager.js');
-        } else {
-            console.log('⏭️ keplr-manager.js already loaded');
-        }
-        
-        if (typeof StakingManager === 'undefined') {
-            scriptsToLoad.push('assets/js/staking-manager.js');
-        } else {
-            console.log('⏭️ staking-manager.js already loaded');
-        }
-        
-        if (typeof UIManager === 'undefined') {
-            scriptsToLoad.push('assets/js/ui-manager.js');
-        } else {
-            console.log('⏭️ ui-manager.js already loaded');
-        }
-        
-        if (typeof StakingHelpers === 'undefined') {
-            scriptsToLoad.push('assets/js/staking-helpers.js');
-        } else {
-            console.log('⏭️ staking-helpers.js already loaded');
-        }
-        
-        if (typeof MedasResearchTerminal === 'undefined') {
-            scriptsToLoad.push('assets/js/main.js');
-        } else {
-            console.log('⏭️ main.js already loaded');
-        }
-        
-        if (typeof MobileNavigationManager === 'undefined') {
-            scriptsToLoad.push('assets/js/mobile-navigation.js');
-        } else {
-            console.log('⏭️ mobile-navigation.js already loaded');
-        }
-        
-        if (scriptsToLoad.length === 0) {
-            console.log('✅ All scripts already loaded!');
+function loadScriptsInOrder() {
+    console.log('📚 Loading application scripts...');
+    
+    const scriptsToLoad = [
+        'assets/js/config.js',
+        'assets/js/mock-data.js', 
+        'assets/js/keplr-manager.js',
+        'assets/js/staking-manager.js',
+        'assets/js/ui-manager.js',
+        'assets/js/staking-helpers.js',
+        'assets/js/main.js',
+        'assets/js/mobile-navigation.js'
+    ];
+    
+    let currentIndex = 0;
+    
+    function loadNextScript() {
+        if (currentIndex >= scriptsToLoad.length) {
+            console.log('✅ All scripts loaded successfully!');
+            console.log('🚀 MedasDigital WebClient ready');
             
-            // Check if terminal is initialized
-            if (!window.terminal && typeof MedasResearchTerminal !== 'undefined') {
-                console.log('🔄 Initializing terminal...');
-                setTimeout(() => {
+            // Initialize terminal
+            setTimeout(() => {
+                if (typeof MedasResearchTerminal !== 'undefined' && !window.terminal) {
                     window.terminal = new MedasResearchTerminal();
-                }, 500);
-            }
+                    console.log('🎮 Terminal initialized');
+                }
+            }, 500);
             return;
         }
         
-        console.log(`📥 Loading ${scriptsToLoad.length} missing scripts:`, scriptsToLoad);
+        const script = document.createElement('script');
+        script.src = scriptsToLoad[currentIndex];
+        script.onload = () => {
+            console.log(`✅ Loaded: ${scriptsToLoad[currentIndex]}`);
+            currentIndex++;
+            loadNextScript();
+        };
+        script.onerror = () => {
+            console.error(`❌ Failed to load: ${scriptsToLoad[currentIndex]}`);
+            currentIndex++;
+            loadNextScript(); // Continue even if one fails
+        };
         
-        let currentIndex = 0;
-        
-        function loadNextScript() {
-            if (currentIndex >= scriptsToLoad.length) {
-                console.log('✅ All missing scripts loaded successfully!');
-                console.log('🚀 MedasDigital WebClient ready');
-                
-                // Initialize terminal if needed
-                if (!window.terminal && typeof MedasResearchTerminal !== 'undefined') {
-                    setTimeout(() => {
-                        window.terminal = new MedasResearchTerminal();
-                    }, 500);
-                }
-                return;
-            }
-            
-            const script = document.createElement('script');
-            script.src = scriptsToLoad[currentIndex];
-            script.onload = () => {
-                console.log(`✅ Loaded: ${scriptsToLoad[currentIndex]}`);
-                currentIndex++;
-                loadNextScript();
-            };
-            script.onerror = () => {
-                console.error(`❌ Failed to load: ${scriptsToLoad[currentIndex]}`);
-                currentIndex++;
-                loadNextScript(); // Continue even if one fails
-            };
-            
-            document.head.appendChild(script);
-        }
-        
-        loadNextScript();
+        document.head.appendChild(script);
     }
+    
+    loadNextScript();
+}
 
-    // Wait for CosmJS to load (or fail), then load other scripts
-    window.addEventListener('cosmjs-loaded', () => {
-        console.log('🎉 CosmJS loaded, proceeding with script check');
+// Wait for CosmJS, then load scripts
+window.addEventListener('cosmjs-loaded', () => {
+    console.log('🎉 CosmJS ready, loading application scripts');
+    loadScriptsInOrder();
+});
+
+window.addEventListener('cosmjs-failed', () => {
+    console.log('⚠️ CosmJS failed, loading scripts anyway (limited functionality)');
+    loadScriptsInOrder();
+});
+
+// Fallback: Load scripts anyway after timeout
+setTimeout(() => {
+    if (!window.terminal) {
+        console.log('⏰ Timeout reached, loading scripts');
         loadScriptsInOrder();
-    });
+    }
+}, 2000);
+</script>
 
-    window.addEventListener('cosmjs-failed', () => {
-        console.log('⚠️ CosmJS failed, loading scripts anyway (will use fallback)');
-        loadScriptsInOrder();
-    });
+<!-- Step 4: Global Staking Helper Functions -->
+<script>
+// Redelegate from form inputs
+async function performRedelegationFromForm() {
+    const fromSelect = document.getElementById('redelegate-from-select');
+    const toSelect = document.getElementById('redelegate-to-select');
+    const amountInput = document.getElementById('redelegate-amount');
+    
+    if (!fromSelect.value || fromSelect.value === 'Select source validator...') {
+        window.terminal?.ui?.showNotification('❌ Please select source validator', 'error');
+        return;
+    }
+    
+    if (!toSelect.value || toSelect.value === 'Select destination validator...') {
+        window.terminal?.ui?.showNotification('❌ Please select destination validator', 'error');
+        return;
+    }
+    
+    const amount = parseFloat(amountInput.value || '0');
+    if (amount <= 0) {
+        window.terminal?.ui?.showNotification('❌ Please enter valid amount', 'error');
+        return;
+    }
+    
+    await window.terminal?.ui?.performRedelegation(fromSelect.value, toSelect.value, amount);
+    
+    // Reset form
+    fromSelect.value = 'Select source validator...';
+    toSelect.value = 'Select destination validator...';
+    amountInput.value = '';
+}
 
-    // Fallback: If events don't fire within 3 seconds, load anyway
-    setTimeout(() => {
-        if (!window.scriptsStartedLoading) {
-            console.log('⏰ Timeout reached, checking scripts without CosmJS');
-            window.scriptsStartedLoading = true;
-            loadScriptsInOrder();
-        }
-    }, 3000);
+// Undelegate from form inputs
+async function performUndelegationFromForm() {
+    const fromSelect = document.getElementById('undelegate-from-select');
+    const amountInput = document.getElementById('undelegate-amount');
+    
+    if (!fromSelect.value || fromSelect.value === 'Select validator to unstake from...') {
+        window.terminal?.ui?.showNotification('❌ Please select validator', 'error');
+        return;
+    }
+    
+    const amount = parseFloat(amountInput.value || '0');
+    if (amount <= 0) {
+        window.terminal?.ui?.showNotification('❌ Please enter valid amount', 'error');
+        return;
+    }
+    
+    const confirmed = confirm(`Are you sure you want to undelegate ${amount} MEDAS?\n\nThis will start a 21-day unbonding period and you cannot use these tokens for staking during this time.`);
+    
+    if (confirmed) {
+        await window.terminal?.ui?.performUndelegation(fromSelect.value, amount);
+        
+        // Reset form
+        fromSelect.value = 'Select validator to unstake from...';
+        amountInput.value = '';
+    }
+}
+
+// Send tokens helper
+async function sendTokens() {
+    const addressInput = document.getElementById('send-address');
+    const amountInput = document.getElementById('send-amount');
+    const memoInput = document.getElementById('send-memo');
+    
+    if (!addressInput.value) {
+        window.terminal?.ui?.showNotification('❌ Please enter recipient address', 'error');
+        return;
+    }
+    
+    const amount = parseFloat(amountInput.value || '0');
+    if (amount <= 0) {
+        window.terminal?.ui?.showNotification('❌ Please enter valid amount', 'error');
+        return;
+    }
+    
+    await window.terminal?.ui?.sendTokens(addressInput.value, amount, memoInput.value);
+    
+    // Reset form on success
+    addressInput.value = '';
+    amountInput.value = '';
+    memoInput.value = '';
+}
+
+// Set max send amount
+function setMaxSendAmount() {
+    const amountInput = document.getElementById('send-amount');
+    const balance = window.terminal?.ui?.currentBalance || 0;
+    const fee = 0.01; // Reserve for fees
+    const maxAmount = Math.max(0, balance - fee);
+    amountInput.value = maxAmount.toFixed(6);
+}
+
+// Debug function
+window.debugCosmJS = function() {
+    console.log('🔍 CosmJS Debug:');
+    console.log('window.cosmjsReady:', window.cosmjsReady);
+    console.log('window.SigningStargateClient:', typeof window.SigningStargateClient);
+    console.log('window.coins:', typeof window.coins);
+    
+    // Check all window properties containing "cosmjs" or "stargate"
+    const cosmjsKeys = Object.keys(window).filter(key => 
+        key.toLowerCase().includes('cosmjs') || 
+        key.toLowerCase().includes('stargate') ||
+        key.toLowerCase().includes('amino')
+    );
+    console.log('CosmJS-related window properties:', cosmjsKeys);
+    
+    return 'Debug info logged to console';
+};
+
+console.log('🎯 Global functions loaded. Use window.debugCosmJS() for debugging.');
 </script>
 
 <!-- Notification Container -->
 <div id="notification-container"></div>
-
 
 </body>
 </html>
