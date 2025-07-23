@@ -159,7 +159,7 @@ createWithdrawRewardsMessage(delegatorAddress, validatorAddress) {
 
 async encodeTxForBroadcast(signedTx) {
     try {
-        console.log('🔍 AMINO ENCODING FÜR KEPLR SENDTX:');
+        console.log('🔍 AMINO BINARY ENCODING FÜR KEPLR:');
         console.log('====================================');
         
         // ✅ SCHRITT 1: Analysiere SignedTx (von signAmino)
@@ -171,170 +171,49 @@ async encodeTxForBroadcast(signedTx) {
             throw new Error('No messages found in signed transaction');
         }
         
-        // ✅ SCHRITT 2: StdTx Format (Amino Standard)
-        // Das ist das Format das Keplr für Amino-encoded transactions erwartet
-        const stdTx = {
-            type: "cosmos-sdk/StdTx",
-            value: {
-                msg: signedTx.signed.msgs,
-                fee: signedTx.signed.fee,
-                signatures: [signedTx.signature],
-                memo: signedTx.signed.memo || ""
-            }
+        // ✅ SCHRITT 2: Erstelle Transaction (für Broadcast Format)
+        const transaction = {
+            msg: signedTx.signed.msgs,
+            fee: signedTx.signed.fee,
+            signatures: [signedTx.signature],
+            memo: signedTx.signed.memo || ""
         };
         
-        console.log('📊 StdTx structure:', stdTx);
-        console.log('📊 StdTx messages:', stdTx.value.msg);
-        console.log('📊 StdTx signatures:', stdTx.value.signatures);
+        console.log('📊 Transaction structure:', transaction);
+        console.log('📊 Message count:', transaction.msg.length);
+        console.log('📊 Signature present:', !!transaction.signatures[0]);
         
-        // ✅ SCHRITT 3: Amino Binary Encoding
-        // Keplr sendTx will "Amino-encoded" als Uint8Array
-        const aminoBinaryTx = this.encodeAminoTx(stdTx);
+        // ✅ SCHRITT 3: JSON → Binary (UTF-8 Encoding)
+        const txJson = JSON.stringify(transaction);
+        const txBinary = new TextEncoder().encode(txJson);
         
-        console.log('📊 AMINO BINARY ENCODING RESULT:');
-        console.log('- Is Uint8Array:', aminoBinaryTx instanceof Uint8Array);
-        console.log('- Length:', aminoBinaryTx.length);
-        console.log('- First 20 bytes:', Array.from(aminoBinaryTx.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
+        console.log('📊 BINARY ENCODING RESULT:');
+        console.log('- JSON string length:', txJson.length);
+        console.log('- Binary data length:', txBinary.length);
+        console.log('- Is Uint8Array:', txBinary instanceof Uint8Array);
+        console.log('- First 20 bytes:', Array.from(txBinary.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
+        console.log('- First 20 chars:', txJson.substring(0, 20));
         
         // ✅ SCHRITT 4: Validierung
-        if (aminoBinaryTx.length === 0) {
-            throw new Error('Amino encoding resulted in empty data');
+        if (txBinary.length === 0) {
+            throw new Error('Binary encoding resulted in empty data');
         }
         
         // Decode test
-        try {
-            const testDecode = this.decodeAminoTx(aminoBinaryTx);
-            console.log('✅ Validation: Can decode back to:', testDecode.type);
-        } catch (decodeError) {
-            console.warn('⚠️ Decode test failed:', decodeError.message);
+        const decoded = JSON.parse(new TextDecoder().decode(txBinary));
+        if (!decoded.msg || decoded.msg.length === 0) {
+            throw new Error('Validation failed: Messages lost during encoding');
         }
         
-        console.log('✅ Amino encoding completed successfully');
-        return aminoBinaryTx; // ← Amino-encoded Uint8Array für Keplr sendTx
+        console.log('✅ Amino binary encoding completed successfully');
+        console.log('📊 Ready for Keplr sendTx');
         
-    } catch (error) {
-        console.error('❌ Amino encoding failed:', error);
-        throw error;
-    }
-}
-
-// ===================================
-// 🔧 AMINO TX BINARY ENCODING
-// ===================================
-
-encodeAminoTx(stdTx) {
-    try {
-        console.log('🔧 Encoding Amino transaction to binary...');
-        
-        // ✅ METHODE 1: Structured Amino Binary Format
-        // Type Prefix für cosmos-sdk/StdTx
-        const typePrefix = new Uint8Array([0x16, 0x65, 0xAB, 0xC0]); // StdTx type hash
-        
-        // Value als JSON serialisieren
-        const valueJson = JSON.stringify(stdTx.value);
-        const valueBytes = new TextEncoder().encode(valueJson);
-        
-        console.log('📊 Amino encoding details:');
-        console.log('- Type prefix:', Array.from(typePrefix).map(b => '0x' + b.toString(16)).join(' '));
-        console.log('- Value JSON length:', valueJson.length);
-        console.log('- Value bytes length:', valueBytes.length);
-        
-        // ✅ Length-Delimited Format (wie Protobuf)
-        const lengthBytes = this.encodeVarint(valueBytes.length);
-        
-        // Kombiniere: TypePrefix + Length + Value
-        const totalLength = typePrefix.length + lengthBytes.length + valueBytes.length;
-        const result = new Uint8Array(totalLength);
-        
-        let offset = 0;
-        result.set(typePrefix, offset);
-        offset += typePrefix.length;
-        
-        result.set(lengthBytes, offset);
-        offset += lengthBytes.length;
-        
-        result.set(valueBytes, offset);
-        
-        console.log('✅ Amino binary encoding complete');
-        console.log('📊 Total length:', result.length);
-        console.log('📊 Structure: TypePrefix(' + typePrefix.length + ') + Length(' + lengthBytes.length + ') + Value(' + valueBytes.length + ')');
-        
-        return result;
+        return txBinary; // ← Amino Transaction als Uint8Array
         
     } catch (error) {
         console.error('❌ Amino binary encoding failed:', error);
-        
-        // ✅ FALLBACK: Simple JSON → Uint8Array
-        console.log('⚠️ Using fallback encoding...');
-        
-        try {
-            const fallbackJson = JSON.stringify(stdTx);
-            const fallbackBytes = new TextEncoder().encode(fallbackJson);
-            
-            // Einfacher Header
-            const header = new Uint8Array(8);
-            header[0] = 0xAA; // Amino marker
-            header[1] = 0xBB; // Version
-            header[2] = 0xCC; // StdTx type
-            header[3] = 0xDD; // JSON format
-            
-            // Length in header
-            const len = fallbackBytes.length;
-            header[4] = (len >> 24) & 0xFF;
-            header[5] = (len >> 16) & 0xFF;
-            header[6] = (len >> 8) & 0xFF;
-            header[7] = len & 0xFF;
-            
-            const fallbackResult = new Uint8Array(header.length + fallbackBytes.length);
-            fallbackResult.set(header, 0);
-            fallbackResult.set(fallbackBytes, header.length);
-            
-            console.log('✅ Fallback encoding complete');
-            return fallbackResult;
-            
-        } catch (fallbackError) {
-            throw new Error(`All encoding methods failed: ${error.message}`);
-        }
+        throw error;
     }
-}
-
-// ===================================
-// 🔧 AMINO TX DECODE (FOR VALIDATION)
-// ===================================
-
-decodeAminoTx(binaryData) {
-    try {
-        // Einfache Validierung - schaue nach bekannten Patterns
-        const firstBytes = Array.from(binaryData.slice(0, 4));
-        
-        if (firstBytes[0] === 0x16 && firstBytes[1] === 0x65) {
-            // Standard Amino format
-            console.log('✅ Detected standard Amino format');
-            return { type: "cosmos-sdk/StdTx", format: "amino" };
-        } else if (firstBytes[0] === 0xAA && firstBytes[1] === 0xBB) {
-            // Fallback format
-            console.log('✅ Detected fallback Amino format');
-            return { type: "cosmos-sdk/StdTx", format: "fallback" };
-        } else {
-            throw new Error(`Unknown format: ${firstBytes.map(b => '0x' + b.toString(16)).join(' ')}`);
-        }
-    } catch (error) {
-        throw new Error(`Decode validation failed: ${error.message}`);
-    }
-}
-
-// ===================================
-// 🔧 VARINT ENCODING HELPER
-// ===================================
-
-encodeVarint(value) {
-    const result = [];
-    while (value >= 0x80) {
-        result.push((value & 0xFF) | 0x80);
-        value >>>= 7;
-    }
-    result.push(value & 0xFF);
-    return new Uint8Array(result);
 }
 
 // ===================================
@@ -342,27 +221,27 @@ encodeVarint(value) {
 // ===================================
 
 async broadcastTransaction(signedTx) {
-    console.log('📡 Broadcasting with Amino signing + Amino encoding...');
+    console.log('📡 Broadcasting with Amino signing + binary encoding...');
     
     try {
         console.log('📊 Input signedTx:', signedTx);
 
-        // ✅ Amino binary encoding
-        const aminoBinaryTx = await this.encodeTxForBroadcast(signedTx);
+        // ✅ Encode Amino Transaction zu Binary
+        const txBinary = await this.encodeTxForBroadcast(signedTx);
         
         console.log('📊 KEPLR SENDTX CALL:');
         console.log('- Chain ID:', this.chainId);
-        console.log('- TX data type:', typeof aminoBinaryTx);
-        console.log('- TX data length:', aminoBinaryTx.length);
-        console.log('- Is Uint8Array:', aminoBinaryTx instanceof Uint8Array);
-        console.log('- First 10 bytes:', Array.from(aminoBinaryTx.slice(0, 10)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
+        console.log('- TX data type:', typeof txBinary);
+        console.log('- TX data length:', txBinary.length);
+        console.log('- Is Uint8Array:', txBinary instanceof Uint8Array);
+        console.log('- First 10 bytes:', Array.from(txBinary.slice(0, 10)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
 
-        // ✅ Keplr sendTx mit Amino-encoded Uint8Array
-        console.log('🔧 Calling keplr.sendTx with Amino-encoded data...');
+        // ✅ Keplr sendTx mit binary transaction
+        console.log('🔧 Calling keplr.sendTx with binary Amino transaction...');
         
         const txHashBytes = await window.keplr.sendTx(
             this.chainId,
-            aminoBinaryTx,  // ← Amino-encoded Uint8Array
+            txBinary,  // ← Amino Transaction als Uint8Array
             "sync"
         );
 
@@ -381,7 +260,7 @@ async broadcastTransaction(signedTx) {
             txHash = Buffer.from(txHashBytes).toString('hex').toUpperCase();
         }
 
-        console.log('🎉 Amino transaction broadcast successful!');
+        console.log('🎉 Amino binary transaction broadcast successful!');
         console.log('📊 Final TX Hash:', txHash);
 
         return {
@@ -393,7 +272,7 @@ async broadcastTransaction(signedTx) {
         };
 
     } catch (error) {
-        console.error('❌ Amino broadcast failed:', error);
+        console.error('❌ Amino binary broadcast failed:', error);
         console.error('❌ Error details:', {
             message: error.message,
             stack: error.stack,
@@ -407,9 +286,8 @@ async broadcastTransaction(signedTx) {
             throw new Error('Transaction was cancelled by user');
         } else if (error.message?.includes('insufficient funds')) {
             throw new Error('Insufficient funds for transaction');  
-        } else if (error.message?.includes('tx parse error') || 
-                   error.message?.includes('expected 2 wire type')) {
-            throw new Error('Transaction encoding format error - Amino format may not be supported');
+        } else if (error.message?.includes('tx parse error')) {
+            throw new Error('Transaction format error - check Keplr version');
         } else {
             throw new Error(`Keplr sendTx failed: ${error.message}`);
         }
