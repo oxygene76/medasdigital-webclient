@@ -225,100 +225,43 @@ async encodeTxForBroadcast(signedTx) {
 // ===================================
 
 async broadcastTransaction(signedTx) {
-    console.log('📡 Broadcasting with Cosmos SDK REST API (like medasdigital-client)...');
+    console.log('📡 Broadcasting with Cosmos SDK REST API...');
     
     try {
-        // ✅ SCHRITT 1: Protobuf → Standard Cosmos Message Format
-        const convertedMsgs = signedTx.signed.msgs.map(msg => {
-            console.log('🔧 Converting message for REST API:', msg['@type']);
-            
-            if (msg['@type'] === '/cosmos.staking.v1beta1.MsgDelegate') {
-                return {
-                    "@type": "/cosmos.staking.v1beta1.MsgDelegate",
-                    delegator_address: msg.delegator_address,
-                    validator_address: msg.validator_address,
-                    amount: msg.amount
-                };
-            }
-            
-            if (msg['@type'] === '/cosmos.staking.v1beta1.MsgUndelegate') {
-                return {
-                    "@type": "/cosmos.staking.v1beta1.MsgUndelegate",
-                    delegator_address: msg.delegator_address,
-                    validator_address: msg.validator_address,
-                    amount: msg.amount
-                };
-            }
-            
-            if (msg['@type'] === '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward') {
-                return {
-                    "@type": "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
-                    delegator_address: msg.delegator_address,
-                    validator_address: msg.validator_address
-                };
-            }
-            
-            return msg;
-        });
+        console.log('📊 Original signedTx:', signedTx);
         
-        // ✅ SCHRITT 2: Standard Cosmos TX Format (wie von REST API erwartet)
-        const cosmosTx = {
-            body: {
-                messages: convertedMsgs,
-                memo: signedTx.signed.memo || "",
-                timeout_height: "0",
-                extension_options: [],
-                non_critical_extension_options: []
-            },
-            auth_info: {
-                signer_infos: [{
-                    public_key: {
-                        "@type": "/cosmos.crypto.secp256k1.PubKey",
-                        key: signedTx.signature.pub_key.value
-                    },
-                    mode_info: {
-                        single: {
-                            mode: "SIGN_MODE_LEGACY_AMINO_JSON"
-                        }
-                    },
-                    sequence: signedTx.signed.sequence
-                }],
-                fee: {
-                    amount: signedTx.signed.fee.amount,
-                    gas_limit: signedTx.signed.fee.gas,
-                    payer: "",
-                    granter: ""
-                }
-            },
-            signatures: [signedTx.signature.signature]
+        // ✅ RICHTIGES LCD API FORMAT für /cosmos/tx/v1beta1/txs
+        const txBytes = this.encodeTxForBroadcast(signedTx);
+        
+        const broadcastPayload = {
+            tx_bytes: txBytes,
+            mode: "BROADCAST_MODE_SYNC"
         };
         
-        console.log('📊 Cosmos TX for REST API:', cosmosTx);
-        console.log('✅ Message count:', cosmosTx.body.messages.length);
-        console.log('📊 First message type:', cosmosTx.body.messages[0]?.["@type"]);
+        console.log('📊 Broadcasting payload:', broadcastPayload);
+        console.log('📊 tx_bytes length:', txBytes.length);
         
-        // ✅ SCHRITT 3: Broadcast via REST API (wie medasdigital-client es machen würde)
-        console.log('📡 Broadcasting via REST API /cosmos/tx/v1beta1/txs...');
+        // ✅ NEU (ohne CORS Preflight):
+        const response = await fetch('https://lcd.medas-digital.io:1317/cosmos/tx/v1beta1/txs', {
+            method: 'POST',
+            body: JSON.stringify(broadcastPayload)
+        });
+
+        console.log('📡 Response status:', response.status);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ REST API Error:', errorText);
+            throw new Error(`REST API failed: ${response.status} - ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log('📡 REST API broadcast response:', result);
+
+        if (!result.tx_response) {
+            throw new Error('Invalid response: missing tx_response');
+        }
         
-       // ✅ NEU (ohne Preflight):
-const response = await fetch('https://lcd.medas-digital.io:1317/cosmos/tx/v1beta1/txs', {
-    method: 'POST',
-    body: JSON.stringify(signedTx)  // Browser setzt automatisch text/plain
-});
-
-// ❌ ALT: restResponse
-// ✅ NEU: response
-if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`REST API failed: ${response.status} - ${errorText}`);
-}
-
-const result = await response.json();
-console.log('📡 REST API broadcast response:', result);
-
-if (!result.tx_response) {
-    throw new Error('Invalid response: missing tx_response');
-}
         const txResponse = result.tx_response;
         
         if (txResponse.code !== 0) {
@@ -327,21 +270,15 @@ if (!result.tx_response) {
         }
 
         // ✅ SUCCESS!
-        console.log('🎉 Transaction successful via REST API!');
+        console.log('🎉 Transaction successful!');
         console.log('📊 TX Hash:', txResponse.txhash);
-        console.log('📊 Gas Wanted:', txResponse.gas_wanted);
-        console.log('📊 Gas Used:', txResponse.gas_used);
-        
-        // Optional: Wait for block inclusion
-        const finalResult = await this.waitForBlockInclusion(txResponse.txhash, 30);
         
         return {
             success: true,
             txHash: txResponse.txhash,
             gasWanted: parseInt(txResponse.gas_wanted || '0'),
             gasUsed: parseInt(txResponse.gas_used || '0'),
-            blockHeight: finalResult?.blockHeight || txResponse.height,
-            confirmed: finalResult?.confirmed || true
+            blockHeight: txResponse.height
         };
 
     } catch (error) {
