@@ -226,14 +226,13 @@ async encodeTxForBroadcast(signedTx) {
 
 // Ersetzen Sie Ihre broadcastTransaction Methode:
 async broadcastTransaction(signedTx) {
-    console.log('📡 Broadcasting with production-ready broadcast_tx_sync...');
+    console.log('📡 Broadcasting with CORRECT HEX encoding...');
     
     try {
         // ✅ SCHRITT 1: Protobuf → Amino Message Conversion
         const convertedMsgs = signedTx.signed.msgs.map(msg => {
             console.log('🔧 Converting message:', msg['@type']);
             
-            // Protobuf → Amino Type Mapping
             if (msg['@type'] === '/cosmos.staking.v1beta1.MsgDelegate') {
                 return {
                     type: 'cosmos-sdk/MsgDelegate',
@@ -266,11 +265,10 @@ async broadcastTransaction(signedTx) {
                 };
             }
             
-            console.warn('⚠️ Unknown message type:', msg['@type']);
             return msg;
         });
         
-        // ✅ SCHRITT 2: StdTx Format für CometBFT (laut Doku)
+        // ✅ SCHRITT 2: StdTx Format
         const stdTx = {
             msg: convertedMsgs,
             fee: {
@@ -287,15 +285,31 @@ async broadcastTransaction(signedTx) {
         console.log('📊 StdTx:', stdTx);
         console.log('✅ Message count:', stdTx.msg.length);
         
-        // ✅ SCHRITT 3: JSON Serialization + Base64 (laut CometBFT Doku)
+        // ✅ SCHRITT 3: JSON → UTF-8 Bytes → HEX (NICHT Base64!)
         const txJson = JSON.stringify(stdTx);
-        const txBase64 = btoa(txJson);  // Base64 encoding wie in Doku gezeigt
-        
         console.log('📊 TX JSON length:', txJson.length);
-        console.log('📊 TX Base64 length:', txBase64.length);
+        console.log('📊 TX JSON preview:', txJson.substring(0, 200));
         
-        // ✅ SCHRITT 4: Production Broadcast mit broadcast_tx_sync
-        console.log('📡 Using broadcast_tx_sync for production...');
+        // ✅ PROBLEM IDENTIFIZIERT: CometBFT will HEX, nicht Base64!
+        // JSON String → UTF-8 Bytes → Hex String
+        const encoder = new TextEncoder();
+        const txBytes = encoder.encode(txJson);  // UTF-8 bytes
+        const txHex = Array.from(txBytes, byte => byte.toString(16).padStart(2, '0')).join('');
+        
+        console.log('📊 TX Bytes length:', txBytes.length);
+        console.log('📊 TX Hex length:', txHex.length);
+        console.log('📊 TX Hex preview:', txHex.substring(0, 100));
+        
+        // ✅ VALIDATION: Hex decode back
+        const hexBytes = new Uint8Array(txHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+        const decodedJson = new TextDecoder().decode(hexBytes);
+        const decoded = JSON.parse(decodedJson);
+        
+        console.log('✅ Hex validation: Message count =', decoded.msg?.length);
+        console.log('✅ Hex validation: First message type =', decoded.msg?.[0]?.type);
+        
+        // ✅ SCHRITT 4: Broadcast mit HEX (laut CometBFT Doku)
+        console.log('📡 Broadcasting with HEX encoding...');
         
         const rpcResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_sync', {
             method: 'POST',
@@ -308,7 +322,7 @@ async broadcastTransaction(signedTx) {
                 id: 1,
                 method: 'broadcast_tx_sync',
                 params: { 
-                    tx: txBase64  // Base64-encoded wie in der Doku
+                    tx: '0x' + txHex  // ← HEX mit 0x prefix wie in Doku!
                 }
             })
         });
@@ -318,13 +332,12 @@ async broadcastTransaction(signedTx) {
         }
 
         const result = await rpcResponse.json();
-        console.log('📡 broadcast_tx_sync Response:', result);
+        console.log('📡 HEX broadcast response:', result);
 
         if (result.error) {
             throw new Error(`RPC Error: ${result.error.message}`);
         }
 
-        // ✅ SCHRITT 5: CheckTx Validation (broadcast_tx_sync gibt nur CheckTx zurück)
         const checkTx = result.result;
         
         if (!checkTx) {
@@ -333,17 +346,17 @@ async broadcastTransaction(signedTx) {
         
         if (checkTx.code !== 0) {
             console.error('❌ CheckTx failed:', checkTx);
-            throw new Error(`Transaction rejected by mempool: ${checkTx.log}`);
+            throw new Error(`Transaction rejected: ${checkTx.log}`);
         }
 
-        // ✅ SUCCESS - Transaction accepted by mempool
-        console.log('🎉 Transaction accepted by mempool!');
+        // ✅ SUCCESS!
+        console.log('🎉 Transaction accepted with HEX encoding!');
         console.log('📊 TX Hash:', checkTx.hash);
         console.log('📊 Gas Wanted:', checkTx.gas_wanted);
         console.log('📊 Gas Used:', checkTx.gas_used);
         
-        // ✅ SCHRITT 6: Wait for block inclusion (optional polling)
-        const finalResult = await this.waitForBlockInclusion(checkTx.hash);
+        // Optional: Wait for block inclusion
+        const finalResult = await this.waitForBlockInclusion(checkTx.hash, 30);
         
         return {
             success: true,
@@ -355,7 +368,7 @@ async broadcastTransaction(signedTx) {
         };
 
     } catch (error) {
-        console.error('❌ Production broadcast failed:', error);
+        console.error('❌ HEX broadcast failed:', error);
         throw error;
     }
 }
