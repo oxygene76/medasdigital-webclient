@@ -1,10 +1,7 @@
 // ===================================
-// STAKING-MANAGER.JS - MIT COSMJS!
+// STAKING-MANAGER.JS - MIT COSMJS ÜBER CDN!
 // Ersetze deine bestehende staking-manager.js mit dieser Version
 // ===================================
-
-import { SigningStargateClient } from "@cosmjs/stargate";
-import { coins } from "@cosmjs/stargate";
 
 class StakingManager {
     constructor() {
@@ -14,12 +11,47 @@ class StakingManager {
         this.decimals = 6;
         this.client = null;
         this.account = null;
+        this.cosmjsLoaded = false;
+        
+        // Load CosmJS automatisch
+        this.loadCosmJS();
+    }
+
+    async loadCosmJS() {
+        if (this.cosmjsLoaded) return;
+        
+        try {
+            console.log('📦 Loading CosmJS from CDN...');
+            
+            // CosmJS über CDN laden
+            const { SigningStargateClient } = await import('https://cdn.skypack.dev/@cosmjs/stargate@^0.32.0');
+            const { coins } = await import('https://cdn.skypack.dev/@cosmjs/stargate@^0.32.0');
+            
+            // Global verfügbar machen
+            window.SigningStargateClient = SigningStargateClient;
+            window.coins = coins;
+            
+            this.cosmjsLoaded = true;
+            console.log('✅ CosmJS loaded from CDN');
+            
+        } catch (error) {
+            console.error('❌ Failed to load CosmJS:', error);
+            // Fallback zu deiner alten Implementierung
+            console.warn('⚠️ Falling back to manual TxRaw implementation');
+        }
     }
 
     async connectKeplr() {
         try {
             if (!window.keplr) {
                 throw new Error('Keplr extension not found. Please install Keplr.');
+            }
+
+            // Warte bis CosmJS geladen ist
+            await this.loadCosmJS();
+            
+            if (!this.cosmjsLoaded) {
+                throw new Error('CosmJS not available - using fallback');
             }
 
             // ✅ Standard Keplr connection
@@ -29,7 +61,7 @@ class StakingManager {
             const offlineSigner = window.keplr.getOfflineSigner(this.chainId);
             
             // ✅ SigningStargateClient - macht alles automatisch!
-            this.client = await SigningStargateClient.connectWithSigner(
+            this.client = await window.SigningStargateClient.connectWithSigner(
                 this.rpcEndpoint, 
                 offlineSigner
             );
@@ -63,9 +95,9 @@ class StakingManager {
             const result = await this.client.delegateTokens(
                 this.account.address,              // delegator
                 validatorAddress,                  // validator  
-                coins(this.formatUmedas(amountInMedas), "umedas"), // amount
+                window.coins(this.formatUmedas(amountInMedas), "umedas"), // amount
                 "auto",                           // fee (automatic calculation)
-                `Stake ${amountInMedas} MEDAS to validator` // memo
+                `Stake ${amountInMedas} MEDAS via MedasDigital` // memo
             );
 
             console.log('🎉 CosmJS delegation successful!');
@@ -110,9 +142,9 @@ class StakingManager {
             const result = await this.client.undelegateTokens(
                 this.account.address,
                 validatorAddress,
-                coins(this.formatUmedas(amountInMedas), "umedas"),
+                window.coins(this.formatUmedas(amountInMedas), "umedas"),
                 "auto",
-                `Unstake ${amountInMedas} MEDAS from validator`
+                `Unstake ${amountInMedas} MEDAS via MedasDigital`
             );
 
             console.log('✅ CosmJS undelegation successful!');
@@ -139,23 +171,21 @@ class StakingManager {
 
             console.log('🏆 Starting rewards claiming with CosmJS...');
 
-            // ✅ CosmJS withdrawRewards - macht alles automatisch!
-            const result = await this.client.withdrawRewards(
-                this.account.address,
-                validatorAddresses[0], // Für ersten Validator
+            // Für mehrere Validators - CosmJS signAndBroadcast mit Messages
+            const messages = validatorAddresses.map(validatorAddress => ({
+                typeUrl: "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+                value: {
+                    delegatorAddress: this.account.address,
+                    validatorAddress: validatorAddress,
+                },
+            }));
+
+            const result = await this.client.signAndBroadcast(
+                this.account.address, 
+                messages, 
                 "auto",
                 `Claim rewards from ${validatorAddresses.length} validators`
             );
-
-            // Für mehrere Validators (falls gewünscht):
-            // const messages = validatorAddresses.map(validatorAddress => ({
-            //     typeUrl: "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
-            //     value: {
-            //         delegatorAddress: this.account.address,
-            //         validatorAddress: validatorAddress,
-            //     },
-            // }));
-            // const result = await this.client.signAndBroadcast(this.account.address, messages, "auto");
 
             console.log('🎉 CosmJS rewards claiming successful!');
             return {
@@ -183,7 +213,7 @@ class StakingManager {
             const result = await this.client.sendTokens(
                 this.account.address,
                 recipientAddress,
-                coins(this.formatUmedas(amountInMedas), "umedas"),
+                window.coins(this.formatUmedas(amountInMedas), "umedas"),
                 "auto",
                 "Transfer via MedasDigital"
             );
@@ -274,5 +304,5 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = StakingManager;
 } else {
     window.StakingManager = StakingManager;
-    console.log('🥩 CosmJS StakingManager loaded - No more manual TxRaw needed!');
+    console.log('🥩 CosmJS StakingManager loaded via CDN - No npm install needed!');
 }
