@@ -5,16 +5,16 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
-    "dev-cosmjs": "vite --port 3000 --host",
+    "start": "NODE_ENV=production node server.js",
+    "dev": "NODE_ENV=development nodemon server.js",
+    "dev-express-vite": "NODE_ENV=development node server.js",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "NODE_ENV=production node server.js",
     "legacy-start": "python -m http.server 8000",
     "live-dev": "live-server --port=8000 --open=/",
     "deploy": "./scripts/deploy.sh",
     "daemon": "docker run -d --name medas-digital-daemon -p 8080:8080 medas-digital/daemon:latest",
-    "test-cosmjs": "echo 'Open browser and run: window.testMedasOsmosisStyle()'"
+    "test-cosmjs": "echo 'Server: http://localhost:8080 | Test: window.testMedasOsmosisStyle()'"
   },
   "keywords": [
     "blockchain",
@@ -29,7 +29,9 @@
     "chat",
     "real-time",
     "cosmjs",
-    "osmosis-style"
+    "osmosis-style",
+    "express",
+    "vite"
   ],
   "author": "Medas Digital Team",
   "license": "MIT",
