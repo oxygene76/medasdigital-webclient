@@ -143,7 +143,7 @@ class StakingManager {
 
 async encodeTxForBroadcast(signedTx) {
     try {
-        console.log('🔧 Encoding transaction via TxEncodeAmino (CORRECTED FORMAT)...');
+        console.log('🔧 Encoding transaction via TxEncodeAmino (DIRECT URL)...');
         console.log('🔍 SignedTx structure:', signedTx);
         
         // ✅ KORRIGIERTES AMINO FORMAT - StdTx Wrapper hinzufügen!
@@ -166,10 +166,9 @@ async encodeTxForBroadcast(signedTx) {
         };
         
         console.log('🔧 Corrected Request Body:', requestBody);
-        console.log('🔧 Corrected Request Body JSON:', JSON.stringify(requestBody));
         
-        // ✅ VERWENDE DEN COSMOS SDK TxEncodeAmino ENDPOINT
-        const restUrl = '/api/lcd';
+        // ✅ DIREKTE LCD URL (kein Proxy mehr!)
+        const restUrl = 'https://lcd.medas-digital.io:1317';  // ← DIREKT!
         const encodeResponse = await fetch(`${restUrl}/cosmos/tx/v1beta1/encode/amino`, {
             method: 'POST',
             headers: {
@@ -179,7 +178,6 @@ async encodeTxForBroadcast(signedTx) {
         });
 
         console.log('🔧 Response Status:', encodeResponse.status);
-        console.log('🔧 Response Headers:', [...encodeResponse.headers.entries()]);
         
         // ✅ SCHAUEN WIR UNS DIE ANTWORT AN
         const responseText = await encodeResponse.text();
@@ -206,8 +204,6 @@ async encodeTxForBroadcast(signedTx) {
         
         if (responseData && responseData.amino_binary) {
             console.log('✅ Got amino_binary:', responseData.amino_binary);
-            console.log('✅ amino_binary type:', typeof responseData.amino_binary);
-            console.log('✅ amino_binary length:', responseData.amino_binary.length);
             return responseData.amino_binary;
         } else {
             console.error('❌ No amino_binary in response!');
@@ -222,15 +218,12 @@ async encodeTxForBroadcast(signedTx) {
     }
 }
 
-// ===================================
-// 🔍 BONUS: Debug auch die Broadcast-Antwort
-// ===================================
-
 async broadcastTransaction(signedTx) {
     try {
-        const restUrl = '/api/lcd';
+        // ✅ DIREKTE LCD URL (kein Proxy mehr!)
+        const restUrl = 'https://lcd.medas-digital.io:1317';  // ← DIREKT!
         
-        console.log('📡 Broadcasting transaction with modern API...');
+        console.log('📡 Broadcasting transaction with modern API (DIRECT)...');
         
         // ✅ SCHRITT 1: Transaction encodieren
         const txBytes = await this.encodeTxForBroadcast(signedTx);
@@ -243,7 +236,7 @@ async broadcastTransaction(signedTx) {
         console.log('📡 Broadcasting with protobuf bytes...');
         console.log('📡 Broadcast request:', broadcastReq);
         
-        // ✅ SCHRITT 2: Broadcast mit moderner API
+        // ✅ SCHRITT 2: Broadcast mit moderner API (DIREKT!)
         const response = await fetch(`${restUrl}/cosmos/tx/v1beta1/txs`, {
             method: 'POST',
             headers: {
@@ -253,7 +246,6 @@ async broadcastTransaction(signedTx) {
         });
 
         console.log('📡 Broadcast response status:', response.status);
-        console.log('📡 Broadcast response headers:', [...response.headers.entries()]);
 
         // ✅ SCHAUEN WIR UNS DIE KOMPLETTE BROADCAST-ANTWORT AN
         const broadcastResponseText = await response.text();
@@ -297,6 +289,7 @@ async broadcastTransaction(signedTx) {
         };
     }
 }
+
 
 // ===================================
 // 📝 WAS PASSIERT:
