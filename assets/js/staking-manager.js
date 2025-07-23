@@ -141,7 +141,6 @@ class StakingManager {
 // 🎯 IHRE BEIDEN FUNKTIONEN - DIREKT UND OHNE FALLBACKS
 // ===================================
 
-// 🔧 FUNKTION 1: encodeTxForBroadcast (mit TxEncodeAmino)
 async encodeTxForBroadcast(signedTx) {
     try {
         console.log('🔧 Encoding transaction via TxEncodeAmino...');
@@ -157,6 +156,14 @@ async encodeTxForBroadcast(signedTx) {
         
         console.log('🔧 Amino TX for encoding:', aminoTx);
         
+        // ✅ REQUEST BODY
+        const requestBody = {
+            amino_json: JSON.stringify(aminoTx)
+        };
+        
+        console.log('🔧 Request Body:', requestBody);
+        console.log('🔧 Request Body JSON:', JSON.stringify(requestBody));
+        
         // ✅ VERWENDE DEN COSMOS SDK TxEncodeAmino ENDPOINT
         const restUrl = '/api/lcd';
         const encodeResponse = await fetch(`${restUrl}/cosmos/tx/v1beta1/encode/amino`, {
@@ -164,20 +171,46 @@ async encodeTxForBroadcast(signedTx) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                amino_json: JSON.stringify(aminoTx)
-            })
+            body: JSON.stringify(requestBody)
         });
 
-        if (!encodeResponse.ok) {
-            throw new Error(`TxEncodeAmino failed: HTTP ${encodeResponse.status}`);
+        console.log('🔧 Response Status:', encodeResponse.status);
+        console.log('🔧 Response Headers:', [...encodeResponse.headers.entries()]);
+        
+        // ✅ SCHAUEN WIR UNS DIE KOMPLETTE ANTWORT AN
+        const responseText = await encodeResponse.text();
+        console.log('🔧 Raw Response Text:', responseText);
+        
+        // ✅ VERSUCHE JSON ZU PARSEN
+        let responseData;
+        try {
+            responseData = JSON.parse(responseText);
+            console.log('🔧 Parsed Response JSON:', responseData);
+        } catch (parseError) {
+            console.log('🔧 Response is not JSON:', parseError.message);
+            responseData = responseText;
         }
 
-        const encodeResult = await encodeResponse.json();
-        console.log('🔧 TxEncodeAmino successful, got protobuf bytes');
-        console.log('🔧 Encoded tx_bytes type:', typeof encodeResult.amino_binary);
+        if (!encodeResponse.ok) {
+            console.error('❌ TxEncodeAmino failed!');
+            console.error('❌ Status:', encodeResponse.status);
+            console.error('❌ Response:', responseData);
+            throw new Error(`TxEncodeAmino failed: HTTP ${encodeResponse.status} - ${responseText}`);
+        }
+
+        console.log('✅ TxEncodeAmino successful!');
+        console.log('✅ Response data:', responseData);
         
-        return encodeResult.amino_binary;  // ECHTE PROTOBUF BYTES!
+        if (responseData && responseData.amino_binary) {
+            console.log('✅ Got amino_binary:', responseData.amino_binary);
+            console.log('✅ amino_binary type:', typeof responseData.amino_binary);
+            console.log('✅ amino_binary length:', responseData.amino_binary.length);
+            return responseData.amino_binary;
+        } else {
+            console.error('❌ No amino_binary in response!');
+            console.error('❌ Available keys:', Object.keys(responseData || {}));
+            throw new Error('No amino_binary in response');
+        }
         
     } catch (error) {
         console.error('❌ Transaction encoding failed:', error);
@@ -186,10 +219,12 @@ async encodeTxForBroadcast(signedTx) {
     }
 }
 
-// 🔧 FUNKTION 2: broadcastTransaction (direkt mit moderner API)
+// ===================================
+// 🔍 BONUS: Debug auch die Broadcast-Antwort
+// ===================================
+
 async broadcastTransaction(signedTx) {
     try {
-        // ✅ VERWENDE PROXY-PFAD (wie in Ihrem Code)
         const restUrl = '/api/lcd';
         
         console.log('📡 Broadcasting transaction with modern API...');
@@ -203,7 +238,7 @@ async broadcastTransaction(signedTx) {
         };
         
         console.log('📡 Broadcasting with protobuf bytes...');
-        console.log('📡 Broadcast request keys:', Object.keys(broadcastReq));
+        console.log('📡 Broadcast request:', broadcastReq);
         
         // ✅ SCHRITT 2: Broadcast mit moderner API
         const response = await fetch(`${restUrl}/cosmos/tx/v1beta1/txs`, {
@@ -215,26 +250,40 @@ async broadcastTransaction(signedTx) {
         });
 
         console.log('📡 Broadcast response status:', response.status);
+        console.log('📡 Broadcast response headers:', [...response.headers.entries()]);
+
+        // ✅ SCHAUEN WIR UNS DIE KOMPLETTE BROADCAST-ANTWORT AN
+        const broadcastResponseText = await response.text();
+        console.log('📡 Raw Broadcast Response:', broadcastResponseText);
+        
+        let broadcastData;
+        try {
+            broadcastData = JSON.parse(broadcastResponseText);
+            console.log('📡 Parsed Broadcast Response:', broadcastData);
+        } catch (parseError) {
+            console.log('📡 Broadcast response is not JSON:', parseError.message);
+            broadcastData = broadcastResponseText;
+        }
 
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Broadcast failed:', errorText);
-            throw new Error(`Broadcast failed: HTTP ${response.status} - ${errorText}`);
+            console.error('❌ Broadcast failed!');
+            console.error('❌ Status:', response.status);
+            console.error('❌ Response:', broadcastData);
+            throw new Error(`Broadcast failed: HTTP ${response.status} - ${broadcastResponseText}`);
         }
 
-        const result = await response.json();
-        console.log('📡 Broadcast result:', result);
+        console.log('🎉 Broadcast successful!');
+        console.log('🎉 Broadcast result:', broadcastData);
         
-        if (result.tx_response && result.tx_response.code !== 0) {
-            throw new Error(`Transaction failed: ${result.tx_response.raw_log}`);
+        if (broadcastData && broadcastData.tx_response && broadcastData.tx_response.code !== 0) {
+            throw new Error(`Transaction failed: ${broadcastData.tx_response.raw_log}`);
         }
 
-        console.log('🎉 Transaction broadcast successful!');
         return {
             success: true,
-            txHash: result.tx_response?.txhash,
-            code: result.tx_response?.code,
-            rawLog: result.tx_response?.raw_log
+            txHash: broadcastData.tx_response?.txhash,
+            code: broadcastData.tx_response?.code,
+            rawLog: broadcastData.tx_response?.raw_log
         };
         
     } catch (error) {
