@@ -914,194 +914,155 @@ class UIManager {
         if (delegationCountEl) delegationCountEl.textContent = '0';
     }
 
-    // ===================================
-    // CORS-FIXED STAKING METHODS - VERWENDET NUR KEPLR SENDTX (FUNKTIONIERT!)
-    // ===================================
-
     async performStaking() {
-        const validatorSelect = document.getElementById('validator-select');
-        const stakeAmountInput = document.getElementById('stake-amount');
-        
-        if (!validatorSelect?.value || validatorSelect.value === 'Select a validator...') {
-            this.showNotification('❌ Please select a validator first', 'error');
-            return;
-        }
-        
-        const amount = parseFloat(stakeAmountInput?.value || '0');
-        if (amount <= 0) {
-            this.showNotification('❌ Please enter a valid amount', 'error');
-            return;
-        }
-        
-        if (!window.terminal?.connected || !window.terminal?.account?.address) {
-            this.showNotification('❌ Please connect your wallet first', 'error');
-            return;
-        }
-        
-        try {
-            this.showNotification('🔄 Preparing CORS-fixed delegation...', 'info');
-            
-            const validatorAddress = validatorSelect.value;
-            const delegatorAddress = window.terminal.account.address;
-            const amountInUmedas = Math.floor(amount * 1000000).toString();
-            
-            console.log('🔧 Using CORS-fixed staking method (sendTx)...');
-            
-            // ✅ CORS-FIXED STAKING - KEPLR DIREKTE ENDPOINTS, WEBCLIENT PROXY
-            const result = await this.performStakingCorsFix(
-                delegatorAddress,
-                validatorAddress,
-                amountInUmedas,
-                amount
-            );
-            
-            if (result.success) {
-                this.showNotification('🎉 CORS-fixed delegation successful!', 'success');
-                this.showNotification(`💰 Staked ${amount} MEDAS to ${this.getValidatorName(validatorAddress)}`, 'success');
-                
-                if (result.txHash) {
-                    this.showNotification(`📡 TX Hash: ${result.txHash}`, 'info');
-                }
-                
-                stakeAmountInput.value = '';
-                validatorSelect.value = 'Select a validator...';
-                
-                setTimeout(() => {
-                    this.populateUserDelegations(delegatorAddress);
-                    if (this.updateBalanceOverview) {
-                        this.updateBalanceOverview();
-                    }
-                }, 2000);
-                
-            } else {
-                throw new Error(result.error || 'CORS-fixed staking failed');
-            }
-            
-        } catch (error) {
-            console.error('❌ CORS-fixed staking failed:', error);
-            
-            if (error.message?.includes('Request rejected') || 
-                error.message?.includes('User denied')) {
-                this.showNotification('❌ Transaction cancelled by user', 'error');
-            } else {
-                this.showNotification(`❌ Staking failed: ${error.message}`, 'error');
-            }
-        }
+    const validatorSelect = document.getElementById('validator-select');
+    const stakeAmountInput = document.getElementById('stake-amount');
+    
+    if (!validatorSelect?.value || validatorSelect.value === 'Select a validator...') {
+        this.showNotification('❌ Please select a validator first', 'error');
+        return;
     }
-
+    
+    const amount = parseFloat(stakeAmountInput?.value || '0');
+    if (amount <= 0) {
+        this.showNotification('❌ Please enter a valid amount', 'error');
+        return;
+    }
+    
+    if (!window.terminal?.connected || !window.terminal?.account?.address) {
+        this.showNotification('❌ Please connect your wallet first', 'error');
+        return;
+    }
+    
+    try {
+        this.showNotification('🔄 Preparing delegation...', 'info');
+        
+        const validatorAddress = validatorSelect.value;
+        const delegatorAddress = window.terminal.account.address;
+        
+        // ✅ VERWENDE DEN NEUEN STAKINGMANAGER
+        const result = await this.stakingManager.delegate(
+            delegatorAddress,
+            validatorAddress,
+            amount
+        );
+        
+        if (result.success) {
+            this.showNotification('🎉 Delegation successful!', 'success');
+            this.showNotification(result.message, 'success');
+            this.showNotification(`📡 TX Hash: ${result.txHash}`, 'info');
+            
+            // Reset form
+            stakeAmountInput.value = '';
+            validatorSelect.value = 'Select a validator...';
+            
+            // Refresh data
+            setTimeout(() => {
+                this.populateUserDelegations(delegatorAddress);
+                if (this.updateBalanceOverview) {
+                    this.updateBalanceOverview();
+                }
+            }, 2000);
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('❌ Staking failed:', error);
+        this.showNotification(`❌ Staking failed: ${error.message}`, 'error');
+    }
+}
     async claimAllRewards() {
-        if (!window.terminal?.connected || !window.terminal?.account?.address) {
-            this.showNotification('❌ Please connect your wallet first', 'error');
+    if (!window.terminal?.connected || !window.terminal?.account?.address) {
+        this.showNotification('❌ Please connect your wallet first', 'error');
+        return;
+    }
+    
+    try {
+        this.showNotification('🔄 Claiming all rewards...', 'info');
+        
+        const delegatorAddress = window.terminal.account.address;
+        
+        const delegations = await this.fetchUserDelegations(delegatorAddress);
+        
+        if (!delegations || delegations.length === 0) {
+            this.showNotification('❌ No delegations found', 'error');
             return;
         }
         
-        try {
-            this.showNotification('🔄 Claiming all rewards (CORS-fixed)...', 'info');
-            
-            const delegatorAddress = window.terminal.account.address;
-            const chainId = window.KEPLR_CHAIN_CONFIG?.chainId || "medasdigital-2";
-            
-            const delegations = await this.fetchUserDelegations(delegatorAddress);
-            
-            if (!delegations || delegations.length === 0) {
-                this.showNotification('❌ No delegations found', 'error');
-                return;
-            }
-            
-            // ✅ CORS-FIXED CLAIM
-            const result = await this.performClaimCorsFix(
-                delegatorAddress,
-                delegations,
-                chainId
-            );
-            
-            if (result.success) {
-                this.showNotification(`🎉 Rewards claimed successfully!`, 'success');
-                this.showNotification(`💰 Claimed from ${delegations.length} validators`, 'info');
-                
-                if (result.txHash) {
-                    this.showNotification(`📡 TX Hash: ${result.txHash}`, 'info');
-                }
-                
-                setTimeout(() => {
-                    this.populateUserDelegations(delegatorAddress);
-                    if (this.updateBalanceOverview) {
-                        this.updateBalanceOverview();
-                    }
-                    this.showNotification('✅ Rewards added to balance', 'success');
-                }, 3000);
-                
-            } else {
-                throw new Error(result.error || 'Claim failed');
-            }
-            
-        } catch (error) {
-            console.error('❌ CORS-fixed claim failed:', error);
-            
-            if (error.message?.includes('Request rejected') || 
-                error.message?.includes('User denied')) {
-                this.showNotification('❌ Claim cancelled by user', 'error');
-            } else {
-                this.showNotification(`❌ Claim failed: ${error.message}`, 'error');
-            }
-        }
-    }
-
-    async performUnstaking(validatorAddress, amount) {
-        if (!window.terminal?.connected || !window.terminal?.account?.address) {
-            this.showNotification('❌ Please connect your wallet first', 'error');
-            return;
-        }
+        const validatorAddresses = delegations.map(d => d.validator_address);
         
-        try {
-            this.showNotification('🔄 Preparing CORS-fixed undelegation...', 'info');
+        // ✅ VERWENDE DEN NEUEN STAKINGMANAGER
+        const result = await this.stakingManager.claimRewards(
+            delegatorAddress,
+            validatorAddresses
+        );
+        
+        if (result.success) {
+            this.showNotification('🎉 Rewards claimed successfully!', 'success');
+            this.showNotification(result.message, 'success');
+            this.showNotification(`📡 TX Hash: ${result.txHash}`, 'info');
             
-            const delegatorAddress = window.terminal.account.address;
-            const chainId = window.KEPLR_CHAIN_CONFIG?.chainId || "medasdigital-2";
-            const amountInUmedas = Math.floor(parseFloat(amount) * 1000000).toString();
-            
-            console.log('🔧 Using CORS-fixed unstaking...');
-            
-            // ✅ CORS-FIXED UNSTAKING
-            const result = await this.performUnstakingCorsFix(
-                delegatorAddress,
-                validatorAddress, 
-                amountInUmedas,
-                chainId
-            );
-            
-            if (result.success) {
-                this.showNotification(`✅ Undelegation successful!`, 'success');
-                this.showNotification('⏰ Note: Unbonding period is 21 days', 'info');
-                
-                if (result.txHash) {
-                    this.showNotification(`📡 TX Hash: ${result.txHash}`, 'info');
+            // Refresh data
+            setTimeout(() => {
+                this.populateUserDelegations(delegatorAddress);
+                if (this.updateBalanceOverview) {
+                    this.updateBalanceOverview();
                 }
-                
-                setTimeout(() => {
-                    this.populateUserDelegations(delegatorAddress);
-                    if (this.updateBalanceOverview) {
-                        this.updateBalanceOverview();
-                    }
-                }, 3000);
-                
-            } else {
-                throw new Error(result.error || 'Unstaking failed');
+            }, 3000);
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('❌ Claim failed:', error);
+        this.showNotification(`❌ Claim failed: ${error.message}`, 'error');
+    }
+}
+   async performUnstaking(validatorAddress, amount) {
+    if (!window.terminal?.connected || !window.terminal?.account?.address) {
+        this.showNotification('❌ Please connect your wallet first', 'error');
+        return;
+    }
+    
+    try {
+        this.showNotification('🔄 Preparing undelegation...', 'info');
+        
+        const delegatorAddress = window.terminal.account.address;
+        
+        // ✅ VERWENDE DEN NEUEN STAKINGMANAGER
+        const result = await this.stakingManager.undelegate(
+            delegatorAddress,
+            validatorAddress, 
+            amount
+        );
+        
+        if (result.success) {
+            this.showNotification(`✅ Undelegation successful!`, 'success');
+            this.showNotification('⏰ Note: Unbonding period is 21 days', 'info');
+            
+            if (result.txHash) {
+                this.showNotification(`📡 TX Hash: ${result.txHash}`, 'info');
             }
             
-        } catch (error) {
-            console.error('❌ CORS-fixed unstaking failed:', error);
-            
-            if (error.message?.includes('Request rejected') || 
-                error.message?.includes('User denied')) {
-                this.showNotification('❌ Unstaking cancelled by user', 'error');
-            } else {
-                this.showNotification(`❌ Unstaking failed: ${error.message}`, 'error');
-            }
+            setTimeout(() => {
+                this.populateUserDelegations(delegatorAddress);
+                if (this.updateBalanceOverview) {
+                    this.updateBalanceOverview();
+                }
+            }, 3000);
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        console.error('❌ Unstaking failed:', error);
+        
+        if (error.message?.includes('Request rejected') || 
+            error.message?.includes('User denied')) {
+            this.showNotification('❌ Unstaking cancelled by user', 'error');
+        } else {
+            this.showNotification(`❌ Unstaking failed: ${error.message}`, 'error');
         }
     }
-
-
+}
 
     async performRedelegation(srcValidatorAddress, dstValidatorAddress, amount) {
         // Implementierung ähnlich zu anderen CORS-fixed Methoden...
