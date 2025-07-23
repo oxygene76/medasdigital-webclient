@@ -300,17 +300,11 @@ async broadcastTransaction(signedTx) {
         // ✅ SCHRITT 3: Broadcast via REST API (wie medasdigital-client es machen würde)
         console.log('📡 Broadcasting via REST API /cosmos/tx/v1beta1/txs...');
         
-        const restResponse = await fetch('https://lcd.medas-digital.io:1317/cosmos/tx/v1beta1/txs', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                tx: cosmosTx,
-                mode: "BROADCAST_MODE_SYNC"
-            })
-        });
+        // ✅ NEU (ohne Preflight):
+const response = await fetch('https://lcd.medas-digital.io:1317/cosmos/tx/v1beta1/txs', {
+    method: 'POST',
+    body: JSON.stringify(signedTx)  // Browser setzt automatisch text/plain
+});
 
         if (!restResponse.ok) {
             const errorText = await restResponse.text();
