@@ -13,188 +13,6 @@
 </head>
     <!-- Fügen Sie diese Script-Tags VOR dem schließenden </body> Tag hinzu -->
 
-<!-- Staking Helper Functions (Global) -->
-<script>
-// ===================================
-// GLOBALE STAKING-FUNKTIONEN
-// ===================================
-
-// Redelegate from form inputs
-async function performRedelegationFromForm() {
-    const fromSelect = document.getElementById('redelegate-from-select');
-    const toSelect = document.getElementById('redelegate-to-select');
-    const amountInput = document.getElementById('redelegate-amount');
-    
-    if (!fromSelect.value || fromSelect.value === 'Select source validator...') {
-        window.terminal?.ui?.showNotification('❌ Please select source validator', 'error');
-        return;
-    }
-    
-    if (!toSelect.value || toSelect.value === 'Select destination validator...') {
-        window.terminal?.ui?.showNotification('❌ Please select destination validator', 'error');
-        return;
-    }
-    
-    const amount = parseFloat(amountInput.value || '0');
-    if (amount <= 0) {
-        window.terminal?.ui?.showNotification('❌ Please enter valid amount', 'error');
-        return;
-    }
-    
-    await window.terminal?.ui?.performRedelegation(fromSelect.value, toSelect.value, amount);
-    
-    // Reset form
-    fromSelect.value = 'Select source validator...';
-    toSelect.value = 'Select destination validator...';
-    amountInput.value = '';
-}
-
-// Undelegate from form inputs
-async function performUndelegationFromForm() {
-    const fromSelect = document.getElementById('undelegate-from-select');
-    const amountInput = document.getElementById('undelegate-amount');
-    
-    if (!fromSelect.value || fromSelect.value === 'Select validator to unstake from...') {
-        window.terminal?.ui?.showNotification('❌ Please select validator', 'error');
-        return;
-    }
-    
-    const amount = parseFloat(amountInput.value || '0');
-    if (amount <= 0) {
-        window.terminal?.ui?.showNotification('❌ Please enter valid amount', 'error');
-        return;
-    }
-    
-    const confirmed = confirm(`Are you sure you want to undelegate ${amount} MEDAS?\n\nThis will start a 21-day unbonding period during which you won't earn rewards and cannot redelegate these tokens.`);
-    if (!confirmed) return;
-    
-    await window.terminal?.ui?.performUnstaking(fromSelect.value, amount);
-    
-    // Reset form
-    fromSelect.value = 'Select validator to unstake from...';
-    amountInput.value = '';
-}
-
-// Quick Stake aus Validator-Liste
-async function quickStake(validatorAddress, validatorName) {
-    const amount = prompt(`Quick Stake to ${validatorName}\n\nEnter amount in MEDAS:`);
-    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
-        return;
-    }
-    
-    // Auto-fill form
-    selectValidator(validatorAddress, validatorName);
-    
-    const stakeAmountInput = document.getElementById('stake-amount');
-    if (stakeAmountInput) {
-        stakeAmountInput.value = amount;
-    }
-    
-    // Trigger staking
-    if (window.terminal?.ui?.performStaking) {
-        await window.terminal.ui.performStaking();
-    }
-}
-
-// Add More Stake zu bestehendem Validator
-async function addMoreStake(validatorAddress, validatorName) {
-    const amount = prompt(`Add more stake to ${validatorName}\n\nEnter additional amount in MEDAS:`);
-    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
-        return;
-    }
-    
-    selectValidator(validatorAddress, validatorName);
-    
-    const stakeAmountInput = document.getElementById('stake-amount');
-    if (stakeAmountInput) {
-        stakeAmountInput.value = amount;
-    }
-    
-    if (window.terminal?.ui?.performStaking) {
-        await window.terminal.ui.performStaking();
-    }
-}
-
-// Claim Rewards von einzelnem Validator
-async function claimRewards(validatorAddress, validatorName) {
-    if (window.terminal?.ui?.claimSingleValidatorRewards) {
-        await window.terminal.ui.claimSingleValidatorRewards(validatorAddress, validatorName);
-    }
-}
-
-// Unstake from specific Validator
-async function unstakeFrom(validatorAddress, validatorName, currentAmount) {
-    const maxAmount = parseFloat(currentAmount);
-    const amount = prompt(`Unstake from ${validatorName}\n\nCurrent delegation: ${currentAmount} MEDAS\nEnter amount to unstake (max ${currentAmount}):`);
-    
-    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
-        return;
-    }
-    
-    const unstakeAmount = parseFloat(amount);
-    if (unstakeAmount > maxAmount) {
-        window.terminal?.ui?.showNotification(`❌ Cannot unstake more than ${currentAmount} MEDAS`, 'error');
-        return;
-    }
-    
-    const confirmed = confirm(`Are you sure you want to unstake ${amount} MEDAS from ${validatorName}?\n\nThis will start a 21-day unbonding period during which you won't earn rewards and cannot redelegate these tokens.`);
-    if (!confirmed) return;
-    
-    if (window.terminal?.ui?.performUnstaking) {
-        await window.terminal.ui.performUnstaking(validatorAddress, amount);
-    }
-}
-
-// Enhanced Validator Selection
-window.selectValidator = function(validatorAddress, validatorName) {
-    // Standard validator select
-    const validatorSelect = document.getElementById('validator-select');
-    if (validatorSelect) {
-        let option = Array.from(validatorSelect.options).find(opt => opt.value === validatorAddress);
-        if (!option) {
-            option = new Option(validatorName, validatorAddress);
-            validatorSelect.add(option);
-        }
-        validatorSelect.value = validatorAddress;
-    }
-    
-    // Redelegate To select
-    const redelegateToSelect = document.getElementById('redelegate-to-select');
-    if (redelegateToSelect) {
-        let option = Array.from(redelegateToSelect.options).find(opt => opt.value === validatorAddress);
-        if (!option) {
-            option = new Option(validatorName, validatorAddress);
-            redelegateToSelect.add(option);
-        }
-    }
-    
-    console.log(`📊 Selected validator: ${validatorName} (${validatorAddress})`);
-};
-
-// Keyboard Shortcuts für Staking
-document.addEventListener('keydown', function(event) {
-    // Nur wenn Staking Tab aktiv ist
-    if (window.terminal?.ui?.activeTab !== 'staking') return;
-    
-    // Ctrl/Cmd + S = Quick Stake
-    if ((event.ctrlKey || event.metaKey) && event.key === 's') {
-        event.preventDefault();
-        if (window.terminal?.ui?.performStaking) {
-            window.terminal.ui.performStaking();
-        }
-    }
-    
-    // Ctrl/Cmd + R = Claim All Rewards
-    if ((event.ctrlKey || event.metaKey) && event.key === 'r') {
-        event.preventDefault();
-        if (window.terminal?.ui?.claimAllRewards) {
-            window.terminal.ui.claimAllRewards();
-        }
-    }
-});
-
-console.log('🎯 Enhanced staking functions loaded');
-</script>
 
 <!-- CSS Styles für Advanced Staking Features -->
 <style>
@@ -905,10 +723,11 @@ details[open] {
         </div>
     </div>
 
-   <!-- Ersetzen Sie Ihre bestehenden JavaScript-Includes mit diesen -->
+</div>
+    </div>
+
 <!-- ===================================== -->
-<!-- ERSETZEN SIE NUR DIESEN TEIL IN IHRER INDEX.HTML -->
-<!-- Alles andere (HTML Body) bleibt unverändert! -->
+<!-- BEREINIGTES SCRIPT-LOADING (Kein Duplikat) -->
 <!-- ===================================== -->
 
 <!-- Step 1: Load CosmJS as ES Module FIRST -->
@@ -938,41 +757,102 @@ details[open] {
     }
 </script>
 
-<!-- Step 2: Wait for CosmJS, then load scripts in correct order -->
+<!-- Step 2: Check for existing scripts, then load missing ones -->
 <script>
     function loadScriptsInOrder() {
-        console.log('📚 Loading scripts in correct order...');
+        console.log('📚 Checking which scripts need to be loaded...');
         
-        // Scripts to load in sequence
-        const scripts = [
-            'assets/js/config.js',
-            'assets/js/mock-data.js', 
-            'assets/js/keplr-manager.js',
-            'assets/js/staking-manager.js',  // This will use window.SigningStargateClient
-            'assets/js/ui-manager.js',
-            'assets/js/staking-helpers.js',
-            'assets/js/main.js',
-            'assets/js/mobile-navigation.js'
-        ];
+        // Check what's already loaded to avoid duplicates
+        const scriptsToLoad = [];
+        
+        if (typeof KEPLR_CHAIN_CONFIG === 'undefined') {
+            scriptsToLoad.push('assets/js/config.js');
+        } else {
+            console.log('⏭️ config.js already loaded');
+        }
+        
+        if (typeof MockData === 'undefined') {
+            scriptsToLoad.push('assets/js/mock-data.js');
+        } else {
+            console.log('⏭️ mock-data.js already loaded');
+        }
+        
+        if (typeof KeplrManager === 'undefined') {
+            scriptsToLoad.push('assets/js/keplr-manager.js');
+        } else {
+            console.log('⏭️ keplr-manager.js already loaded');
+        }
+        
+        if (typeof StakingManager === 'undefined') {
+            scriptsToLoad.push('assets/js/staking-manager.js');
+        } else {
+            console.log('⏭️ staking-manager.js already loaded');
+        }
+        
+        if (typeof UIManager === 'undefined') {
+            scriptsToLoad.push('assets/js/ui-manager.js');
+        } else {
+            console.log('⏭️ ui-manager.js already loaded');
+        }
+        
+        if (typeof StakingHelpers === 'undefined') {
+            scriptsToLoad.push('assets/js/staking-helpers.js');
+        } else {
+            console.log('⏭️ staking-helpers.js already loaded');
+        }
+        
+        if (typeof MedasResearchTerminal === 'undefined') {
+            scriptsToLoad.push('assets/js/main.js');
+        } else {
+            console.log('⏭️ main.js already loaded');
+        }
+        
+        if (typeof MobileNavigationManager === 'undefined') {
+            scriptsToLoad.push('assets/js/mobile-navigation.js');
+        } else {
+            console.log('⏭️ mobile-navigation.js already loaded');
+        }
+        
+        if (scriptsToLoad.length === 0) {
+            console.log('✅ All scripts already loaded!');
+            
+            // Check if terminal is initialized
+            if (!window.terminal && typeof MedasResearchTerminal !== 'undefined') {
+                console.log('🔄 Initializing terminal...');
+                setTimeout(() => {
+                    window.terminal = new MedasResearchTerminal();
+                }, 500);
+            }
+            return;
+        }
+        
+        console.log(`📥 Loading ${scriptsToLoad.length} missing scripts:`, scriptsToLoad);
         
         let currentIndex = 0;
         
         function loadNextScript() {
-            if (currentIndex >= scripts.length) {
-                console.log('✅ All scripts loaded successfully!');
+            if (currentIndex >= scriptsToLoad.length) {
+                console.log('✅ All missing scripts loaded successfully!');
                 console.log('🚀 MedasDigital WebClient ready');
+                
+                // Initialize terminal if needed
+                if (!window.terminal && typeof MedasResearchTerminal !== 'undefined') {
+                    setTimeout(() => {
+                        window.terminal = new MedasResearchTerminal();
+                    }, 500);
+                }
                 return;
             }
             
             const script = document.createElement('script');
-            script.src = scripts[currentIndex];
+            script.src = scriptsToLoad[currentIndex];
             script.onload = () => {
-                console.log(`✅ Loaded: ${scripts[currentIndex]}`);
+                console.log(`✅ Loaded: ${scriptsToLoad[currentIndex]}`);
                 currentIndex++;
                 loadNextScript();
             };
             script.onerror = () => {
-                console.error(`❌ Failed to load: ${scripts[currentIndex]}`);
+                console.error(`❌ Failed to load: ${scriptsToLoad[currentIndex]}`);
                 currentIndex++;
                 loadNextScript(); // Continue even if one fails
             };
@@ -985,7 +865,7 @@ details[open] {
 
     // Wait for CosmJS to load (or fail), then load other scripts
     window.addEventListener('cosmjs-loaded', () => {
-        console.log('🎉 CosmJS loaded, proceeding with other scripts');
+        console.log('🎉 CosmJS loaded, proceeding with script check');
         loadScriptsInOrder();
     });
 
@@ -997,7 +877,7 @@ details[open] {
     // Fallback: If events don't fire within 3 seconds, load anyway
     setTimeout(() => {
         if (!window.scriptsStartedLoading) {
-            console.log('⏰ Timeout reached, loading scripts without CosmJS');
+            console.log('⏰ Timeout reached, checking scripts without CosmJS');
             window.scriptsStartedLoading = true;
             loadScriptsInOrder();
         }
@@ -1006,6 +886,7 @@ details[open] {
 
 <!-- Notification Container -->
 <div id="notification-container"></div>
+
 
 </body>
 </html>
