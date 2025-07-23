@@ -160,7 +160,10 @@ app.get('/api/proxy-status', async (req, res) => {
 // Static Files with Cache Control
 const setCustomCacheControl = (res, path) => {
     if (path.includes('.js') || path.includes('.css')) {
-        res.setHeader('Cache-Control', 'public, max-age=3600');
+        // ✅ KEIN CACHE für JS/CSS während Development!
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
     } else if (path.includes('.png') || path.includes('.jpg') || path.includes('.svg')) {
         res.setHeader('Cache-Control', 'public, max-age=86400');
     } else if (path.includes('.html')) {
