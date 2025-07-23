@@ -225,146 +225,132 @@ async encodeTxForBroadcast(signedTx) {
 // ===================================
 
 async broadcastTransaction(signedTx) {
-    console.log('📡 Broadcasting with CORRECT Base64 encoding (not HEX)...');
+    console.log('📡 Broadcasting with Cosmos SDK REST API (like medasdigital-client)...');
     
     try {
-        // ✅ SCHRITT 1: Protobuf → Amino Message Conversion
+        // ✅ SCHRITT 1: Protobuf → Standard Cosmos Message Format
         const convertedMsgs = signedTx.signed.msgs.map(msg => {
-            console.log('🔧 Converting message:', msg['@type']);
+            console.log('🔧 Converting message for REST API:', msg['@type']);
             
             if (msg['@type'] === '/cosmos.staking.v1beta1.MsgDelegate') {
                 return {
-                    type: 'cosmos-sdk/MsgDelegate',
-                    value: {
-                        delegator_address: msg.delegator_address,
-                        validator_address: msg.validator_address,
-                        amount: msg.amount
-                    }
+                    "@type": "/cosmos.staking.v1beta1.MsgDelegate",
+                    delegator_address: msg.delegator_address,
+                    validator_address: msg.validator_address,
+                    amount: msg.amount
                 };
             }
             
             if (msg['@type'] === '/cosmos.staking.v1beta1.MsgUndelegate') {
                 return {
-                    type: 'cosmos-sdk/MsgUndelegate',
-                    value: {
-                        delegator_address: msg.delegator_address,
-                        validator_address: msg.validator_address,
-                        amount: msg.amount
-                    }
+                    "@type": "/cosmos.staking.v1beta1.MsgUndelegate",
+                    delegator_address: msg.delegator_address,
+                    validator_address: msg.validator_address,
+                    amount: msg.amount
                 };
             }
             
             if (msg['@type'] === '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward') {
                 return {
-                    type: 'cosmos-sdk/MsgWithdrawDelegatorReward',
-                    value: {
-                        delegator_address: msg.delegator_address,
-                        validator_address: msg.validator_address
-                    }
+                    "@type": "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+                    delegator_address: msg.delegator_address,
+                    validator_address: msg.validator_address
                 };
             }
             
             return msg;
         });
         
-        // ✅ SCHRITT 2: StdTx Format (korrigiert!)
-        const stdTx = {
-            msg: convertedMsgs,  // ← Amino messages
-            fee: {
-                amount: signedTx.signed.fee.amount,
-                gas: signedTx.signed.fee.gas
+        // ✅ SCHRITT 2: Standard Cosmos TX Format (wie von REST API erwartet)
+        const cosmosTx = {
+            body: {
+                messages: convertedMsgs,
+                memo: signedTx.signed.memo || "",
+                timeout_height: "0",
+                extension_options: [],
+                non_critical_extension_options: []
             },
-            signatures: [{
-                pub_key: signedTx.signature.pub_key,
-                signature: signedTx.signature.signature
-            }],
-            memo: signedTx.signed.memo || ""
+            auth_info: {
+                signer_infos: [{
+                    public_key: {
+                        "@type": "/cosmos.crypto.secp256k1.PubKey",
+                        key: signedTx.signature.pub_key.value
+                    },
+                    mode_info: {
+                        single: {
+                            mode: "SIGN_MODE_LEGACY_AMINO_JSON"
+                        }
+                    },
+                    sequence: signedTx.signed.sequence
+                }],
+                fee: {
+                    amount: signedTx.signed.fee.amount,
+                    gas_limit: signedTx.signed.fee.gas,
+                    payer: "",
+                    granter: ""
+                }
+            },
+            signatures: [signedTx.signature.signature]
         };
         
-        console.log('📊 StdTx:', stdTx);
-        console.log('✅ Message count:', stdTx.msg.length);
-        console.log('📊 First message type:', stdTx.msg[0]?.type);
+        console.log('📊 Cosmos TX for REST API:', cosmosTx);
+        console.log('✅ Message count:', cosmosTx.body.messages.length);
+        console.log('📊 First message type:', cosmosTx.body.messages[0]?.["@type"]);
         
-        // ✅ SCHRITT 3: JSON → Base64 (NICHT HEX!)
-        const txJson = JSON.stringify(stdTx);
-        console.log('📊 TX JSON length:', txJson.length);
-        console.log('📊 TX JSON preview:', txJson.substring(0, 200));
+        // ✅ SCHRITT 3: Broadcast via REST API (wie medasdigital-client es machen würde)
+        console.log('📡 Broadcasting via REST API /cosmos/tx/v1beta1/txs...');
         
-        // ✅ RICHTIG: Base64 encoding (wie in CometBFT Doku)
-        const txBase64 = btoa(txJson);
-        console.log('📊 TX Base64 length:', txBase64.length);
-        console.log('📊 TX Base64 preview:', txBase64.substring(0, 100));
-        
-        // ✅ VALIDATION: Base64 decode back
-        const decoded = JSON.parse(atob(txBase64));
-        console.log('✅ Base64 validation: Message count =', decoded.msg?.length);
-        console.log('✅ Base64 validation: First message type =', decoded.msg?.[0]?.type);
-        
-        if (!decoded.msg || decoded.msg.length === 0) {
-            throw new Error('Validation failed: No messages after encoding');
-        }
-        
-        // ✅ SCHRITT 4: Broadcast mit Base64 (wie in CometBFT Doku!)
-        console.log('📡 Broadcasting with Base64 encoding (CometBFT standard)...');
-        
-        const rpcResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_sync', {
+        const restResponse = await fetch('https://lcd.medas-digital.io:1317/cosmos/tx/v1beta1/txs', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
             body: JSON.stringify({
-                jsonrpc: '2.0',
-                id: 1,
-                method: 'broadcast_tx_sync',
-                params: { 
-                    tx: txBase64  // ← Base64 (NICHT 0x+hex!)
-                }
+                tx: cosmosTx,
+                mode: "BROADCAST_MODE_SYNC"
             })
         });
 
-        if (!rpcResponse.ok) {
-            throw new Error(`HTTP ${rpcResponse.status}: ${rpcResponse.statusText}`);
+        if (!restResponse.ok) {
+            const errorText = await restResponse.text();
+            throw new Error(`REST API failed: ${restResponse.status} - ${errorText}`);
         }
 
-        const result = await rpcResponse.json();
-        console.log('📡 Base64 broadcast response:', result);
+        const result = await restResponse.json();
+        console.log('📡 REST API broadcast response:', result);
 
-        if (result.error) {
-            throw new Error(`RPC Error: ${result.error.message}`);
-        }
-
-        const checkTx = result.result;
-        
-        if (!checkTx) {
-            throw new Error('Invalid response: missing result');
+        if (!result.tx_response) {
+            throw new Error('Invalid response: missing tx_response');
         }
         
-        if (checkTx.code !== 0) {
-            console.error('❌ CheckTx failed:', checkTx);
-            throw new Error(`Transaction rejected: ${checkTx.log}`);
+        const txResponse = result.tx_response;
+        
+        if (txResponse.code !== 0) {
+            console.error('❌ Transaction failed:', txResponse);
+            throw new Error(`Transaction failed: ${txResponse.raw_log}`);
         }
 
         // ✅ SUCCESS!
-        console.log('🎉 Transaction accepted with Base64 encoding!');
-        console.log('📊 TX Hash:', checkTx.hash);
-        console.log('📊 Gas Wanted:', checkTx.gas_wanted);
-        console.log('📊 Gas Used:', checkTx.gas_used);
+        console.log('🎉 Transaction successful via REST API!');
+        console.log('📊 TX Hash:', txResponse.txhash);
+        console.log('📊 Gas Wanted:', txResponse.gas_wanted);
+        console.log('📊 Gas Used:', txResponse.gas_used);
         
         // Optional: Wait for block inclusion
-        const finalResult = await this.waitForBlockInclusion(checkTx.hash, 30);
+        const finalResult = await this.waitForBlockInclusion(txResponse.txhash, 30);
         
         return {
             success: true,
-            txHash: checkTx.hash,
-            gasWanted: parseInt(checkTx.gas_wanted || '0'),
-            gasUsed: parseInt(checkTx.gas_used || '0'),
-            blockHeight: finalResult?.blockHeight,
-            confirmed: finalResult?.confirmed || false
+            txHash: txResponse.txhash,
+            gasWanted: parseInt(txResponse.gas_wanted || '0'),
+            gasUsed: parseInt(txResponse.gas_used || '0'),
+            blockHeight: finalResult?.blockHeight || txResponse.height,
+            confirmed: finalResult?.confirmed || true
         };
 
     } catch (error) {
-        console.error('❌ Base64 broadcast failed:', error);
+        console.error('❌ REST API broadcast failed:', error);
         throw error;
     }
 }
