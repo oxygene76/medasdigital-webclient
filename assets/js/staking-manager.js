@@ -242,7 +242,7 @@ async broadcastTransaction(messages, fee, memo = "") {
             bodyBytes: null, // Keplr generiert automatisch
             authInfoBytes: null, // Keplr generiert automatisch  
             chainId: this.chainId,
-            accountNumber: Long ? Long.fromString(accountInfo.accountNumber) : accountInfo.accountNumber
+            accountNumber: parseInt(accountInfo.accountNumber) // Einfacher parseInt statt Long
         };
 
         console.log('📊 SignDoc:', signDoc);
@@ -330,6 +330,7 @@ async broadcastTransaction(messages, fee, memo = "") {
         }
     }
 }
+
 // ===================================
 // 🔍 BLOCK INCLUSION POLLING (OPTIONAL)
 // ===================================
