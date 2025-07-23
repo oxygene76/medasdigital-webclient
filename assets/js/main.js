@@ -1808,6 +1808,30 @@ console.log('🎮 Terminal will be initialized from main.js');
 // Event für bestehenden Code
 window.dispatchEvent(new Event('app-ready'));
 
+// ===================================
+// GLOBALE HELPER FUNKTIONEN FÜR HTML ONCLICK EVENTS
+// ===================================
+
+// Global helper functions für HTML onclick handlers
+window.performRedelegationFromForm = async function() {
+    const fromSelect = document.getElementById('redelegate-from-select');
+    const toSelect = document.getElementById('redelegate-to-select');
+    const amountInput = document.getElementById('redelegate-amount');
+    
+    if (!fromSelect?.value || fromSelect.value === 'Select source validator...') {
+        window.terminal?.ui?.showNotification('❌ Please select source validator', 'error');
+        return;
+    }
+    
+    if (!toSelect?.value || toSelect.value === 'Select destination validator...') {
+        window.terminal?.ui?.showNotification('❌ Please select destination validator', 'error');
+        return;
+    }
+    
+    const amount = parseFloat(amountInput?.value || '0');
+    if (amount <= 0) {
+        window.terminal
+
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = MedasResearchTerminal;
