@@ -223,12 +223,33 @@ async encodeTxForBroadcast(signedTx) {
 // ===================================
 // 🚀 PRODUCTION-READY BROADCAST SOLUTION
 // ===================================
-
 async broadcastTransaction(signedTx) {
     console.log('📡 Broadcasting via RPC broadcast_tx_sync...');
     
     try {
-        // ✅ AMINO JSON für RPC (wie vorher erfolgreich)
+        // ✅ DEBUG: Vollständige SignedTx Analyse
+        console.log('🔍 VOLLSTÄNDIGE DEBUG ANALYSE:');
+        console.log('================================');
+        console.log('📊 signedTx:', signedTx);
+        console.log('📊 signedTx.signed:', signedTx.signed);
+        console.log('📊 signedTx.signed.msgs:', signedTx.signed.msgs);
+        console.log('📊 signedTx.signed.msgs.length:', signedTx.signed.msgs?.length);
+        
+        if (signedTx.signed.msgs && signedTx.signed.msgs.length > 0) {
+            signedTx.signed.msgs.forEach((msg, i) => {
+                console.log(`📊 Message ${i}:`, msg);
+                console.log(`📊 Message ${i} @type:`, msg['@type']);
+                console.log(`📊 Message ${i} keys:`, Object.keys(msg));
+            });
+        } else {
+            console.error('❌ PROBLEM: Keine Messages in signedTx.signed.msgs!');
+            console.log('📊 Checking alternative locations...');
+            console.log('📊 signedTx.msgs:', signedTx.msgs);
+            console.log('📊 signedTx.tx:', signedTx.tx);
+            console.log('📊 signedTx.body:', signedTx.body);
+        }
+        
+        // ✅ AMINO JSON für RPC
         const aminoTx = {
             msg: signedTx.signed.msgs,
             fee: signedTx.signed.fee,
@@ -236,24 +257,87 @@ async broadcastTransaction(signedTx) {
             memo: signedTx.signed.memo || ""
         };
         
-        const txBytes = btoa(JSON.stringify(aminoTx));
-        console.log('📊 Amino TX Bytes length:', txBytes.length);
+        console.log('📊 AMINO TX DEBUG:');
+        console.log('- aminoTx:', aminoTx);
+        console.log('- aminoTx.msg:', aminoTx.msg);
+        console.log('- aminoTx.msg.length:', aminoTx.msg?.length);
+        console.log('- aminoTx.fee:', aminoTx.fee);
+        console.log('- aminoTx.signatures:', aminoTx.signatures);
         
-        // ✅ RPC broadcast_tx_sync (statt commit)
+        // ✅ Check if messages are undefined/null
+        if (!aminoTx.msg) {
+            console.error('❌ aminoTx.msg is undefined/null!');
+            console.log('📊 Trying to fix with alternative paths...');
+            // Try alternative message paths
+            aminoTx.msg = signedTx.signed.messages || signedTx.msgs || [];
+        }
+        
+        // ✅ JSON String Debug
+        const jsonString = JSON.stringify(aminoTx);
+        console.log('📊 JSON STRING DEBUG:');
+        console.log('- JSON length:', jsonString.length);
+        console.log('- JSON preview:', jsonString.substring(0, 500));
+        
+        // ✅ Check for empty JSON
+        if (jsonString === '{"msg":[],"fee":{},"signatures":[],"memo":""}' || 
+            jsonString.includes('"msg":[]') || 
+            jsonString.includes('"msg":null')) {
+            console.error('❌ FATAL: JSON contains empty messages!');
+            console.log('📊 Raw signedTx structure:', JSON.stringify(signedTx, null, 2));
+            throw new Error('Transaction contains no messages after serialization');
+        }
+        
+        // ✅ Base64 Debug
+        const txBytes = btoa(jsonString);
+        console.log('📊 BASE64 DEBUG:');
+        console.log('- Base64 length:', txBytes.length);
+        console.log('- Base64 preview:', txBytes.substring(0, 100));
+        
+        // ✅ Validation: Decode zurück
+        try {
+            const decoded = JSON.parse(atob(txBytes));
+            console.log('📊 DECODED VALIDATION:');
+            console.log('- Decoded TX:', decoded);
+            console.log('- Decoded msg count:', decoded.msg?.length);
+            console.log('- Decoded first message:', decoded.msg?.[0]);
+            
+            if (!decoded.msg || decoded.msg.length === 0) {
+                console.error('❌ FATAL: Messages verloren beim Encoding!');
+                throw new Error('Messages lost during encoding/decoding');
+            }
+        } catch (decodeError) {
+            console.error('❌ DECODE ERROR:', decodeError);
+            throw new Error(`Failed to decode transaction: ${decodeError.message}`);
+        }
+        
+        // ✅ RPC Request Debug
+        const rpcRequest = {
+            jsonrpc: "2.0",
+            method: "broadcast_tx_sync",
+            params: {
+                tx: txBytes
+            },
+            id: 1
+        };
+        
+        console.log('📊 RPC REQUEST DEBUG:');
+        console.log('- Method:', rpcRequest.method);
+        console.log('- TX bytes length:', rpcRequest.params.tx.length);
+        console.log('- Full request size:', JSON.stringify(rpcRequest).length);
+        
+        // ✅ RPC broadcast_tx_sync
         const response = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_sync', {
             method: 'POST',
-            body: JSON.stringify({
-                jsonrpc: "2.0",
-                method: "broadcast_tx_sync",
-                params: {
-                    tx: txBytes
-                },
-                id: 1
-            })
+            body: JSON.stringify(rpcRequest)
         });
+
+        console.log('📊 RPC RESPONSE DEBUG:');
+        console.log('- Response status:', response.status);
+        console.log('- Response ok:', response.ok);
 
         if (!response.ok) {
             const errorText = await response.text();
+            console.error('❌ HTTP Error:', errorText);
             throw new Error(`RPC failed: ${response.status} - ${errorText}`);
         }
 
@@ -261,11 +345,17 @@ async broadcastTransaction(signedTx) {
         console.log('📡 RPC broadcast_tx_sync Result:', result);
 
         if (result.error) {
-            throw new Error(`RPC Error: ${result.error.message}`);
+            console.error('❌ RPC Error:', result.error);
+            throw new Error(`RPC Error: ${result.error.message || result.error.data}`);
         }
 
         // ✅ broadcast_tx_sync Response Format
         const syncResult = result.result;
+        console.log('📊 SYNC RESULT DEBUG:');
+        console.log('- syncResult:', syncResult);
+        console.log('- syncResult.code:', syncResult.code);
+        console.log('- syncResult.log:', syncResult.log);
+        console.log('- syncResult.hash:', syncResult.hash);
         
         if (syncResult.code !== 0) {
             console.error('❌ Mempool validation failed:', syncResult);
@@ -288,6 +378,7 @@ async broadcastTransaction(signedTx) {
 
     } catch (error) {
         console.error('❌ RPC broadcast_tx_sync failed:', error);
+        console.error('❌ Error stack:', error.stack);
         throw error;
     }
 }
