@@ -906,7 +906,17 @@ details[open] {
     </div>
 
    <!-- Ersetzen Sie Ihre bestehenden JavaScript-Includes mit diesen -->
-
+<script type="module">
+  // Import CosmJS modules
+  import { SigningStargateClient } from "@cosmjs/stargate";
+  import { coins } from "@cosmjs/stargate";
+  
+  // Make available globally
+  window.SigningStargateClient = SigningStargateClient;
+  window.coins = coins;
+  
+  console.log('✅ CosmJS modules loaded');
+</script>
 <!-- JavaScript Modules -->
 <script src="assets/js/config.js"></script>
 <script src="assets/js/mock-data.js"></script>
