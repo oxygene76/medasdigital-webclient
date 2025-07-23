@@ -72,6 +72,35 @@ export default defineConfig({
     cors: true,
     fs: {
       allow: ['..']
+    },
+    // ===================================
+    // FIX: ERLAUBTE EXTERNE HOSTS HINZUFÜGEN
+    // ===================================
+    allowedHosts: [
+      'app.medas-digital.io',
+      'api.medas-digital.io', 
+      'lcd.medas-digital.io',
+      'rpc.medas-digital.io',
+      'localhost',
+      '127.0.0.1',
+      '.medas-digital.io'  // Wildcard für alle Subdomains
+    ],
+    // ===================================
+    // FIX: PROXY FÜR BLOCKCHAIN APIs
+    // ===================================
+    proxy: {
+      '/cosmos': {
+        target: 'https://lcd.medas-digital.io:1317',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path
+      },
+      '/rpc': {
+        target: 'https://rpc.medas-digital.io:26657',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/rpc/, '')
+      }
     }
   },
   build: {
