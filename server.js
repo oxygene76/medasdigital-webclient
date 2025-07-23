@@ -1,8 +1,8 @@
 // ===================================
 // MedasDigital WebClient Hybrid Server  
-// Express Server + CosmJS Support
-// STABLE VERSION - Ohne Vite Middleware Konflikte
-// Port 8080 - Funktioniert mit Nodemon!
+// Express Server + Vite Middleware + CosmJS Support
+// ENHANCED VERSION - Mit Vite ES Module Support
+// Port 8080 - Nodemon-kompatibel mit HMR!
 // ===================================
 
 import express from 'express';
@@ -17,6 +17,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 8080;
 const NODE_ENV = process.env.NODE_ENV || 'development';
+const isProduction = NODE_ENV === 'production';
 
 // ===================================
 // CORS CONFIGURATION
@@ -38,7 +39,8 @@ app.use((req, res, next) => {
         !req.url.includes('.png') && 
         !req.url.includes('.ico') &&
         !req.url.includes('.svg') &&
-        !req.url.includes('/@vite/')) {
+        !req.url.includes('/@vite/') &&
+        !req.url.includes('/node_modules/')) {
         console.log(`${req.method} ${req.url}`);
     }
     next();
@@ -51,41 +53,46 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // ===================================
-// ✅ MANAGEMENT ENDPOINTS (Deine APIs bleiben!)
+// ✅ MANAGEMENT ENDPOINTS (Ihre APIs bleiben!)
 // ===================================
 
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'healthy',
-        service: 'MedasDigital WebClient Stable Server',
-        version: '1.2.1',
+        service: 'MedasDigital WebClient Hybrid Server',
+        version: '1.3.0',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
-        mode: 'stable-express-cosmjs',
-        moduleSystem: 'ES Modules',
+        mode: isProduction ? 'production-express' : 'development-express-vite',
+        moduleSystem: 'ES Modules + Vite',
         features: {
             expressServer: true,
-            viteIntegration: 'external',
+            viteIntegration: !isProduction,
+            viteMiddleware: !isProduction,
             cosmjsSupport: true,
-            staticFiles: true,
+            esModulesSupport: !isProduction,
+            staticFiles: isProduction,
+            hotReload: !isProduction,
             blockchainProxy: false,
             directBlockchainAccess: true,
             managementAPIs: true,
-            esModules: true,
             nodemonCompatible: true
         },
         endpoints: {
             health: '/api/health',
             blockchainStatus: '/api/blockchain-status',
+            info: '/api/info',
             static: '/',
-            cosmjsReady: true
+            cosmjsReady: true,
+            viteHMR: !isProduction ? `http://localhost:${PORT}/@vite/client` : false
         }
     });
 });
 
-// Blockchain Connectivity Test
+// Blockchain Connectivity Test (bleibt gleich)
 app.get('/api/blockchain-status', async (req, res) => {
+    // ... Ihr bestehender Code bleibt gleich ...
     const checkEndpoint = async (url, name) => {
         try {
             const startTime = Date.now();
@@ -93,7 +100,7 @@ app.get('/api/blockchain-status', async (req, res) => {
                 method: 'GET',
                 headers: { 
                     'Accept': 'application/json',
-                    'User-Agent': 'MedasDigital-Stable-Server/1.2.1'
+                    'User-Agent': 'MedasDigital-Hybrid-Server/1.3.0'
                 },
                 signal: AbortSignal.timeout(10000)
             });
@@ -134,8 +141,9 @@ app.get('/api/blockchain-status', async (req, res) => {
     const totalCount = results.length;
     
     res.json({
-        server: 'MedasDigital WebClient Stable Server',
-        mode: 'stable-express-cosmjs',
+        server: 'MedasDigital WebClient Hybrid Server',
+        mode: isProduction ? 'production-express' : 'development-express-vite',
+        viteActive: !isProduction,
         timestamp: new Date().toISOString(),
         summary: {
             healthy: healthyCount,
@@ -146,91 +154,102 @@ app.get('/api/blockchain-status', async (req, res) => {
         recommendation: healthyCount === totalCount ? 
             '🎉 All blockchain endpoints healthy - CosmJS ready!' : 
             `⚠️ ${totalCount - healthyCount}/${totalCount} endpoints having issues - may affect CosmJS functionality`,
-        note: 'Blockchain APIs accessed via CosmJS from browser (stable mode)',
-        viteStatus: 'Run "npm run build" then "npm start" for production, or use external Vite dev server'
+        note: 'Blockchain APIs accessed via CosmJS from browser (hybrid mode)',
+        cosmjsIntegration: !isProduction ? 'Vite ES Modules' : 'Built Bundle'
     });
 });
 
 // Server Info Endpoint
 app.get('/api/info', (req, res) => {
     res.json({
-        server: 'MedasDigital WebClient Stable Server',
-        version: '1.2.1',
-        mode: 'stable-express-cosmjs',
-        description: 'Stable Express server for CosmJS support (no Vite middleware conflicts)',
+        server: 'MedasDigital WebClient Hybrid Server',
+        version: '1.3.0',
+        mode: isProduction ? 'production-express' : 'development-express-vite',
+        description: isProduction ? 
+            'Production Express server with built files' :
+            'Development Express server with Vite middleware for ES modules',
         architecture: {
             baseServer: 'Express.js (ES Modules)',
-            frontendHandling: 'Static files + External Vite',
+            frontendHandling: isProduction ? 'Static built files' : 'Vite middleware + HMR',
             blockchainLibrary: 'CosmJS (browser)',
             walletIntegration: 'Keplr',
             moduleSystem: 'ES Modules (import/export)',
-            stability: 'High (no middleware conflicts)',
+            bundler: isProduction ? 'Vite (built)' : 'Vite (middleware)',
+            stability: 'High',
+            hmr: !isProduction,
             benefits: [
-                'Single port 8080 for APIs',
-                'Stable with nodemon restarts',
-                'CosmJS ES modules support',
+                'Single port 8080 for APIs + Frontend',
+                'Nodemon-kompatibel (Express restart, Vite weiter)',
+                'CosmJS ES modules support via Vite',
                 'No CORS issues',
-                'Production-ready',
-                'No Vite middleware conflicts'
+                'Hot Module Reload in development',
+                'Production-ready builds'
             ]
         },
         usage: {
-            development: 'npm run dev (Express APIs) + separate Vite if needed',
+            development: 'npm run dev (Express + Vite middleware)',
             production: 'npm run build && npm start (Express + built files)',
             apis: 'Full management APIs available',
-            frontend: 'Static files or external bundler'
+            frontend: isProduction ? 'Vite built bundle' : 'Vite middleware with HMR'
         }
     });
 });
 
 // ===================================
-// 🎯 STATIC FILE SERVING (STABLE)
+// 🔥 VITE MIDDLEWARE INTEGRATION
 // ===================================
 
-const setCustomCacheControl = (res, filePath) => {
-    if (filePath.includes('.js') || filePath.includes('.css')) {
-        // KEIN CACHE für JS/CSS während Development
-        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Expires', '0');
-    } else if (filePath.includes('.png') || filePath.includes('.jpg') || filePath.includes('.svg') || filePath.includes('.ico')) {
-        // CACHE für Bilder (24 Stunden)
-        res.setHeader('Cache-Control', 'public, max-age=86400');
-    } else if (filePath.includes('.html')) {
-        // KEIN CACHE für HTML
-        res.setHeader('Cache-Control', 'no-cache');
-    } else {
-        // DEFAULT für andere Dateien
-        res.setHeader('Cache-Control', 'public, max-age=3600');
+let vite;
+
+if (!isProduction) {
+    console.log('🔧 Setting up Vite middleware...');
+    
+    try {
+        // Dynamisches Import von Vite
+        const { createServer: createViteServer } = await import('vite');
+        
+        // Vite Server mit Middleware Mode erstellen
+        vite = await createViteServer({
+            server: { 
+                middlewareMode: true,
+                hmr: {
+                    port: PORT + 1 // HMR auf Port 8081
+                }
+            },
+            appType: 'spa',
+            root: process.cwd(),
+            configFile: './vite.config.js',
+            logLevel: 'info'
+        });
+        
+        // Vite Middleware zu Express hinzufügen
+        app.use(vite.middlewares);
+        
+        console.log('✅ Vite middleware initialized');
+        console.log(`📡 HMR available on port ${PORT + 1}`);
+        
+    } catch (error) {
+        console.error('❌ Failed to setup Vite middleware:', error.message);
+        console.log('🔄 Falling back to static file serving...');
+        
+        // Fallback: Static files
+        app.use(express.static('./', { 
+            index: 'index.html',
+            maxAge: 0
+        }));
     }
     
-    // CORS und Server-Identifier
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('X-Served-By', 'MedasDigital-Stable-Server');
-    res.setHeader('X-Server-Mode', 'stable-express-cosmjs');
-};
-
-// ✅ SERVE STATIC FILES (Stabil - funktioniert immer)
-if (NODE_ENV === 'production') {
+} else {
     // Production: Serve built files
     console.log('📦 Production mode - serving built files from dist/');
     app.use(express.static('./dist', { 
         index: 'index.html',
-        setHeaders: setCustomCacheControl,
         maxAge: '1d'
-    }));
-} else {
-    // Development: Serve source files directly
-    console.log('🔧 Development mode - serving source files directly');
-    app.use(express.static('./', { 
-        index: 'index.html',
-        setHeaders: setCustomCacheControl,
-        maxAge: 0
     }));
 }
 
 // ===================================
-// ERROR HANDLING
+// ERROR HANDLING (bleibt gleich)
 // ===================================
 
 // 404 Handler für API routes
@@ -245,34 +264,20 @@ app.use('/api/*', (req, res) => {
         ],
         note: 'Blockchain APIs handled by CosmJS directly in browser',
         cosmjsSupport: true,
-        serverMode: 'stable',
+        serverMode: isProduction ? 'production' : 'development-vite',
         timestamp: new Date().toISOString()
     });
 });
 
-// SPA ROUTING (für Single Page App)
-app.get('*', (req, res) => {
-    // Für Dateien mit Extensions, 404 zurückgeben
-    if (req.url.startsWith('/api/') || 
-        req.url.includes('.js') || 
-        req.url.includes('.css') || 
-        req.url.includes('.png') ||
-        req.url.includes('.jpg') ||
-        req.url.includes('.svg') ||
-        req.url.includes('.ico') ||
-        req.url.includes('.woff') ||
-        req.url.includes('.ttf') ||
-        req.url.includes('.map')) {
-        res.status(404).json({ 
-            error: 'File not found',
-            path: req.url,
-            note: `Check if the file exists in the ${NODE_ENV === 'production' ? 'dist' : 'root'} directory`
-        });
-        return;
+// SPA ROUTING (angepasst für Vite)
+app.get('*', (req, res, next) => {
+    // In development mit Vite middleware, weiter zu Vite
+    if (!isProduction && vite) {
+        return next();
     }
     
-    // Für alle anderen Routen, serve index.html (SPA)
-    const indexPath = NODE_ENV === 'production' ? 
+    // In production oder bei Vite failure, serve index.html
+    const indexPath = isProduction ? 
         path.join(__dirname, 'dist', 'index.html') : 
         path.join(__dirname, 'index.html');
     
@@ -288,7 +293,7 @@ app.use((error, req, res, next) => {
         message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong',
         timestamp: new Date().toISOString(),
         path: req.url,
-        server: 'MedasDigital Stable Server (Express + CosmJS)'
+        server: 'MedasDigital Hybrid Server (Express + Vite)'
     });
 });
 
@@ -299,81 +304,112 @@ app.use((error, req, res, next) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log('');
     console.log('==========================================');
-    console.log('🚀 MedasDigital WebClient Stable Server');
-    console.log('   Express + CosmJS (Stable Mode)');
+    console.log('🚀 MedasDigital WebClient Hybrid Server');
+    console.log('   Express + Vite + CosmJS');
     console.log('==========================================');
     console.log('');
     console.log(`Server running at:`);
     console.log(`   📍 Local:    http://localhost:${PORT}`);
     console.log(`   🌐 Network:  http://app.medas-digital.io:${PORT}`);
+    
+    if (!isProduction) {
+        console.log(`   🔥 HMR:      http://localhost:${PORT + 1} (Hot Module Reload)`);
+    }
+    
     console.log('');
-    console.log('🎯 STABLE MODE ACTIVE:');
+    console.log('🎯 HYBRID MODE ACTIVE:');
     console.log(`   ✅ Express Server:   http://localhost:${PORT}/`);
     console.log(`   ✅ Health Check:     http://localhost:${PORT}/api/health`);
     console.log(`   ✅ Blockchain Test:  http://localhost:${PORT}/api/blockchain-status`);
     console.log(`   ✅ Server Info:      http://localhost:${PORT}/api/info`);
-    console.log(`   ✅ Static Files:     ${NODE_ENV === 'production' ? 'dist/' : './'}`);
+    
+    if (!isProduction && vite) {
+        console.log(`   🔥 Vite Middleware:  Active (ES Modules + HMR)`);
+        console.log(`   📡 ES Module Import: import('@cosmjs/stargate') works!`);
+    } else if (isProduction) {
+        console.log(`   📦 Static Files:     dist/ (Vite built)`);
+    } else {
+        console.log(`   📁 Static Files:     ./ (fallback mode)`);
+    }
     
     console.log('');
     console.log('🚀 COSMJS INTEGRATION:');
-    console.log('   📡 ES Modules:       Ready for browser import');
-    console.log('   📡 CosmJS Library:   Via npm packages in frontend');
+    console.log('   📡 ES Modules:       ' + (!isProduction ? 'Vite middleware' : 'Built bundle'));
+    console.log('   📡 CosmJS Library:   ' + (!isProduction ? 'import("@cosmjs/stargate")' : 'Built bundle'));
     console.log('   📡 LCD API:          https://lcd.medas-digital.io:1317 (direct)');
     console.log('   📡 RPC API:          https://rpc.medas-digital.io:26657 (direct)');
     
     console.log('');
     console.log('💡 DEVELOPMENT WORKFLOW:');
-    console.log('   🔧 APIs:             Nodemon auto-restart (this server)');
-    console.log('   🔧 Frontend:         Direct file serving OR external Vite');
-    console.log('   🔧 CosmJS:           Browser imports from node_modules');
+    console.log('   🔧 APIs:             Nodemon auto-restart (Express)');
+    console.log('   🔧 Frontend:         ' + (!isProduction ? 'Vite HMR (instant updates)' : 'Static built files'));
+    console.log('   🔧 CosmJS:           ' + (!isProduction ? 'ES Module imports via Vite' : 'Built bundle'));
     
     console.log('');
     console.log('✅ BENEFITS:');
-    console.log('   🎯 Single Port 8080 für APIs');
-    console.log('   🔄 Nodemon-kompatibel (keine Restart-Konflikte)');  
+    console.log('   🎯 Single Port 8080 (APIs + Frontend)');
+    console.log('   🔄 Nodemon-kompatibel');  
     console.log('   🛠️ Osmosis-style CosmJS ready');
-    console.log('   🔥 ES Modules + Browser Polyfills');
-    console.log('   📊 Stable Express Server');
-    console.log('   🚫 Keine Vite Middleware Konflikte');
+    console.log('   🔥 ' + (!isProduction ? 'Hot Module Reload' : 'Optimized production build'));
+    console.log('   📊 Express + Vite Hybrid');
+    console.log('   🚀 ES Modules + Browser Polyfills');
     
     console.log('');
-    console.log('🎉 Stable server ready! No more restart issues.');
-    console.log('   Frontend: Load index.html with CosmJS imports');
-    console.log('   APIs: Full management endpoints available');
+    console.log('🎉 Hybrid server ready!');
+    console.log('   Frontend: ' + (!isProduction ? 'Vite middleware with HMR' : 'Built files'));
+    console.log('   APIs: Full management endpoints');
+    console.log('   CosmJS: ' + (!isProduction ? 'ES modules via Vite' : 'Built bundle'));
 });
 
 // ===================================
 // GRACEFUL SHUTDOWN
 // ===================================
 
-process.on('SIGTERM', () => {
-    console.log('🛑 Shutting down MedasDigital Stable Server gracefully...');
+process.on('SIGTERM', async () => {
+    console.log('🛑 Shutting down MedasDigital Hybrid Server gracefully...');
+    
+    if (vite) {
+        console.log('🔥 Closing Vite server...');
+        await vite.close();
+    }
+    
     process.exit(0);
 });
 
-process.on('SIGINT', () => {
-    console.log('\n🛑 Shutting down MedasDigital Stable Server gracefully...');
+process.on('SIGINT', async () => {
+    console.log('\n🛑 Shutting down MedasDigital Hybrid Server gracefully...');
+    
+    if (vite) {
+        console.log('🔥 Closing Vite server...');
+        await vite.close();
+    }
+    
     process.exit(0);
 });
 
 // ===================================
-// STARTUP HEALTH CHECK (weniger aggressiv)
+// STARTUP HEALTH CHECK
 // ===================================
 
 setTimeout(async () => {
     try {
-        console.log('🔍 Testing server health...');
+        console.log('🔍 Testing hybrid server health...');
         const response = await fetch(`http://localhost:${PORT}/api/health`);
         const health = await response.json();
         
         console.log(`📊 Server Mode: ${health.mode}`);
-        console.log(`📊 Nodemon Compatible: ${health.features.nodemonCompatible ? 'Yes' : 'No'}`);
+        console.log(`📊 Vite Integration: ${health.features.viteIntegration ? 'Active' : 'Disabled'}`);
+        console.log(`📊 ES Modules Support: ${health.features.esModulesSupport ? 'Yes' : 'No'}`);
         console.log(`📊 CosmJS Support: ${health.features.cosmjsSupport ? 'Enabled' : 'Disabled'}`);
         
         if (health.status === 'healthy') {
-            console.log('🎉 Stable server healthy - Ready for CosmJS frontend!');
+            console.log('🎉 Hybrid server healthy - Ready for CosmJS ES modules!');
+            
+            if (!isProduction) {
+                console.log('💡 Try in browser console: import("@cosmjs/stargate")');
+            }
         }
     } catch (error) {
         console.log('⚠️ Could not verify server health:', error.message);
     }
-}, 1500); // Kürzeres Timeout
+}, 2000);
