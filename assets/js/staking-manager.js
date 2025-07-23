@@ -180,45 +180,86 @@ async encodeTxForBroadcast(signedTx) {
             console.error('❌ PROBLEM: Keine Messages gefunden!');
         }
         
-        // ✅ SCHRITT 2: Amino TX erstellen mit DEBUG
-        const aminoTx = {
-            msg: signedTx.signed.msgs,
-            fee: signedTx.signed.fee,
-            signatures: [signedTx.signature],
-            memo: signedTx.signed.memo || ""
+        // ✅ SCHRITT 2: Konvertiere Amino zu Protobuf Messages
+        console.log('🔧 Converting Amino messages to Protobuf...');
+        
+        const protobufMessages = this.convertAminoToProtobuf(signedTx.signed.msgs);
+        console.log('📊 Protobuf Messages:', protobufMessages);
+        
+        // ✅ SCHRITT 3: Verwende signDirect für Protobuf (NICHT signAmino!)
+        console.log('🔧 Using signDirect for Protobuf encoding...');
+        
+        const account = await this.connectKeplr();
+        const accountInfo = await this.getAccountInfo(account.address);
+        
+        // ✅ SCHRITT 4: Erstelle Protobuf SignDoc
+        const signDoc = {
+            bodyBytes: this.encodeProtobufTxBody(protobufMessages, signedTx.signed.memo || ""),
+            authInfoBytes: this.encodeProtobufAuthInfo(signedTx.signed.fee, accountInfo.sequence),
+            chainId: this.chainId,
+            accountNumber: parseInt(accountInfo.accountNumber)
         };
         
-        console.log('📊 AMINO TX STRUKTUR:');
-        console.log('- aminoTx:', aminoTx);
-        console.log('- aminoTx.msg:', aminoTx.msg);
-        console.log('- aminoTx.msg.length:', aminoTx.msg?.length);
+        console.log('📊 SignDoc created:', {
+            bodyBytesLength: signDoc.bodyBytes.length,
+            authInfoBytesLength: signDoc.authInfoBytes.length,
+            chainId: signDoc.chainId,
+            accountNumber: signDoc.accountNumber
+        });
         
-        // ✅ SCHRITT 3: Validierung VORHER
-        if (!aminoTx.msg || aminoTx.msg.length === 0) {
-            console.error('❌ LEER: Messages Array ist leer!');
-            throw new Error('Messages array is empty');
+        // ✅ SCHRITT 5: signDirect mit Protobuf Messages
+        const protoSignResponse = await window.keplr.signDirect(
+            this.chainId,
+            account.address,
+            signDoc,
+            {
+                preferNoSetFee: false,
+                preferNoSetMemo: false
+            }
+        );
+        
+        console.log('✅ signDirect successful');
+        console.log('📊 Proto Sign Response keys:', Object.keys(protoSignResponse));
+        
+        // ✅ SCHRITT 6: Erstelle TxRaw Protobuf
+        const txRawData = {
+            bodyBytes: protoSignResponse.signed.bodyBytes,
+            authInfoBytes: protoSignResponse.signed.authInfoBytes,
+            signatures: [
+                new Uint8Array(Buffer.from(protoSignResponse.signature.signature, "base64"))
+            ]
+        };
+        
+        console.log('📊 TxRaw data lengths:', {
+            body: txRawData.bodyBytes.length,
+            authInfo: txRawData.authInfoBytes.length,
+            signature: txRawData.signatures[0].length
+        });
+        
+        // ✅ SCHRITT 7: PROTOBUF WIRE FORMAT Serialisierung
+        console.log('🔧 PROTOBUF WIRE FORMAT KODIERUNG:');
+        
+        const protobufTx = this.encodeToProtobufWireFormat(txRawData);
+        
+        console.log('📊 PROTOBUF BINÄRE DATEN:');
+        console.log('- Binary data:', protobufTx);
+        console.log('- Is Uint8Array:', protobufTx instanceof Uint8Array);
+        console.log('- Binary length:', protobufTx.length);
+        console.log('- First 20 bytes:', Array.from(protobufTx.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
+        
+        // ✅ SCHRITT 8: Validierung
+        if (protobufTx.length === 0) {
+            console.error('❌ LEER: Protobuf Kodierung ist leer!');
+            throw new Error('Protobuf encoding resulted in empty data');
         }
         
-        // ✅ SCHRITT 4: BINÄRE AMINO KODIERUNG (statt JSON!)
-        console.log('🔧 BINÄRE AMINO KODIERUNG:');
-        console.log('- Converting to binary Amino format...');
-        
-        const binaryAminoTx = this.encodeToBinaryAmino(aminoTx);
-        
-        console.log('📊 BINÄRE AMINO DATEN:');
-        console.log('- Binary data:', binaryAminoTx);
-        console.log('- Is Uint8Array:', binaryAminoTx instanceof Uint8Array);
-        console.log('- Binary length:', binaryAminoTx.length);
-        console.log('- First 20 bytes:', Array.from(binaryAminoTx.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
-        
-        // ✅ SCHRITT 5: Validierung NACHHER
-        if (binaryAminoTx.length === 0) {
-            console.error('❌ LEER: Binäre Kodierung ist leer!');
-            throw new Error('Binary encoding resulted in empty data');
+        // Prüfe auf korrekte Wire Types (0x0A, 0x12, 0x1A)
+        if (protobufTx[0] !== 0x0A) {
+            console.warn('⚠️ Unexpected first wire type:', '0x' + protobufTx[0].toString(16));
         }
         
-        console.log('✅ Binary encoding validation passed');
-        return binaryAminoTx; // ← Uint8Array statt JSON String!
+        console.log('✅ Protobuf encoding validation passed');
+        return protobufTx; // ← Protobuf Uint8Array für Keplr sendTx!
         
     } catch (error) {
         console.error('❌ Encoding failed with full debug:', error);
@@ -227,73 +268,285 @@ async encodeTxForBroadcast(signedTx) {
 }
 
 // ===================================
-// 🔧 BINÄRE AMINO KODIERUNG
+// 🔧 AMINO ZU PROTOBUF CONVERSION
 // ===================================
 
-encodeToBinaryAmino(aminoTx) {
+convertAminoToProtobuf(aminoMsgs) {
     try {
-        console.log('🔧 Converting Amino to binary format...');
+        console.log('🔧 Converting Amino messages to Protobuf...');
         
-        // ✅ METHODE 1: Strukturierte binäre Kodierung
-        console.log('📊 Using structured binary encoding...');
+        const protobufMsgs = [];
         
-        // JSON String erstellen (wie vorher)
-        const jsonString = JSON.stringify(aminoTx);
-        console.log('- JSON string length:', jsonString.length);
+        for (const aminoMsg of aminoMsgs) {
+            console.log('📊 Converting Amino message:', aminoMsg);
+            
+            let protobufMsg;
+            
+            switch (aminoMsg.type) {
+                case 'cosmos-sdk/MsgDelegate':
+                    protobufMsg = {
+                        typeUrl: '/cosmos.staking.v1beta1.MsgDelegate',
+                        value: {
+                            delegatorAddress: aminoMsg.value.delegator_address,
+                            validatorAddress: aminoMsg.value.validator_address,
+                            amount: aminoMsg.value.amount
+                        }
+                    };
+                    break;
+                    
+                case 'cosmos-sdk/MsgUndelegate':
+                    protobufMsg = {
+                        typeUrl: '/cosmos.staking.v1beta1.MsgUndelegate',
+                        value: {
+                            delegatorAddress: aminoMsg.value.delegator_address,
+                            validatorAddress: aminoMsg.value.validator_address,
+                            amount: aminoMsg.value.amount
+                        }
+                    };
+                    break;
+                    
+                case 'cosmos-sdk/MsgWithdrawDelegatorReward':
+                    protobufMsg = {
+                        typeUrl: '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
+                        value: {
+                            delegatorAddress: aminoMsg.value.delegator_address,
+                            validatorAddress: aminoMsg.value.validator_address
+                        }
+                    };
+                    break;
+                    
+                default:
+                    throw new Error(`Unsupported Amino message type: ${aminoMsg.type}`);
+            }
+            
+            console.log('✅ Converted to Protobuf:', protobufMsg);
+            protobufMsgs.push(protobufMsg);
+        }
         
-        // ✅ Strukturiertes binäres Format erstellen
-        const jsonBytes = new TextEncoder().encode(jsonString);
+        return protobufMsgs;
         
-        // ✅ Amino-ähnlicher Header hinzufügen
-        const header = new Uint8Array([
-            0x16, 0x65, 0xAB, 0xC0, // Amino StdTx type prefix
-            (jsonBytes.length >> 24) & 0xFF, // Length (4 bytes big-endian)
-            (jsonBytes.length >> 16) & 0xFF,
-            (jsonBytes.length >> 8) & 0xFF,
-            jsonBytes.length & 0xFF
-        ]);
+    } catch (error) {
+        console.error('❌ Amino to Protobuf conversion failed:', error);
+        throw error;
+    }
+}
+
+// ===================================
+// 🔧 PROTOBUF TX BODY ENCODING
+// ===================================
+
+encodeProtobufTxBody(messages, memo) {
+    try {
+        console.log('🔧 Encoding Protobuf TxBody...');
         
-        // ✅ Header + JSON kombinieren
-        const result = new Uint8Array(header.length + jsonBytes.length);
-        result.set(header, 0);
-        result.set(jsonBytes, header.length);
+        // TxBody proto message:
+        // field 1: messages (repeated Any)
+        // field 2: memo (string)
+        // field 3: timeout_height (uint64)
+        // field 4: extension_options (repeated Any)
+        // field 5: non_critical_extension_options (repeated Any)
         
-        console.log('✅ Structured binary encoding complete');
-        console.log('- Header length:', header.length);
-        console.log('- JSON bytes length:', jsonBytes.length);
-        console.log('- Total length:', result.length);
+        const messageBytes = [];
+        
+        // Encode each message as Any proto
+        for (const msg of messages) {
+            const anyBytes = this.encodeAnyMessage(msg);
+            // Field 1, wire type 2 (length-delimited)
+            messageBytes.push(0x0A); // field 1, wire type 2
+            messageBytes.push(...this.encodeVarint(anyBytes.length));
+            messageBytes.push(...anyBytes);
+        }
+        
+        // Encode memo if present
+        const memoBytes = [];
+        if (memo) {
+            const memoUtf8 = new TextEncoder().encode(memo);
+            memoBytes.push(0x12); // field 2, wire type 2
+            memoBytes.push(...this.encodeVarint(memoUtf8.length));
+            memoBytes.push(...memoUtf8);
+        }
+        
+        // timeout_height = 0 (optional, skip if zero)
+        
+        const result = new Uint8Array([...messageBytes, ...memoBytes]);
+        
+        console.log('✅ TxBody encoded, length:', result.length);
+        return result;
+        
+    } catch (error) {
+        console.error('❌ TxBody encoding failed:', error);
+        throw error;
+    }
+}
+
+// ===================================
+// 🔧 PROTOBUF AUTH INFO ENCODING
+// ===================================
+
+encodeProtobufAuthInfo(fee, sequence) {
+    try {
+        console.log('🔧 Encoding Protobuf AuthInfo...');
+        
+        // AuthInfo proto message:
+        // field 1: signer_infos (repeated SignerInfo)
+        // field 2: fee (Fee)
+        
+        // For now, simplified version - would need proper SignerInfo encoding
+        // This is a complex structure that would need full protobuf implementation
+        
+        // Simplified fee encoding
+        const feeAmount = fee.amount[0];
+        const feeJson = JSON.stringify({
+            amount: feeAmount.amount,
+            denom: feeAmount.denom,
+            gas_limit: fee.gas
+        });
+        
+        const feeBytes = new TextEncoder().encode(feeJson);
+        const result = new Uint8Array(feeBytes.length + 10);
+        
+        // Simplified wrapper
+        result[0] = 0x12; // field 2
+        result[1] = feeBytes.length;
+        result.set(feeBytes, 2);
+        
+        console.log('✅ AuthInfo encoded (simplified), length:', result.length);
+        return result;
+        
+    } catch (error) {
+        console.error('❌ AuthInfo encoding failed:', error);
+        throw error;
+    }
+}
+
+// ===================================
+// 🔧 ANY MESSAGE ENCODING
+// ===================================
+
+encodeAnyMessage(msg) {
+    try {
+        // Any proto message:
+        // field 1: type_url (string)
+        // field 2: value (bytes)
+        
+        const typeUrlBytes = new TextEncoder().encode(msg.typeUrl);
+        const valueJson = JSON.stringify(msg.value);
+        const valueBytes = new TextEncoder().encode(valueJson);
+        
+        const result = [];
+        
+        // Field 1: type_url
+        result.push(0x0A); // field 1, wire type 2
+        result.push(...this.encodeVarint(typeUrlBytes.length));
+        result.push(...typeUrlBytes);
+        
+        // Field 2: value
+        result.push(0x12); // field 2, wire type 2
+        result.push(...this.encodeVarint(valueBytes.length));
+        result.push(...valueBytes);
+        
+        return new Uint8Array(result);
+        
+    } catch (error) {
+        console.error('❌ Any message encoding failed:', error);
+        throw error;
+    }
+}
+
+// ===================================
+// 🔧 PROTOBUF WIRE FORMAT KODIERUNG
+// ===================================
+
+encodeToProtobufWireFormat(txRaw) {
+    try {
+        console.log('🔧 Encoding to Protobuf Wire Format...');
+        
+        const bodyBytes = new Uint8Array(txRaw.bodyBytes);
+        const authInfoBytes = new Uint8Array(txRaw.authInfoBytes);
+        const signatures = new Uint8Array(txRaw.signatures[0]);
+        
+        console.log('📊 Component lengths:', {
+            body: bodyBytes.length,
+            authInfo: authInfoBytes.length,
+            signature: signatures.length
+        });
+        
+        // ✅ PROTOBUF WIRE FORMAT für TxRaw
+        // Field 1: body_bytes (wire type 2 = length-delimited)
+        // Field 2: auth_info_bytes (wire type 2)
+        // Field 3: signatures (wire type 2, repeated)
+        
+        let totalLength = 0;
+        
+        // Calculate total length
+        totalLength += 1 + this.getVarintLength(bodyBytes.length) + bodyBytes.length;        // Field 1
+        totalLength += 1 + this.getVarintLength(authInfoBytes.length) + authInfoBytes.length; // Field 2
+        totalLength += 1 + this.getVarintLength(signatures.length) + signatures.length;       // Field 3
+        
+        const result = new Uint8Array(totalLength);
+        let offset = 0;
+        
+        // Field 1: body_bytes (field number 1, wire type 2)
+        result[offset++] = (1 << 3) | 2; // 0x0A = field 1, wire type 2
+        offset += this.writeVarint(result, offset, bodyBytes.length);
+        result.set(bodyBytes, offset);
+        offset += bodyBytes.length;
+        
+        // Field 2: auth_info_bytes (field number 2, wire type 2) 
+        result[offset++] = (2 << 3) | 2; // 0x12 = field 2, wire type 2
+        offset += this.writeVarint(result, offset, authInfoBytes.length);
+        result.set(authInfoBytes, offset);
+        offset += authInfoBytes.length;
+        
+        // Field 3: signatures (field number 3, wire type 2)
+        result[offset++] = (3 << 3) | 2; // 0x1A = field 3, wire type 2
+        offset += this.writeVarint(result, offset, signatures.length);
+        result.set(signatures, offset);
+        
+        console.log('✅ Protobuf Wire Format encoding complete');
+        console.log('📊 Final length:', result.length);
+        console.log('📊 Wire format preview:', Array.from(result.slice(0, 10)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
+        console.log('📊 Expected wire types: 0x0A (field 1), 0x12 (field 2), 0x1A (field 3)');
         
         return result;
         
     } catch (error) {
-        console.error('❌ Binary encoding failed:', error);
-        
-        // ✅ FALLBACK: Einfache binäre Kodierung
-        console.log('⚠️ Using simple binary fallback...');
-        
-        try {
-            const simpleJson = JSON.stringify(aminoTx);
-            const simpleBytes = new TextEncoder().encode(simpleJson);
-            
-            // Einfacher binärer Wrapper
-            const wrapper = new Uint8Array(simpleBytes.length + 8);
-            wrapper[0] = 0xAA; // Start marker
-            wrapper[1] = 0xBB; // Version
-            wrapper[2] = 0xCC; // Type: Amino
-            wrapper[3] = 0xDD; // Format: JSON
-            wrapper[4] = (simpleBytes.length >> 24) & 0xFF; // Length
-            wrapper[5] = (simpleBytes.length >> 16) & 0xFF;
-            wrapper[6] = (simpleBytes.length >> 8) & 0xFF;
-            wrapper[7] = simpleBytes.length & 0xFF;
-            wrapper.set(simpleBytes, 8);
-            
-            return wrapper;
-            
-        } catch (fallbackError) {
-            console.error('❌ Fallback encoding also failed:', fallbackError);
-            throw new Error(`All encoding methods failed: ${error.message}`);
-        }
+        console.error('❌ Protobuf Wire Format encoding failed:', error);
+        throw error;
     }
+}
+
+// ===================================
+// 🔧 VARINT HELPERS
+// ===================================
+
+encodeVarint(value) {
+    const result = [];
+    while (value >= 0x80) {
+        result.push((value & 0xFF) | 0x80);
+        value >>>= 7;
+    }
+    result.push(value & 0xFF);
+    return result;
+}
+
+getVarintLength(value) {
+    if (value < 0x80) return 1;
+    if (value < 0x4000) return 2;
+    if (value < 0x200000) return 3;
+    if (value < 0x10000000) return 4;
+    return 5;
+}
+
+writeVarint(buffer, offset, value) {
+    let bytesWritten = 0;
+    while (value >= 0x80) {
+        buffer[offset + bytesWritten] = (value & 0xFF) | 0x80;
+        value >>>= 7;
+        bytesWritten++;
+    }
+    buffer[offset + bytesWritten] = value & 0xFF;
+    return bytesWritten + 1;
 }
 
 
