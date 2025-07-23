@@ -1111,20 +1111,18 @@ class UIManager {
 // ✅ LÖSUNG - Einfach enable ohne suggest:
 // await window.keplr.enable(chainId);
 
-async performStakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas, amountInMedas) {
+async performStakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas, amount) {
     try {
-        console.log('🥩 ULTIMATE CORS-fixed staking method...');
+        console.log('🏆 ULTIMATE CORS-fixed staking method...');
         
-        const chainId = "medasdigital-2";
+        const chainId = window.KEPLR_CHAIN_CONFIG?.chainId || "medasdigital-2";
         
-        // ✅ KEIN experimentalSuggestChain - das verursacht Cache Reset!
-        // await window.keplr.experimentalSuggestChain(window.KEPLR_CHAIN_CONFIG);
-        
-        // ✅ NUR ENABLE - funktioniert perfekt ohne Cache Reset
+        // ✅ KEIN experimentalSuggestChain - das war das Cache Reset Problem!
         await window.keplr.enable(chainId);
         
         console.log('✅ Keplr enabled WITHOUT experimentalSuggestChain - NO cache issues!');
         
+        // ✅ KORRIGIERTES MESSAGE FORMAT
         const delegateMsg = {
             typeUrl: '/cosmos.staking.v1beta1.MsgDelegate',
             value: {
@@ -1149,14 +1147,22 @@ async performStakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas, 
         console.log('📝 Using Keplr sendTx WITHOUT chain suggestion...');
         this.showNotification('📝 Please sign the transaction in Keplr...', 'info');
         
-        // ✅ SENDTX OHNE CHAIN CONFIG PROBLEMS
+        // ❌ ALTES FORMAT (VERURSACHT "invalid mode" FEHLER):
+        // const result = await window.keplr.sendTx(
+        //     chainId,
+        //     [{
+        //         ...delegateMsg,           ← FALSCH!
+        //         gas: gasEstimate.toString(),
+        //         fee: fee
+        //     }]
+        // );
+        
+        // ✅ KORRIGIERTES SENDTX FORMAT:
         const result = await window.keplr.sendTx(
             chainId,
-            [{
-                ...delegateMsg,
-                gas: gasEstimate.toString(),
-                fee: fee
-            }]
+            [delegateMsg],  // ← Nur die Message, NICHT mit gas/fee vermischt!
+            fee,            // ← Fee als separater Parameter!
+            ""              // ← Memo als separater Parameter!
         );
         
         console.log('✅ sendTx successful - NO cache reset!', result);
@@ -1183,6 +1189,10 @@ async performStakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas, 
     }
 }
 
+// ===================================
+// FIXED: performClaimCorsFix() - Korrigiertes sendTx Format
+// ===================================
+
 async performClaimCorsFix(delegatorAddress, delegations, chainId) {
     try {
         console.log('🏆 ULTIMATE CORS-fixed claim method...');
@@ -1190,9 +1200,10 @@ async performClaimCorsFix(delegatorAddress, delegations, chainId) {
         // ✅ KEIN experimentalSuggestChain!
         await window.keplr.enable(chainId);
         
-        console.log('✅ Keplr enabled for claims WITHOUT experimentalSuggestChain');
+        console.log('✅ Keplr enabled for claim WITHOUT experimentalSuggestChain');
         
-        const claimMessages = delegations.map(delegation => ({
+        // ✅ KORRIGIERTE CLAIM MESSAGES
+        const claimMsgs = delegations.map(delegation => ({
             typeUrl: '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward',
             value: {
                 delegatorAddress: delegatorAddress,
@@ -1200,33 +1211,24 @@ async performClaimCorsFix(delegatorAddress, delegations, chainId) {
             }
         }));
         
-        const gasPerClaim = 150000;
-        const totalGas = Math.floor(gasPerClaim * claimMessages.length * 1.2);
+        const gasEstimate = 150000 + (delegations.length * 100000);
         const fee = {
             amount: [{
                 denom: 'umedas',
-                amount: Math.floor(totalGas * 0.025).toString()
+                amount: Math.floor(gasEstimate * 0.025).toString()
             }],
-            gas: totalGas.toString()
+            gas: gasEstimate.toString()
         };
         
-        console.log('📝 Using Keplr sendTx for claims WITHOUT chain suggestion...');
-        this.showNotification('📝 Please sign the rewards claim in Keplr...', 'info');
+        console.log('📝 Using Keplr sendTx for claim WITHOUT chain suggestion...');
+        this.showNotification('📝 Please sign the claim transaction in Keplr...', 'info');
         
-        // ✅ SENDTX OHNE CHAIN CONFIG INTERFERENCE
+        // ✅ KORRIGIERTES SENDTX FORMAT:
         const result = await window.keplr.sendTx(
             chainId,
-            claimMessages.map(msg => ({
-                ...msg,
-                gas: Math.floor(totalGas / claimMessages.length).toString(),
-                fee: {
-                    amount: [{
-                        denom: 'umedas',
-                        amount: Math.floor(totalGas * 0.025 / claimMessages.length).toString()
-                    }],
-                    gas: Math.floor(totalGas / claimMessages.length).toString()
-                }
-            }))
+            claimMsgs,      // ← Nur die Messages!
+            fee,            // ← Fee als separater Parameter!
+            ""              // ← Memo als separater Parameter!
         );
         
         console.log('✅ Claim sendTx successful - NO cache reset!', result);
@@ -1252,15 +1254,22 @@ async performClaimCorsFix(delegatorAddress, delegations, chainId) {
     }
 }
 
-async performUnstakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas, chainId) {
+// ===================================
+// FIXED: performUnstakingCorsFix() - Korrigiertes sendTx Format
+// ===================================
+
+async performUnstakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas) {
     try {
-        console.log('📉 ULTIMATE CORS-fixed unstaking method...');
+        console.log('🏆 ULTIMATE CORS-fixed unstaking method...');
+        
+        const chainId = window.KEPLR_CHAIN_CONFIG?.chainId || "medasdigital-2";
         
         // ✅ KEIN experimentalSuggestChain!
         await window.keplr.enable(chainId);
         
         console.log('✅ Keplr enabled for unstaking WITHOUT experimentalSuggestChain');
         
+        // ✅ KORRIGIERTE UNDELEGATE MESSAGE
         const undelegateMsg = {
             typeUrl: '/cosmos.staking.v1beta1.MsgUndelegate',
             value: {
@@ -1285,14 +1294,12 @@ async performUnstakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas
         console.log('📝 Using Keplr sendTx for unstaking WITHOUT chain suggestion...');
         this.showNotification('📝 Please sign the undelegation in Keplr...', 'info');
         
-        // ✅ SENDTX OHNE CHAIN CONFIG PROBLEMS
+        // ✅ KORRIGIERTES SENDTX FORMAT:
         const result = await window.keplr.sendTx(
             chainId,
-            [{
-                ...undelegateMsg,
-                gas: gasEstimate.toString(),
-                fee: fee
-            }]
+            [undelegateMsg],  // ← Nur die Message!
+            fee,              // ← Fee als separater Parameter!
+            ""                // ← Memo als separater Parameter!
         );
         
         console.log('✅ Unstaking sendTx successful - NO cache reset!', result);
@@ -1317,6 +1324,7 @@ async performUnstakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas
         return { success: false, error: error.message };
     }
 }
+
 
 
     async getAccountInfoViaProxy(address) {
