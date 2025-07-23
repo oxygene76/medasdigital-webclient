@@ -225,64 +225,69 @@ async encodeTxForBroadcast(signedTx) {
 // ===================================
 
 async broadcastTransaction(signedTx) {
-    console.log('📡 Broadcasting with Cosmos SDK REST API...');
+    console.log('📡 Broadcasting via RPC broadcast_tx_sync...');
     
     try {
-        console.log('📊 Original signedTx:', signedTx);
-        
-        // ✅ RICHTIGES LCD API FORMAT für /cosmos/tx/v1beta1/txs
-        const txBytes = this.encodeTxForBroadcast(signedTx);
-        
-        const broadcastPayload = {
-            tx_bytes: txBytes,
-            mode: "BROADCAST_MODE_SYNC"
+        // ✅ AMINO JSON für RPC (wie vorher erfolgreich)
+        const aminoTx = {
+            msg: signedTx.signed.msgs,
+            fee: signedTx.signed.fee,
+            signatures: [signedTx.signature],
+            memo: signedTx.signed.memo || ""
         };
         
-        console.log('📊 Broadcasting payload:', broadcastPayload);
-        console.log('📊 tx_bytes length:', txBytes.length);
+        const txBytes = btoa(JSON.stringify(aminoTx));
+        console.log('📊 Amino TX Bytes length:', txBytes.length);
         
-        // ✅ NEU (ohne CORS Preflight):
-        const response = await fetch('https://lcd.medas-digital.io:1317/cosmos/tx/v1beta1/txs', {
+        // ✅ RPC broadcast_tx_sync (statt commit)
+        const response = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_sync', {
             method: 'POST',
-            body: JSON.stringify(broadcastPayload)
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                method: "broadcast_tx_sync",
+                params: {
+                    tx: txBytes
+                },
+                id: 1
+            })
         });
-
-        console.log('📡 Response status:', response.status);
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('❌ REST API Error:', errorText);
-            throw new Error(`REST API failed: ${response.status} - ${errorText}`);
+            throw new Error(`RPC failed: ${response.status} - ${errorText}`);
         }
 
         const result = await response.json();
-        console.log('📡 REST API broadcast response:', result);
+        console.log('📡 RPC broadcast_tx_sync Result:', result);
 
-        if (!result.tx_response) {
-            throw new Error('Invalid response: missing tx_response');
-        }
-        
-        const txResponse = result.tx_response;
-        
-        if (txResponse.code !== 0) {
-            console.error('❌ Transaction failed:', txResponse);
-            throw new Error(`Transaction failed: ${txResponse.raw_log}`);
+        if (result.error) {
+            throw new Error(`RPC Error: ${result.error.message}`);
         }
 
-        // ✅ SUCCESS!
-        console.log('🎉 Transaction successful!');
-        console.log('📊 TX Hash:', txResponse.txhash);
+        // ✅ broadcast_tx_sync Response Format
+        const syncResult = result.result;
+        
+        if (syncResult.code !== 0) {
+            console.error('❌ Mempool validation failed:', syncResult);
+            throw new Error(`Mempool failed: ${syncResult.log || 'Unknown error'}`);
+        }
+
+        console.log('🎉 Transaction submitted to mempool!');
+        console.log('📊 TX Hash:', syncResult.hash);
+        
+        // ✅ Optional: Wait for inclusion in block
+        const finalResult = await this.waitForBlockInclusion(syncResult.hash, 30);
         
         return {
             success: true,
-            txHash: txResponse.txhash,
-            gasWanted: parseInt(txResponse.gas_wanted || '0'),
-            gasUsed: parseInt(txResponse.gas_used || '0'),
-            blockHeight: txResponse.height
+            txHash: syncResult.hash,
+            blockHeight: finalResult?.blockHeight || null,
+            gasUsed: finalResult?.gasUsed || 0,
+            confirmed: finalResult?.confirmed || false
         };
 
     } catch (error) {
-        console.error('❌ REST API broadcast failed:', error);
+        console.error('❌ RPC broadcast_tx_sync failed:', error);
         throw error;
     }
 }
