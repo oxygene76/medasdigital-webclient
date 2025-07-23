@@ -240,7 +240,7 @@ async broadcastTransaction(signedTx) {
         
         // ✅ METHODE 1: Verwende Keplr's eigene Transaction Bytes
         if (signedTx.tx_bytes) {
-            console.log('✅ Found tx_bytes in signedTx - using Keplr\'s Protobuf encoding');
+            console.log('✅ Found tx_bytes in signedTx - using Keplr Protobuf encoding');
             
             const commitResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_commit', {
                 method: 'POST',
