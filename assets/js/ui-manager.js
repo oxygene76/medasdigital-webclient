@@ -1157,13 +1157,14 @@ async performStakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas, 
         //     }]
         // );
         
-        // ✅ KORRIGIERTES SENDTX FORMAT:
-        const result = await window.keplr.sendTx(
-            chainId,
-            [delegateMsg],  // ← Nur die Message, NICHT mit gas/fee vermischt!
-            fee,            // ← Fee als separater Parameter!
-            ""              // ← Memo als separater Parameter!
-        );
+        // ✅ ERSETZEN MIT (NEUES FORMAT):
+const result = await window.keplr.sendTx(
+    chainId,
+    [delegateMsg],  // ← Nur die Message!
+    fee,            // ← Fee als separater Parameter!
+    ""              // ← Memo als separater Parameter!
+);
+
         
         console.log('✅ sendTx successful - NO cache reset!', result);
         
