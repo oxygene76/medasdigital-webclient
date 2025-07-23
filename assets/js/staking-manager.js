@@ -225,26 +225,110 @@ async encodeTxForBroadcast(signedTx) {
     }
 }
 
-// ===================================
-// 🚀 PRODUCTION-READY BROADCAST SOLUTION
-// ===================================
-// ✅ EINFACHSTE LÖSUNG:
 async broadcastTransaction(messages, fee, memo = "") {
-    const account = await this.connectKeplr();
+    console.log('📡 Broadcasting via Keplr signDirect + sendTx...');
     
-    // Lass Keplr alles machen:
-    const result = await window.keplr.signAndBroadcast(
-        this.chainId,
-        account.address,
-        messages,
-        fee,
-        memo
-    );
-    
-    return {
-        success: true,
-        txHash: result.transactionHash
-    };
+    try {
+        // ✅ SCHRITT 1: Account Connection
+        const account = await this.connectKeplr();
+        console.log('📊 Account:', account.address);
+
+        // ✅ SCHRITT 2: Account Info für Protobuf
+        const accountInfo = await this.getAccountInfo(account.address);
+        console.log('📊 Account Info:', accountInfo);
+
+        // ✅ SCHRITT 3: Erstelle SignDoc für signDirect
+        const signDoc = {
+            bodyBytes: null, // Keplr generiert automatisch
+            authInfoBytes: null, // Keplr generiert automatisch  
+            chainId: this.chainId,
+            accountNumber: Long ? Long.fromString(accountInfo.accountNumber) : accountInfo.accountNumber
+        };
+
+        console.log('📊 SignDoc:', signDoc);
+        console.log('📊 Messages:', messages);  
+        console.log('📊 Fee:', fee);
+
+        // ✅ SCHRITT 4: signDirect (Protobuf Signing)
+        const signResponse = await window.keplr.signDirect(
+            this.chainId,
+            account.address,
+            signDoc,
+            // SignOptions mit Messages und Fee
+            {
+                msgs: messages,
+                fee: fee, 
+                memo: memo || ""
+            }
+        );
+
+        console.log('✅ signDirect successful');
+        console.log('📊 Signed Response:', signResponse);
+        console.log('📊 bodyBytes length:', signResponse.signed.bodyBytes?.length);
+        console.log('📊 authInfoBytes length:', signResponse.signed.authInfoBytes?.length);
+        console.log('📊 signature length:', signResponse.signature.signature?.length);
+
+        // ✅ SCHRITT 5: Erstelle TxRaw Structure (OHNE externe Library)
+        const txRaw = {
+            bodyBytes: signResponse.signed.bodyBytes,
+            authInfoBytes: signResponse.signed.authInfoBytes,
+            signatures: [
+                // Convert base64 signature to Uint8Array
+                Uint8Array.from(atob(signResponse.signature.signature), c => c.charCodeAt(0))
+            ]
+        };
+
+        console.log('📊 TxRaw Structure:', txRaw);
+        console.log('📊 Signatures[0] length:', txRaw.signatures[0].length);
+
+        // ✅ SCHRITT 6: Einfache Protobuf Serialisierung
+        // Da TxRaw.encode nicht verfügbar ist, verwenden wir eine vereinfachte Methode
+        const serializedTx = this.simpleTxRawSerialization(txRaw);
+        
+        console.log('📊 Serialized TX:', serializedTx);
+        console.log('📊 Is Uint8Array:', serializedTx instanceof Uint8Array);
+        console.log('📊 Length:', serializedTx.length);
+
+        // ✅ SCHRITT 7: Keplr sendTx mit Uint8Array
+        const txHashBytes = await window.keplr.sendTx(
+            this.chainId,
+            serializedTx,
+            "sync"
+        );
+
+        console.log('✅ sendTx successful');
+        console.log('📊 TX Hash Bytes:', txHashBytes);
+
+        // ✅ SCHRITT 8: Convert Hash zu String
+        const txHash = Buffer ? 
+            Buffer.from(txHashBytes).toString('hex').toUpperCase() :
+            Array.from(txHashBytes).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+
+        console.log('🎉 Keplr broadcast successful!');
+        console.log('📊 TX Hash:', txHash);
+
+        return {
+            success: true,
+            txHash: txHash,
+            blockHeight: null,
+            gasUsed: 0,
+            confirmed: false
+        };
+
+    } catch (error) {
+        console.error('❌ Keplr broadcast failed:', error);
+        
+        // Spezifische Fehlerbehandlung
+        if (error.message.includes('User rejected')) {
+            throw new Error('Transaction was cancelled by user');
+        } else if (error.message.includes('insufficient funds')) {
+            throw new Error('Insufficient funds for transaction');  
+        } else if (error.message.includes('sequence mismatch')) {
+            throw new Error('Account sequence mismatch - please retry');
+        } else {
+            throw new Error(`Transaction failed: ${error.message}`);
+        }
+    }
 }
 // ===================================
 // 🔍 BLOCK INCLUSION POLLING (OPTIONAL)
