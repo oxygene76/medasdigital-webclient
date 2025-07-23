@@ -231,86 +231,173 @@ async encodeTxForBroadcast(signedTx) {
 
 async broadcastTransaction(signedTx) {
     try {
-        console.log('📡 Broadcasting with broadcast_tx_commit (waits for block inclusion)...');
+        console.log('📡 Broadcasting with CometBFT 0.37 compatible format...');
+        console.log('📊 Analyzing signedTx structure from Keplr...');
         
-        // ✅ Amino TX Format erstellen
-        const aminoTx = {
-            msg: signedTx.signed.msgs,
-            fee: signedTx.signed.fee,
-            signatures: [signedTx.signature],
-            memo: signedTx.signed.memo || ""
+        // ✅ DEBUG: Vollständige SignedTx Struktur analysieren
+        console.log('🔍 SignedTx from Keplr:', signedTx);
+        console.log('🔍 SignedTx keys:', Object.keys(signedTx));
+        
+        // ✅ METHODE 1: Verwende Keplr's eigene Transaction Bytes
+        if (signedTx.tx_bytes) {
+            console.log('✅ Found tx_bytes in signedTx - using Keplr's Protobuf encoding');
+            
+            const commitResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_commit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    id: 1,
+                    method: "broadcast_tx_commit",
+                    params: {
+                        tx: signedTx.tx_bytes  // ← Direkt von Keplr!
+                    }
+                })
+            });
+            
+            return await this.handleCommitResponse(commitResponse);
+        }
+        
+        // ✅ METHODE 2: Keplr's signedTx serialisieren
+        if (signedTx.signed && signedTx.signature) {
+            console.log('📡 Using Keplr signedTx serialization...');
+            
+            // Verwende Keplr's eigene Serialisierung
+            const keplrTxBytes = this.serializeKeplrTx(signedTx);
+            
+            const commitResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_commit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    id: 1,
+                    method: "broadcast_tx_commit",
+                    params: {
+                        tx: keplrTxBytes
+                    }
+                })
+            });
+            
+            return await this.handleCommitResponse(commitResponse);
+        }
+        
+        throw new Error('Invalid signedTx format - missing tx_bytes or signed data');
+
+    } catch (error) {
+        console.error('❌ CometBFT broadcast failed:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+// ===================================
+// 🔧 KEPLR TX SERIALIZATION
+// ===================================
+
+serializeKeplrTx(signedTx) {
+    try {
+        console.log('🔧 Serializing Keplr transaction...');
+        
+        // ✅ COSMOS SDK 0.50 Transaction Format für CometBFT
+        const txWrapper = {
+            body: {
+                messages: signedTx.signed.msgs,
+                memo: signedTx.signed.memo || "",
+                timeout_height: "0",
+                extension_options: [],
+                non_critical_extension_options: []
+            },
+            auth_info: {
+                signer_infos: [{
+                    public_key: {
+                        "@type": "/cosmos.crypto.secp256k1.PubKey",
+                        key: signedTx.signature.pub_key.value
+                    },
+                    mode_info: {
+                        single: {
+                            mode: "SIGN_MODE_LEGACY_AMINO_JSON"
+                        }
+                    },
+                    sequence: signedTx.signed.sequence
+                }],
+                fee: {
+                    amount: signedTx.signed.fee.amount,
+                    gas_limit: signedTx.signed.fee.gas,
+                    payer: "",
+                    granter: ""
+                }
+            },
+            signatures: [signedTx.signature.signature]
         };
         
-        console.log('📊 Waiting for block confirmation...');
+        console.log('📊 TX Wrapper for CometBFT:', txWrapper);
         
-        // ✅ BROADCAST_TX_COMMIT: Wartet auf Block-Inclusion
-        const commitResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_commit', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                jsonrpc: "2.0",
-                id: 1,
-                method: "broadcast_tx_commit",
-                params: {
-                    tx: btoa(JSON.stringify(aminoTx))
-                }
-            })
-        });
+        // ✅ JSON → Base64 (CometBFT erwartet Base64-encoded bytes)
+        const txBytes = btoa(JSON.stringify(txWrapper));
+        console.log('📊 Serialized tx bytes length:', txBytes.length);
+        
+        return txBytes;
+        
+    } catch (error) {
+        console.error('❌ TX serialization failed:', error);
+        throw new Error(`TX serialization failed: ${error.message}`);
+    }
+}
 
+// ===================================
+// 🔧 COMMIT RESPONSE HANDLER
+// ===================================
+
+async handleCommitResponse(commitResponse) {
+    try {
         console.log('📡 Commit Response status:', commitResponse.status);
 
         if (!commitResponse.ok) {
             const errorText = await commitResponse.text();
-            throw new Error(`Commit failed: HTTP ${commitResponse.status} - ${errorText}`);
+            throw new Error(`HTTP ${commitResponse.status}: ${errorText}`);
         }
 
         const commitResult = await commitResponse.json();
-        console.log('📡 Commit Result:', commitResult);
+        console.log('📡 CometBFT Commit Result:', commitResult);
         
-        // ✅ RPC Error Check
+        // ✅ CometBFT Error Check
         if (commitResult.error) {
-            console.error('❌ RPC Error:', commitResult.error);
-            throw new Error(`RPC Error: ${commitResult.error.message || commitResult.error.data}`);
+            console.error('❌ CometBFT Error:', commitResult.error);
+            throw new Error(`CometBFT Error: ${commitResult.error.message || commitResult.error.data}`);
         }
         
         if (!commitResult.result) {
-            throw new Error('Invalid commit response: missing result');
+            throw new Error('Invalid CometBFT response: missing result');
         }
         
-        // ✅ CheckTx Validation (Mempool acceptance)
+        // ✅ CheckTx Validation
         const checkTx = commitResult.result.check_tx;
         if (checkTx && checkTx.code !== 0) {
             console.error('❌ CheckTx failed:', checkTx);
-            throw new Error(`Mempool validation failed: ${checkTx.log || 'Unknown CheckTx error'}`);
+            throw new Error(`Mempool validation failed: ${checkTx.log || checkTx.info || 'Unknown error'}`);
         }
         
-        // ✅ DeliverTx Validation (Block execution)
+        // ✅ DeliverTx Validation
         const deliverTx = commitResult.result.deliver_tx;
         if (!deliverTx) {
-            throw new Error('Missing deliver_tx in commit result');
+            throw new Error('Missing deliver_tx in CometBFT result');
         }
         
         if (deliverTx.code !== 0) {
             console.error('❌ DeliverTx failed:', deliverTx);
-            throw new Error(`Transaction failed in block: ${deliverTx.log || 'Unknown DeliverTx error'}`);
+            throw new Error(`Transaction failed: ${deliverTx.log || deliverTx.info || 'Unknown error'}`);
         }
 
-        // ✅ SUCCESS: Transaction im Block bestätigt!
+        // ✅ SUCCESS
         const txHash = commitResult.result.hash;
         const blockHeight = commitResult.result.height;
         
-        console.log('🎉 Transaction confirmed in block!');
+        console.log('🎉 CometBFT transaction confirmed!');
         console.log(`📊 TX Hash: ${txHash}`);
         console.log(`📊 Block Height: ${blockHeight}`);
         console.log(`📊 Gas Used: ${deliverTx.gas_used}/${deliverTx.gas_wanted}`);
-        
-        // ✅ Parse Events für erweiterte Information
-        const events = deliverTx.events || [];
-        if (events.length > 0) {
-            console.log('📊 Transaction Events:', events);
-        }
         
         return {
             success: true,
@@ -320,31 +407,16 @@ async broadcastTransaction(signedTx) {
             rawLog: deliverTx.log || 'Transaction successful',
             gasUsed: parseInt(deliverTx.gas_used || '0'),
             gasWanted: parseInt(deliverTx.gas_wanted || '0'),
-            events: events,
+            events: deliverTx.events || [],
             confirmed: true,
             checkTx: checkTx,
             deliverTx: deliverTx
         };
 
     } catch (error) {
-        console.error('❌ broadcast_tx_commit failed:', error);
-        return {
-            success: false,
-            error: error.message
-        };
+        throw error;
     }
 }
-// ===================================
-// 📝 WAS PASSIERT:
-// ===================================
-
-/*
-🎯 DIREKTE STRATEGIE:
-1. encodeTxForBroadcast → TxEncodeAmino für echte Protobuf bytes
-2. broadcastTransaction → Moderne /cosmos/tx/v1beta1/txs API
-
-✨ SAUBER UND DIREKT - genau wie Sie es wollten!
-*/
     async delegate(delegatorAddress, validatorAddress, amountInMedas) {
         try {
             console.log('🥩 Starting delegation process...');
