@@ -54,54 +54,59 @@ class StakingManager {
     }
 
    createDelegateMessage(delegatorAddress, validatorAddress, amount) {
-    console.log('🔧 Creating delegate message for SDK 0.50.10...');
+    console.log('🔧 Creating delegate message for Amino/RPC...');
     console.log('📊 Params:', { delegatorAddress, validatorAddress, amount });
     
-    // ✅ COSMOS SDK 0.50.10 MESSAGE FORMAT
+    // ✅ AMINO FORMAT (nicht Protobuf @type)
     const message = {
-        "@type": "/cosmos.staking.v1beta1.MsgDelegate",  // ← Protobuf type URL!
-        delegator_address: delegatorAddress,
-        validator_address: validatorAddress,
-        amount: {
-            denom: this.denom,
-            amount: amount.toString()
+        type: "cosmos-sdk/MsgDelegate",  // ← Amino type!
+        value: {
+            delegator_address: delegatorAddress,
+            validator_address: validatorAddress,
+            amount: {
+                denom: this.denom,
+                amount: amount.toString()
+            }
         }
     };
     
-    console.log('✅ Created delegate message:', message);
+    console.log('✅ Created Amino delegate message:', message);
     return message;
 }
 
 createUndelegateMessage(delegatorAddress, validatorAddress, amount) {
-    console.log('🔧 Creating undelegate message for SDK 0.50.10...');
+    console.log('🔧 Creating undelegate message for Amino/RPC...');
     
     const message = {
-        "@type": "/cosmos.staking.v1beta1.MsgUndelegate",  // ← Protobuf type URL!
-        delegator_address: delegatorAddress,
-        validator_address: validatorAddress,
-        amount: {
-            denom: this.denom,
-            amount: amount.toString()
+        type: "cosmos-sdk/MsgUndelegate",  // ← Amino type!
+        value: {
+            delegator_address: delegatorAddress,
+            validator_address: validatorAddress,
+            amount: {
+                denom: this.denom,
+                amount: amount.toString()
+            }
         }
     };
     
-    console.log('✅ Created undelegate message:', message);
+    console.log('✅ Created Amino undelegate message:', message);
     return message;
 }
 
 createWithdrawRewardsMessage(delegatorAddress, validatorAddress) {
-    console.log('🔧 Creating withdraw rewards message for SDK 0.50.10...');
+    console.log('🔧 Creating withdraw rewards message for Amino/RPC...');
     
     const message = {
-        "@type": "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",  // ← Protobuf type URL!
-        delegator_address: delegatorAddress,
-        validator_address: validatorAddress
+        type: "cosmos-sdk/MsgWithdrawDelegatorReward",  // ← Amino type!
+        value: {
+            delegator_address: delegatorAddress,
+            validator_address: validatorAddress
+        }
     };
     
-    console.log('✅ Created withdraw rewards message:', message);
+    console.log('✅ Created Amino withdraw rewards message:', message);
     return message;
 }
-
     calculateFee(gasLimit) {
         const gasAmount = Math.ceil(gasLimit * this.gasPrice);
         return {
