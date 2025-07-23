@@ -137,51 +137,47 @@ class StakingManager {
         }
     }
 
-    // Fügen Sie diese Methode zu Ihrer StakingManager Klasse hinzu:
-    encodeTxForBroadcast(signedTx) {
+   // ===================================
+// 🎯 IHRE BEIDEN FUNKTIONEN - DIREKT UND OHNE FALLBACKS
+// ===================================
+
+// 🔧 FUNKTION 1: encodeTxForBroadcast (mit TxEncodeAmino)
+async encodeTxForBroadcast(signedTx) {
     try {
-        console.log('🔧 Encoding transaction for Cosmos SDK 0.50...');
+        console.log('🔧 Encoding transaction via TxEncodeAmino...');
         console.log('🔍 SignedTx structure:', signedTx);
         
-        // ✅ KORREKTE COSMOS SDK 0.50 STRUKTUR
-        const txWrapper = {
-            body: {
-                messages: signedTx.signed.msgs,
-                memo: signedTx.signed.memo || "",
-                timeout_height: "0",
-                extension_options: [],
-                non_critical_extension_options: []
-            },
-            auth_info: {
-                signer_infos: [{
-                    public_key: {
-                        "@type": "/cosmos.crypto.secp256k1.PubKey",
-                        key: signedTx.signature.pub_key.value
-                    },
-                    mode_info: {
-                        single: {
-                            mode: "SIGN_MODE_LEGACY_AMINO_JSON"
-                        }
-                    },
-                    sequence: signedTx.signed.sequence.toString()
-                }],
-                fee: {
-                    amount: signedTx.signed.fee.amount,
-                    gas_limit: signedTx.signed.fee.gas.toString(),
-                    payer: "",
-                    granter: ""
-                }
-            },
-            signatures: [signedTx.signature.signature]
+        // ✅ AMINO TRANSACTION FORMAT (direkt von Keplr)
+        const aminoTx = {
+            msg: signedTx.signed.msgs,
+            fee: signedTx.signed.fee,
+            signatures: [signedTx.signature],
+            memo: signedTx.signed.memo || ""
         };
         
-        console.log('🔧 TX Wrapper for SDK 0.50:', txWrapper);
+        console.log('🔧 Amino TX for encoding:', aminoTx);
         
-        // Base64 encoding
-        const txBytes = btoa(JSON.stringify(txWrapper));
-        console.log('🔧 Encoded tx_bytes length:', txBytes.length);
+        // ✅ VERWENDE DEN COSMOS SDK TxEncodeAmino ENDPOINT
+        const restUrl = '/api/lcd';
+        const encodeResponse = await fetch(`${restUrl}/cosmos/tx/v1beta1/encode/amino`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                amino_json: JSON.stringify(aminoTx)
+            })
+        });
+
+        if (!encodeResponse.ok) {
+            throw new Error(`TxEncodeAmino failed: HTTP ${encodeResponse.status}`);
+        }
+
+        const encodeResult = await encodeResponse.json();
+        console.log('🔧 TxEncodeAmino successful, got protobuf bytes');
+        console.log('🔧 Encoded tx_bytes type:', typeof encodeResult.amino_binary);
         
-        return txBytes;
+        return encodeResult.amino_binary;  // ECHTE PROTOBUF BYTES!
         
     } catch (error) {
         console.error('❌ Transaction encoding failed:', error);
@@ -190,52 +186,77 @@ class StakingManager {
     }
 }
 
-    
-    async broadcastTransaction(signedTx) {
-        try {
-            const restUrl = window.MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
-            
-            const broadcastReq = {
-                tx_bytes: this.encodeTxForBroadcast(signedTx),
-                mode: "BROADCAST_MODE_SYNC"
-            };
+// 🔧 FUNKTION 2: broadcastTransaction (direkt mit moderner API)
+async broadcastTransaction(signedTx) {
+    try {
+        // ✅ VERWENDE PROXY-PFAD (wie in Ihrem Code)
+        const restUrl = '/api/lcd';
+        
+        console.log('📡 Broadcasting transaction with modern API...');
+        
+        // ✅ SCHRITT 1: Transaction encodieren
+        const txBytes = await this.encodeTxForBroadcast(signedTx);
+        
+        const broadcastReq = {
+            tx_bytes: txBytes,
+            mode: "BROADCAST_MODE_SYNC"
+        };
+        
+        console.log('📡 Broadcasting with protobuf bytes...');
+        console.log('📡 Broadcast request keys:', Object.keys(broadcastReq));
+        
+        // ✅ SCHRITT 2: Broadcast mit moderner API
+        const response = await fetch(`${restUrl}/cosmos/tx/v1beta1/txs`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(broadcastReq)
+        });
 
-            console.log('📡 Broadcasting transaction...');
+        console.log('📡 Broadcast response status:', response.status);
 
-            const response = await fetch(`${restUrl}/cosmos/tx/v1beta1/txs`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(broadcastReq)
-            });
-
-            if (!response.ok) {
-                throw new Error(`Broadcast failed: HTTP ${response.status}`);
-            }
-
-            const result = await response.json();
-            
-            if (result.tx_response.code !== 0) {
-                throw new Error(`Transaction failed: ${result.tx_response.raw_log}`);
-            }
-
-            console.log('✅ Transaction broadcast successful');
-            return {
-                success: true,
-                txHash: result.tx_response.txhash,
-                code: result.tx_response.code,
-                rawLog: result.tx_response.raw_log
-            };
-        } catch (error) {
-            console.error('❌ Transaction broadcast failed:', error);
-            return {
-                success: false,
-                error: error.message
-            };
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Broadcast failed:', errorText);
+            throw new Error(`Broadcast failed: HTTP ${response.status} - ${errorText}`);
         }
-    }
 
+        const result = await response.json();
+        console.log('📡 Broadcast result:', result);
+        
+        if (result.tx_response && result.tx_response.code !== 0) {
+            throw new Error(`Transaction failed: ${result.tx_response.raw_log}`);
+        }
+
+        console.log('🎉 Transaction broadcast successful!');
+        return {
+            success: true,
+            txHash: result.tx_response?.txhash,
+            code: result.tx_response?.code,
+            rawLog: result.tx_response?.raw_log
+        };
+        
+    } catch (error) {
+        console.error('❌ Transaction broadcast failed:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+// ===================================
+// 📝 WAS PASSIERT:
+// ===================================
+
+/*
+🎯 DIREKTE STRATEGIE:
+1. encodeTxForBroadcast → TxEncodeAmino für echte Protobuf bytes
+2. broadcastTransaction → Moderne /cosmos/tx/v1beta1/txs API
+
+✨ SAUBER UND DIREKT - genau wie Sie es wollten!
+*/
     async delegate(delegatorAddress, validatorAddress, amountInMedas) {
         try {
             console.log('🥩 Starting delegation process...');
