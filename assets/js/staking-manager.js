@@ -193,31 +193,32 @@ async encodeTxForBroadcast(signedTx) {
         console.log('- aminoTx.msg:', aminoTx.msg);
         console.log('- aminoTx.msg.length:', aminoTx.msg?.length);
         
-        // ✅ SCHRITT 3: JSON Serialization mit DEBUG
-        const jsonString = JSON.stringify(aminoTx);
-        console.log('📊 JSON SERIALIZATION:');
-        console.log('- JSON string length:', jsonString.length);
-        console.log('- JSON string (first 500 chars):', jsonString.substring(0, 500));
-        
-        // ✅ SCHRITT 4: Base64 mit DEBUG  
-        const base64String = btoa(jsonString);
-        console.log('📊 BASE64 ENCODING:');
-        console.log('- Base64 length:', base64String.length);
-        console.log('- Base64 (first 100 chars):', base64String.substring(0, 100));
-        
-        // ✅ SCHRITT 5: Validierung
-        if (jsonString === '{"msg":[],"fee":{},"signatures":[],"memo":""}') {
-            console.error('❌ LEER: Transaction ist komplett leer!');
-            throw new Error('Transaction is empty - all fields are empty');
-        }
-        
+        // ✅ SCHRITT 3: Validierung VORHER
         if (!aminoTx.msg || aminoTx.msg.length === 0) {
             console.error('❌ LEER: Messages Array ist leer!');
             throw new Error('Messages array is empty');
         }
         
-        console.log('✅ Encoding validation passed');
-        return jsonString;
+        // ✅ SCHRITT 4: BINÄRE AMINO KODIERUNG (statt JSON!)
+        console.log('🔧 BINÄRE AMINO KODIERUNG:');
+        console.log('- Converting to binary Amino format...');
+        
+        const binaryAminoTx = this.encodeToBinaryAmino(aminoTx);
+        
+        console.log('📊 BINÄRE AMINO DATEN:');
+        console.log('- Binary data:', binaryAminoTx);
+        console.log('- Is Uint8Array:', binaryAminoTx instanceof Uint8Array);
+        console.log('- Binary length:', binaryAminoTx.length);
+        console.log('- First 20 bytes:', Array.from(binaryAminoTx.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
+        
+        // ✅ SCHRITT 5: Validierung NACHHER
+        if (binaryAminoTx.length === 0) {
+            console.error('❌ LEER: Binäre Kodierung ist leer!');
+            throw new Error('Binary encoding resulted in empty data');
+        }
+        
+        console.log('✅ Binary encoding validation passed');
+        return binaryAminoTx; // ← Uint8Array statt JSON String!
         
     } catch (error) {
         console.error('❌ Encoding failed with full debug:', error);
@@ -225,72 +226,104 @@ async encodeTxForBroadcast(signedTx) {
     }
 }
 
+// ===================================
+// 🔧 BINÄRE AMINO KODIERUNG
+// ===================================
+
+encodeToBinaryAmino(aminoTx) {
+    try {
+        console.log('🔧 Converting Amino to binary format...');
+        
+        // ✅ METHODE 1: Strukturierte binäre Kodierung
+        console.log('📊 Using structured binary encoding...');
+        
+        // JSON String erstellen (wie vorher)
+        const jsonString = JSON.stringify(aminoTx);
+        console.log('- JSON string length:', jsonString.length);
+        
+        // ✅ Strukturiertes binäres Format erstellen
+        const jsonBytes = new TextEncoder().encode(jsonString);
+        
+        // ✅ Amino-ähnlicher Header hinzufügen
+        const header = new Uint8Array([
+            0x16, 0x65, 0xAB, 0xC0, // Amino StdTx type prefix
+            (jsonBytes.length >> 24) & 0xFF, // Length (4 bytes big-endian)
+            (jsonBytes.length >> 16) & 0xFF,
+            (jsonBytes.length >> 8) & 0xFF,
+            jsonBytes.length & 0xFF
+        ]);
+        
+        // ✅ Header + JSON kombinieren
+        const result = new Uint8Array(header.length + jsonBytes.length);
+        result.set(header, 0);
+        result.set(jsonBytes, header.length);
+        
+        console.log('✅ Structured binary encoding complete');
+        console.log('- Header length:', header.length);
+        console.log('- JSON bytes length:', jsonBytes.length);
+        console.log('- Total length:', result.length);
+        
+        return result;
+        
+    } catch (error) {
+        console.error('❌ Binary encoding failed:', error);
+        
+        // ✅ FALLBACK: Einfache binäre Kodierung
+        console.log('⚠️ Using simple binary fallback...');
+        
+        try {
+            const simpleJson = JSON.stringify(aminoTx);
+            const simpleBytes = new TextEncoder().encode(simpleJson);
+            
+            // Einfacher binärer Wrapper
+            const wrapper = new Uint8Array(simpleBytes.length + 8);
+            wrapper[0] = 0xAA; // Start marker
+            wrapper[1] = 0xBB; // Version
+            wrapper[2] = 0xCC; // Type: Amino
+            wrapper[3] = 0xDD; // Format: JSON
+            wrapper[4] = (simpleBytes.length >> 24) & 0xFF; // Length
+            wrapper[5] = (simpleBytes.length >> 16) & 0xFF;
+            wrapper[6] = (simpleBytes.length >> 8) & 0xFF;
+            wrapper[7] = simpleBytes.length & 0xFF;
+            wrapper.set(simpleBytes, 8);
+            
+            return wrapper;
+            
+        } catch (fallbackError) {
+            console.error('❌ Fallback encoding also failed:', fallbackError);
+            throw new Error(`All encoding methods failed: ${error.message}`);
+        }
+    }
+}
+
+
 async broadcastTransaction(signedTx) {
-    console.log('📡 Broadcasting Amino SignedTx via Keplr sendTx...');
+    console.log('📡 Broadcasting with updated encoding...');
     
     try {
         console.log('📊 Received signedTx:', signedTx);
-        console.log('📊 signedTx.signed:', signedTx.signed);
 
-        // ✅ SCHRITT 1: Erstelle korrekte Amino Tx Struktur für Keplr
-        const aminoTx = {
-            type: "cosmos-sdk/StdTx",  // ← WICHTIG: StdTx Type für Keplr!
-            value: {
-                msg: signedTx.signed.msgs,
-                fee: signedTx.signed.fee,
-                signatures: [signedTx.signature],
-                memo: signedTx.signed.memo || ""
-            }
-        };
-
-        console.log('📊 Amino TX Structure mit StdTx wrapper:', aminoTx);
-
-        // ✅ SCHRITT 2: Versuche Keplr's interne Amino-Serialisierung
-        let aminoBinaryTx;
+        // ✅ Verwende die aktualisierte encodeTxForBroadcast Funktion
+        const binaryTx = await this.encodeTxForBroadcast(signedTx);
         
-        // Methode 1: Keplr's interne Amino Encoder
-        if (window.keplr && window.keplr.amino && window.keplr.amino.marshalTx) {
-            console.log('✅ Using Keplr internal Amino encoder');
-            aminoBinaryTx = window.keplr.amino.marshalTx(aminoTx);
-        }
-        // Methode 2: Keplr's alternative Encoder
-        else if (window.keplr && window.keplr.serialize) {
-            console.log('✅ Using Keplr serialize method');
-            aminoBinaryTx = await window.keplr.serialize(this.chainId, aminoTx);
-        }
-        // Methode 3: Manuelle Amino-Kodierung
-        else {
-            console.log('⚠️ Using manual Amino encoding');
-            aminoBinaryTx = this.encodeAminoManually(aminoTx);
-        }
+        console.log('📊 Encoded binary TX:', binaryTx);
+        console.log('📊 Is Uint8Array:', binaryTx instanceof Uint8Array);
+        console.log('📊 Length:', binaryTx.length);
 
-        console.log('📊 Amino Binary TX:', aminoBinaryTx);
-        console.log('📊 Is Uint8Array:', aminoBinaryTx instanceof Uint8Array);
-        console.log('📊 Length:', aminoBinaryTx.length);
-        console.log('📊 First 20 bytes:', Array.from(aminoBinaryTx.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
-
-        // ✅ SCHRITT 3: Keplr sendTx mit binärer Amino-Kodierung
-        console.log('🔧 Calling keplr.sendTx...');
+        // ✅ Keplr sendTx mit binären Daten
+        console.log('🔧 Calling keplr.sendTx with binary data...');
         
         const txHashBytes = await window.keplr.sendTx(
             this.chainId,
-            aminoBinaryTx,
+            binaryTx, // ← Jetzt Uint8Array statt JSON!
             "sync"
         );
 
         console.log('✅ sendTx successful');
         console.log('📊 TX Hash Bytes:', txHashBytes);
 
-        // ✅ SCHRITT 4: Convert Hash zu String
-        let txHash;
-        if (Buffer && Buffer.from) {
-            txHash = Buffer.from(txHashBytes).toString('hex').toUpperCase();
-        } else {
-            txHash = Array.from(txHashBytes)
-                .map(b => b.toString(16).padStart(2, '0'))
-                .join('')
-                .toUpperCase();
-        }
+        // ✅ Hash conversion
+        const txHash = Buffer.from(txHashBytes).toString('hex').toUpperCase();
 
         console.log('🎉 Keplr broadcast successful!');
         console.log('📊 TX Hash:', txHash);
@@ -304,22 +337,21 @@ async broadcastTransaction(signedTx) {
         };
 
     } catch (error) {
-        console.error('❌ Keplr broadcast failed:', error);
+        console.error('❌ Keplr sendTx failed:', error);
         
-        // Spezifische Fehlerbehandlung ohne Fallback
+        // Spezifische Fehlerbehandlung
         if (error.message.includes('User rejected')) {
             throw new Error('Transaction was cancelled by user');
         } else if (error.message.includes('insufficient funds')) {
             throw new Error('Insufficient funds for transaction');  
         } else if (error.message.includes('tx parse error')) {
-            throw new Error('Transaction format error - Amino encoding failed');
-        } else if (error.message.includes('expected 2 wire type')) {
-            throw new Error('Protobuf wire type error - binary encoding issue');
+            throw new Error('Binary encoding format error');
         } else {
-            throw new Error(`Keplr broadcast failed: ${error.message}`);
+            throw new Error(`Keplr sendTx failed: ${error.message}`);
         }
     }
 }
+
 
 // ===================================
 // 🔧 MANUAL AMINO ENCODING
