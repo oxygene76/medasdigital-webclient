@@ -728,107 +728,56 @@ details[open] {
 
 <!-- FINALER FIX: Ersetzen Sie den Script-Bereich in Ihrer index.html -->
 
-<!-- Step 1: Load CosmJS modules individually -->
-<script src="https://unpkg.com/@cosmjs/stargate@0.32.0/build/index.js"></script>
-<script src="https://unpkg.com/@cosmjs/amino@0.32.0/build/index.js"></script>
-<script src="https://unpkg.com/@cosmjs/proto-signing@0.32.0/build/index.js"></script>
+<!-- Step 1: Load CosmJS as ES Modules (fixes exports error) -->
+<script type="module">
+try {
+    console.log('📚 Loading CosmJS ES modules...');
+    
+    // ES Module Imports (das funktioniert!)
+    const { SigningStargateClient, coins } = await import('https://esm.sh/@cosmjs/stargate@0.32.0');
+    
+    // Global verfügbar machen
+    window.SigningStargateClient = SigningStargateClient;
+    window.coins = coins;
+    window.cosmjsReady = true;
+    
+    console.log('✅ CosmJS ES modules loaded successfully!');
+    console.log('SigningStargateClient type:', typeof SigningStargateClient);
+    
+    // Event senden
+    window.dispatchEvent(new Event('cosmjs-loaded'));
+    
+} catch (error) {
+    console.warn('⚠️ ES module import failed:', error.message);
+    console.log('🔄 Trying local Vite import...');
+    
+    try {
+        // Lokaler Vite Import als Fallback
+        const cosmjs = await import('@cosmjs/stargate');
+        
+        window.SigningStargateClient = cosmjs.SigningStargateClient;
+        window.coins = cosmjs.coins;
+        window.cosmjsReady = true;
+        
+        console.log('✅ CosmJS loaded via Vite!');
+        window.dispatchEvent(new Event('cosmjs-loaded'));
+        
+    } catch (viteError) {
+        console.error('❌ All methods failed:', viteError.message);
+        
+        // Mock objects als letzte Option
+        window.SigningStargateClient = null;
+        window.coins = () => [];
+        window.cosmjsReady = false;
+        window.dispatchEvent(new Event('cosmjs-failed'));
+    }
+}
+</script>
 
 <!-- Step 2: Manual CosmJS initialization -->
 <script>
 console.log('📚 Setting up CosmJS...');
 
-function setupCosmJS() {
-    console.log('🔍 Searching for CosmJS in window object...');
-    
-    // DIREKTE LÖSUNG - Die _1 Objekte finden!
-    if (window.signingstargateclient_1 && window.signingstargateclient_1.SigningStargateClient) {
-        console.log('✅ Found CosmJS with _1 suffix (UMD build)');
-        window.SigningStargateClient = window.signingstargateclient_1.SigningStargateClient;
-        window.coins = window.amino_1?.coins || function() { return []; };
-        window.cosmjsReady = true;
-        window.dispatchEvent(new Event('cosmjs-loaded'));
-        return true;
-    }
-    
-    // List all available properties for debugging
-    const allKeys = Object.keys(window);
-    const cosmjsKeys = allKeys.filter(key => 
-        key.toLowerCase().includes('cosmjs') || 
-        key.toLowerCase().includes('stargate') ||
-        key.toLowerCase().includes('amino') ||
-        key.includes('Build') ||
-        key.includes('_1')
-    );
-    
-    console.log('🔍 Found potential CosmJS objects:', cosmjsKeys);
-    
-    // Try other possible locations
-    const possibleLocations = [
-        'cosmjsStargate',
-        'StargateBuild',
-        'stargate',
-        'CosmJS',
-        'cosmjs'
-    ];
-    
-    for (const location of possibleLocations) {
-        if (window[location] && window[location].SigningStargateClient) {
-            console.log(`✅ Found CosmJS at window.${location}`);
-            window.SigningStargateClient = window[location].SigningStargateClient;
-            window.coins = window[location].coins || window.amino?.coins;
-            window.cosmjsReady = true;
-            window.dispatchEvent(new Event('cosmjs-loaded'));
-            return true;
-        }
-    }
-    
-    // Check if already available globally
-    if (window.SigningStargateClient) {
-        console.log('✅ CosmJS already available globally');
-        window.cosmjsReady = true;
-        window.dispatchEvent(new Event('cosmjs-loaded'));
-        return true;
-    }
-    
-    // Manual search through all window properties
-    for (const key of allKeys) {
-        try {
-            const obj = window[key];
-            if (obj && typeof obj === 'object' && obj.SigningStargateClient) {
-                console.log(`✅ Found CosmJS at window.${key}`);
-                window.SigningStargateClient = obj.SigningStargateClient;
-                window.coins = obj.coins;
-                window.cosmjsReady = true;
-                window.dispatchEvent(new Event('cosmjs-loaded'));
-                return true;
-            }
-        } catch (e) {
-            // Ignore errors when checking properties
-        }
-    }
-    
-    console.warn('⚠️ CosmJS not found in any expected location');
-    return false;
-}
-
-// Try immediately
-if (!setupCosmJS()) {
-    // Retry after delay
-    setTimeout(() => {
-        if (!setupCosmJS()) {
-            // Final attempt with longer delay
-            setTimeout(() => {
-                if (!setupCosmJS()) {
-                    console.error('❌ CosmJS setup failed - using fallback mode');
-                    window.SigningStargateClient = null;
-                    window.coins = function() { return []; };
-                    window.cosmjsReady = false;
-                    window.dispatchEvent(new Event('cosmjs-failed'));
-                }
-            }, 1000);
-        }
-    }, 500);
-}
 
 // Debug function
 window.debugCosmJS = function() {
