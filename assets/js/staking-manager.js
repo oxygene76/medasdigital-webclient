@@ -53,43 +53,54 @@ class StakingManager {
         }
     }
 
-    createDelegateMessage(delegatorAddress, validatorAddress, amount) {
-        return {
-            type: "cosmos-sdk/MsgDelegate",
-            value: {
-                delegator_address: delegatorAddress,
-                validator_address: validatorAddress,
-                amount: {
-                    denom: this.denom,
-                    amount: amount.toString()
-                }
-            }
-        };
-    }
+   createDelegateMessage(delegatorAddress, validatorAddress, amount) {
+    console.log('🔧 Creating delegate message for SDK 0.50.10...');
+    console.log('📊 Params:', { delegatorAddress, validatorAddress, amount });
+    
+    // ✅ COSMOS SDK 0.50.10 MESSAGE FORMAT
+    const message = {
+        "@type": "/cosmos.staking.v1beta1.MsgDelegate",  // ← Protobuf type URL!
+        delegator_address: delegatorAddress,
+        validator_address: validatorAddress,
+        amount: {
+            denom: this.denom,
+            amount: amount.toString()
+        }
+    };
+    
+    console.log('✅ Created delegate message:', message);
+    return message;
+}
 
-    createUndelegateMessage(delegatorAddress, validatorAddress, amount) {
-        return {
-            type: "cosmos-sdk/MsgUndelegate",
-            value: {
-                delegator_address: delegatorAddress,
-                validator_address: validatorAddress,
-                amount: {
-                    denom: this.denom,
-                    amount: amount.toString()
-                }
-            }
-        };
-    }
+createUndelegateMessage(delegatorAddress, validatorAddress, amount) {
+    console.log('🔧 Creating undelegate message for SDK 0.50.10...');
+    
+    const message = {
+        "@type": "/cosmos.staking.v1beta1.MsgUndelegate",  // ← Protobuf type URL!
+        delegator_address: delegatorAddress,
+        validator_address: validatorAddress,
+        amount: {
+            denom: this.denom,
+            amount: amount.toString()
+        }
+    };
+    
+    console.log('✅ Created undelegate message:', message);
+    return message;
+}
 
-    createWithdrawRewardsMessage(delegatorAddress, validatorAddress) {
-        return {
-            type: "cosmos-sdk/MsgWithdrawDelegatorReward",
-            value: {
-                delegator_address: delegatorAddress,
-                validator_address: validatorAddress
-            }
-        };
-    }
+createWithdrawRewardsMessage(delegatorAddress, validatorAddress) {
+    console.log('🔧 Creating withdraw rewards message for SDK 0.50.10...');
+    
+    const message = {
+        "@type": "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",  // ← Protobuf type URL!
+        delegator_address: delegatorAddress,
+        validator_address: validatorAddress
+    };
+    
+    console.log('✅ Created withdraw rewards message:', message);
+    return message;
+}
 
     calculateFee(gasLimit) {
         const gasAmount = Math.ceil(gasLimit * this.gasPrice);
@@ -144,22 +155,47 @@ class StakingManager {
 async encodeTxForBroadcast(signedTx) {
     try {
         console.log('🔧 Encoding transaction for Cosmos SDK 0.50.10...');
+        console.log('📊 SignedTx messages:', signedTx.signed.msgs);
         
-        // ✅ AMINO TX FORMAT für RPC broadcast_tx_sync
+        // ✅ VALIDIERE DASS MESSAGES EXISTIEREN
+        if (!signedTx.signed.msgs || signedTx.signed.msgs.length === 0) {
+            throw new Error('No messages in transaction');
+        }
+        
+        // ✅ VALIDIERE MESSAGE FORMAT
+        signedTx.signed.msgs.forEach((msg, index) => {
+            console.log(`📊 Message ${index}:`, msg);
+            
+            if (!msg['@type']) {
+                console.error(`❌ Message ${index} missing @type:`, msg);
+                throw new Error(`Message ${index} missing @type field`);
+            }
+            
+            if (!msg.delegator_address && !msg.validator_address) {
+                console.error(`❌ Message ${index} missing required fields:`, msg);
+                throw new Error(`Message ${index} missing required address fields`);
+            }
+        });
+        
+        // ✅ AMINO TX FORMAT für RPC broadcast_tx_sync (SDK 0.50.10)
         const aminoTx = {
-            msg: signedTx.signed.msgs,
+            msg: signedTx.signed.msgs,      // ← Sollte jetzt korrekte @type haben
             fee: signedTx.signed.fee,
             signatures: [signedTx.signature],
             memo: signedTx.signed.memo || ""
         };
         
-        console.log('🔧 Cosmos SDK 0.50.10 Amino TX:', aminoTx);
+        console.log('🔧 Cosmos SDK 0.50.10 Amino TX (validated):', aminoTx);
         
         // ✅ JSON STRING für Base64 encoding
-        return JSON.stringify(aminoTx);
+        const jsonString = JSON.stringify(aminoTx);
+        console.log('📊 JSON string length:', jsonString.length);
+        
+        return jsonString;
         
     } catch (error) {
         console.error('❌ Transaction encoding failed:', error);
+        console.error('❌ SignedTx structure:', signedTx);
         throw new Error(`Encoding failed: ${error.message}`);
     }
 }
