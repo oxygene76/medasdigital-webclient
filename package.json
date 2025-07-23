@@ -3,12 +3,14 @@
   "version": "0.9.0",
   "description": "Advanced blockchain web client with Planet 9 visualization for Medas Digital",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
     "legacy-start": "python -m http.server 8000",
     "live-dev": "live-server --port=8000 --open=/",
-    "build": "echo No build step required - static HTML",
+    "build": "vite build",
+    "preview": "vite preview",
     "deploy": "./scripts/deploy.sh",
     "daemon": "docker run -d --name medas-digital-daemon -p 8080:8080 medas-digital/daemon:latest"
   },
@@ -39,11 +41,17 @@
     "express": "^4.18.2",
     "cors": "^2.8.5",
     "http-proxy-middleware": "^2.0.6",
-    "serve-static": "^1.15.0"
+    "serve-static": "^1.15.0",
+    "@keplr-wallet/proto-types": "^0.12.0",
+    "@cosmjs/stargate": "^0.32.0",
+    "@cosmjs/proto-signing": "^0.32.0",
+    "@cosmjs/amino": "^0.32.0",
+    "buffer": "^6.0.3"
   },
   "devDependencies": {
     "live-server": "^1.2.2",
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "vite": "^5.0.0"
   },
   "engines": {
     "node": ">=16.0.0"
