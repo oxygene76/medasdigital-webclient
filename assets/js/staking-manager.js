@@ -159,9 +159,10 @@ createWithdrawRewardsMessage(delegatorAddress, validatorAddress) {
 
 async encodeTxForBroadcast(signedTx) {
     try {
-        console.log('🔍 BROADCASTING DEBUG - STEP BY STEP:');
-        console.log('====================================');
+        console.log('🔍 TXRAW IMPORT UND ENCODING:');
+        console.log('=============================');
         
+        // ✅ SCHRITT 1: Input validation
         console.log('📊 Step 1: Input validation');
         console.log('- SignedTx present:', !!signedTx);
         console.log('- Messages count:', signedTx.signed?.msgs?.length);
@@ -171,19 +172,54 @@ async encodeTxForBroadcast(signedTx) {
             throw new Error('No messages found in signed transaction');
         }
         
-        console.log('📊 Step 2: Check if TxRaw encoder available');
-        console.log('- window.TxRaw exists:', !!window.TxRaw);
-        console.log('- window.TxRaw.encode exists:', !!window.TxRaw?.encode);
+        // ✅ SCHRITT 2: Import TxRaw (verschiedene Methoden)
+        console.log('📊 Step 2: Import TxRaw encoder');
         
-        if (!window.TxRaw?.encode) {
-            throw new Error('TxRaw encoder not available - Keplr extension may be outdated');
+        let TxRaw;
+        
+        // Methode 1: Check if already available
+        if (window.TxRaw?.encode) {
+            console.log('- Using window.TxRaw (already available)');
+            TxRaw = window.TxRaw;
+        }
+        // Methode 2: CosmJS von CDN importieren
+        else {
+            console.log('- Importing TxRaw from CDN...');
+            try {
+                // Import CosmJS stargate
+                const module = await import('https://cdn.skypack.dev/@cosmjs/stargate@^0.32.0');
+                if (module.TxRaw) {
+                    TxRaw = module.TxRaw;
+                    console.log('✅ TxRaw imported from CosmJS stargate');
+                } else {
+                    throw new Error('TxRaw not found in CosmJS stargate module');
+                }
+            } catch (importError) {
+                console.error('❌ CDN import failed:', importError);
+                
+                // Methode 3: Fallback - Keplr Proto Types von anderem CDN
+                try {
+                    console.log('- Trying alternative CDN...');
+                    const altModule = await import('https://unpkg.com/@keplr-wallet/proto-types@0.12.0/cosmos/tx/v1beta1/tx.js');
+                    if (altModule.TxRaw) {
+                        TxRaw = altModule.TxRaw;
+                        console.log('✅ TxRaw imported from alternative CDN');
+                    } else {
+                        throw new Error('TxRaw not found in alternative module');
+                    }
+                } catch (altError) {
+                    console.error('❌ Alternative CDN failed:', altError);
+                    throw new Error('TxRaw encoder not available - could not import from any CDN');
+                }
+            }
         }
         
-        console.log('📊 Step 3: Convert messages (no additional connections)');
+        console.log('📊 TxRaw encoder available:', !!TxRaw?.encode);
+        
+        // ✅ SCHRITT 3: Convert Amino messages to Protobuf
+        console.log('📊 Step 3: Convert messages');
         const protobufMessages = [];
         for (const aminoMsg of signedTx.signed.msgs) {
-            console.log('- Converting message type:', aminoMsg.type);
-            
             let typeUrl;
             switch (aminoMsg.type) {
                 case 'cosmos-sdk/MsgDelegate':
@@ -203,41 +239,30 @@ async encodeTxForBroadcast(signedTx) {
                 typeUrl: typeUrl,
                 value: aminoMsg.value
             });
-            console.log('- Converted to:', typeUrl);
         }
         
-        console.log('📊 Step 4: Check current Keplr connection (no new connection)');
-        // ⚠️ VORSICHT: Neue connectKeplr() Aufrufe können Cache Reset auslösen!
-        // Verwende existierende Connection falls möglich
-        
+        // ✅ SCHRITT 4: Get existing Keplr connection (avoid cache reset)
+        console.log('📊 Step 4: Get current connection');
         let currentAddress;
         try {
-            // Versuche vorhandene Connection zu verwenden
             const existingKey = await window.keplr.getKey(this.chainId);
             currentAddress = existingKey.bech32Address;
             console.log('- Using existing connection:', currentAddress);
         } catch (error) {
-            console.log('- No existing connection, will need to reconnect');
             const account = await this.connectKeplr();
             currentAddress = account.address;
         }
         
-        console.log('📊 Step 5: Get account info (potential cache reset trigger)');
-        // ⚠️ VORSICHT: Account Info Abfrage kann Cache Reset auslösen!
+        // ✅ SCHRITT 5: Get account info
+        console.log('📊 Step 5: Get account info');
+        const accountInfo = await this.getAccountInfo(currentAddress);
+        console.log('- Account info:', {
+            accountNumber: accountInfo.accountNumber,
+            sequence: accountInfo.sequence
+        });
         
-        let accountInfo;
-        try {
-            accountInfo = await this.getAccountInfo(currentAddress);
-            console.log('- Account info retrieved:', {
-                accountNumber: accountInfo.accountNumber,
-                sequence: accountInfo.sequence
-            });
-        } catch (error) {
-            console.error('❌ Account info failed - potential cache reset trigger:', error);
-            throw new Error(`Account info failed: ${error.message}`);
-        }
-        
-        console.log('📊 Step 6: Create SignDoc (no external calls)');
+        // ✅ SCHRITT 6: Create SignDoc for signDirect
+        console.log('📊 Step 6: Create SignDoc');
         const signDoc = {
             bodyBytes: new TextEncoder().encode(JSON.stringify({
                 messages: protobufMessages,
@@ -255,120 +280,74 @@ async encodeTxForBroadcast(signedTx) {
             accountNumber: parseInt(accountInfo.accountNumber)
         };
         
-        console.log('- SignDoc created:', {
-            bodyBytesLength: signDoc.bodyBytes.length,
-            authInfoBytesLength: signDoc.authInfoBytes.length,
-            chainId: signDoc.chainId,
-            accountNumber: signDoc.accountNumber
-        });
+        // ✅ SCHRITT 7: signDirect call
+        console.log('📊 Step 7: signDirect call');
+        const protoSignResponse = await window.keplr.signDirect(
+            this.chainId,
+            currentAddress,
+            signDoc
+        );
+        console.log('✅ signDirect successful');
         
-        console.log('📊 Step 7: signDirect call (HIGH RISK for cache reset)');
-        console.log('- About to call signDirect - this may trigger cache reset');
+        // ✅ SCHRITT 8: Use imported TxRaw encoder
+        console.log('📊 Step 8: TxRaw encoding with imported encoder');
+        const protobufTx = TxRaw.encode({
+            bodyBytes: protoSignResponse.signed.bodyBytes,
+            authInfoBytes: protoSignResponse.signed.authInfoBytes,
+            signatures: [
+                Buffer.from(protoSignResponse.signature.signature, "base64")
+            ]
+        }).finish();
         
-        let protoSignResponse;
-        try {
-            protoSignResponse = await window.keplr.signDirect(
-                this.chainId,
-                currentAddress,
-                signDoc
-            );
-            console.log('✅ signDirect successful - no cache reset');
-        } catch (signError) {
-            console.error('❌ signDirect failed:', signError);
-            
-            // Check if this is a cache reset
-            if (signError.message?.includes('Request rejected') || 
-                signError.message?.includes('Unknown request type') ||
-                signError.message?.includes('Method not found')) {
-                
-                console.error('🔄 CACHE RESET DETECTED during signDirect!');
-                throw new Error('Keplr cache reset during signDirect - please refresh page and try again');
-            }
-            
-            throw signError;
-        }
+        console.log('✅ TxRaw encoding successful');
+        console.log('- Length:', protobufTx.length);
+        console.log('- First 10 bytes:', Array.from(protobufTx.slice(0, 10)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
+        console.log('- Wire type check:', protobufTx[0] === 0x0A ? '✅ Correct (0x0A)' : '❌ Wrong wire type');
         
-        console.log('📊 Step 8: TxRaw encoding (final step)');
-        console.log('- About to call TxRaw.encode');
-        
-        let protobufTx;
-        try {
-            protobufTx = window.TxRaw.encode({
-                bodyBytes: protoSignResponse.signed.bodyBytes,
-                authInfoBytes: protoSignResponse.signed.authInfoBytes,
-                signatures: [
-                    Buffer.from(protoSignResponse.signature.signature, "base64")
-                ]
-            }).finish();
-            
-            console.log('✅ TxRaw.encode successful');
-            console.log('- Length:', protobufTx.length);
-            console.log('- First 10 bytes:', Array.from(protobufTx.slice(0, 10)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
-            
-        } catch (encodeError) {
-            console.error('❌ TxRaw.encode failed:', encodeError);
-            throw new Error(`TxRaw encoding failed: ${encodeError.message}`);
-        }
-        
-        console.log('✅ ALL STEPS COMPLETED - No cache reset occurred');
         return protobufTx;
         
     } catch (error) {
-        console.error('❌ Broadcasting debug failed at step:', error.message);
-        
-        // Specific cache reset detection
-        if (error.message?.includes('cache reset') || 
-            error.message?.includes('Request rejected') ||
-            error.message?.includes('Unknown request type')) {
-            
-            console.error('🔄 CACHE RESET CONFIRMED');
-            console.error('💡 Solutions:');
-            console.error('1. Refresh page (F5)');
-            console.error('2. Disconnect and reconnect wallet');
-            console.error('3. Clear browser cache');
-            console.error('4. Restart browser');
-        }
-        
+        console.error('❌ TxRaw import/encoding failed:', error);
         throw error;
     }
 }
 
 // ===================================
-// 🔍 BROADCASTING DEBUG - SIMPLIFIED
+// 🎯 EINFACHE BROADCAST FUNKTION
 // ===================================
 
 async broadcastTransaction(signedTx) {
-    console.log('📡 BROADCASTING DEBUG - MONITORING CACHE RESET:');
-    console.log('===============================================');
+    console.log('📡 Broadcasting with imported TxRaw...');
     
     try {
         console.log('📊 Pre-broadcast check:');
         console.log('- Keplr available:', !!window.keplr);
-        console.log('- TxRaw available:', !!window.TxRaw);
+        console.log('- sendTx available:', !!window.keplr?.sendTx);
         console.log('- Chain ID:', this.chainId);
         
-        // ✅ Encode (this is where cache reset usually happens)
-        console.log('🔧 Starting encoding (cache reset risk)...');
+        // ✅ Encode with imported TxRaw
+        console.log('🔧 Encoding with imported TxRaw...');
         const protobufTx = await this.encodeTxForBroadcast(signedTx);
-        console.log('✅ Encoding completed without cache reset');
         
-        // ✅ Final sendTx call
-        console.log('🔧 Calling keplr.sendTx...');
+        console.log('📊 About to call keplr.sendTx:');
         console.log('- TX length:', protobufTx.length);
         console.log('- TX type:', typeof protobufTx);
         console.log('- Is Uint8Array:', protobufTx instanceof Uint8Array);
         
+        // ✅ Keplr sendTx
+        console.log('🔧 Calling keplr.sendTx...');
         const txHashBytes = await window.keplr.sendTx(
             this.chainId,
             protobufTx,
             "sync"
         );
 
-        console.log('✅ sendTx successful - no cache reset during broadcast');
-        
+        console.log('✅ sendTx successful!');
+        console.log('📊 TX Hash Bytes:', txHashBytes);
+
         // ✅ Hash conversion
         const txHash = Buffer.from(txHashBytes).toString('hex').toUpperCase();
-        console.log('🎉 Transaction broadcast completed! TX Hash:', txHash);
+        console.log('🎉 Transaction successful! TX Hash:', txHash);
 
         return {
             success: true,
@@ -379,43 +358,21 @@ async broadcastTransaction(signedTx) {
         };
 
     } catch (error) {
-        console.error('❌ BROADCASTING DEBUG - Error occurred:', error);
-        console.error('❌ Error type:', error.constructor.name);
-        console.error('❌ Error message:', error.message);
-        console.error('❌ Error stack:', error.stack);
+        console.error('❌ Broadcast failed:', error);
         
-        // Enhanced cache reset detection
-        const cacheResetIndicators = [
-            'Request rejected',
-            'User rejected',
-            'Unknown request type',
-            'Method not found',
-            'Extension context invalidated',
-            'Invalid response',
-            'Connection lost'
-        ];
-        
-        const isCacheReset = cacheResetIndicators.some(indicator => 
-            error.message?.includes(indicator)
-        );
-        
-        if (isCacheReset) {
-            console.error('🔄 CACHE RESET DETECTED DURING BROADCASTING');
-            console.error('📍 Cache reset occurred during:', 
-                error.message.includes('signDirect') ? 'signDirect call' :
-                error.message.includes('TxRaw') ? 'TxRaw encoding' :
-                error.message.includes('sendTx') ? 'sendTx call' :
-                'unknown step'
-            );
-            
-            throw new Error('Keplr cache reset during broadcasting - please refresh page and reconnect wallet');
+        // Spezifische Fehlerbehandlung
+        if (error.message?.includes('Request rejected') || 
+            error.message?.includes('User rejected')) {
+            throw new Error('Transaction was cancelled by user');
+        } else if (error.message?.includes('TxRaw encoder not available')) {
+            throw new Error('Could not import TxRaw encoder - check internet connection or use fallback method');
+        } else if (error.message?.includes('cache reset')) {
+            throw new Error('Keplr cache reset - please refresh page and try again');
+        } else {
+            throw new Error(`Broadcast failed: ${error.message}`);
         }
-        
-        throw new Error(`Broadcasting failed: ${error.message}`);
     }
 }
-
-
 
 
 // ===================================
