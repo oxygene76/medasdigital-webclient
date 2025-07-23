@@ -143,26 +143,30 @@ class StakingManager {
 
 async encodeTxForBroadcast(signedTx) {
     try {
-        console.log('🔧 Encoding transaction via TxEncodeAmino...');
+        console.log('🔧 Encoding transaction via TxEncodeAmino (CORRECTED FORMAT)...');
         console.log('🔍 SignedTx structure:', signedTx);
         
-        // ✅ AMINO TRANSACTION FORMAT (direkt von Keplr)
-        const aminoTx = {
-            msg: signedTx.signed.msgs,
-            fee: signedTx.signed.fee,
-            signatures: [signedTx.signature],
-            memo: signedTx.signed.memo || ""
+        // ✅ KORRIGIERTES AMINO FORMAT - StdTx Wrapper hinzufügen!
+        const stdTx = {
+            type: "cosmos-sdk/StdTx",      // ← DAS HAT GEFEHLT!
+            value: {
+                msg: signedTx.signed.msgs,
+                fee: signedTx.signed.fee,
+                signatures: [signedTx.signature],
+                memo: signedTx.signed.memo || "",
+                timeout_height: "0"        // ← DAS HAT AUCH GEFEHLT!
+            }
         };
         
-        console.log('🔧 Amino TX for encoding:', aminoTx);
+        console.log('🔧 Correct StdTx for encoding:', stdTx);
         
-        // ✅ REQUEST BODY
+        // ✅ REQUEST BODY mit korrektem Format
         const requestBody = {
-            amino_json: JSON.stringify(aminoTx)
+            amino_json: JSON.stringify(stdTx)  // ← Jetzt mit StdTx wrapper!
         };
         
-        console.log('🔧 Request Body:', requestBody);
-        console.log('🔧 Request Body JSON:', JSON.stringify(requestBody));
+        console.log('🔧 Corrected Request Body:', requestBody);
+        console.log('🔧 Corrected Request Body JSON:', JSON.stringify(requestBody));
         
         // ✅ VERWENDE DEN COSMOS SDK TxEncodeAmino ENDPOINT
         const restUrl = '/api/lcd';
@@ -177,11 +181,10 @@ async encodeTxForBroadcast(signedTx) {
         console.log('🔧 Response Status:', encodeResponse.status);
         console.log('🔧 Response Headers:', [...encodeResponse.headers.entries()]);
         
-        // ✅ SCHAUEN WIR UNS DIE KOMPLETTE ANTWORT AN
+        // ✅ SCHAUEN WIR UNS DIE ANTWORT AN
         const responseText = await encodeResponse.text();
         console.log('🔧 Raw Response Text:', responseText);
         
-        // ✅ VERSUCHE JSON ZU PARSEN
         let responseData;
         try {
             responseData = JSON.parse(responseText);
