@@ -1,6 +1,5 @@
 // ===================================
-// KOMPLETTE STAKING IMPLEMENTATION
-// Basierend auf Keplr Dokumentation + Cosmos SDK 0.50.10
+// 1. NEUE DATEI: assets/js/staking-manager.js
 // ===================================
 
 class StakingManager {
@@ -8,24 +7,16 @@ class StakingManager {
         this.chainId = "medasdigital-2";
         this.denom = "umedas";
         this.decimals = 6;
-        this.gasPrice = 0.025; // Gas price in umedas
+        this.gasPrice = 0.025;
     }
-
-    // ===================================
-    // 1. KEPLR CONNECTION & SETUP
-    // ===================================
 
     async connectKeplr() {
         try {
-            // Check if Keplr is installed
             if (!window.keplr) {
                 throw new Error('Keplr extension not found. Please install Keplr.');
             }
 
-            // Enable the chain
             await window.keplr.enable(this.chainId);
-            
-            // Get the current account
             const key = await window.keplr.getKey(this.chainId);
             
             console.log('✅ Keplr connected:', key.bech32Address);
@@ -33,16 +24,11 @@ class StakingManager {
                 address: key.bech32Address,
                 pubkey: key.pubKey
             };
-
         } catch (error) {
             console.error('❌ Keplr connection failed:', error);
             throw error;
         }
     }
-
-    // ===================================
-    // 2. ACCOUNT INFO FETCHING (für Sequence/Account Number)
-    // ===================================
 
     async getAccountInfo(address) {
         try {
@@ -54,15 +40,12 @@ class StakingManager {
             }
 
             const data = await response.json();
-            
             return {
                 accountNumber: data.account.account_number.toString(),
                 sequence: data.account.sequence.toString()
             };
-
         } catch (error) {
             console.error('❌ Failed to get account info:', error);
-            // Fallback für Testing
             return {
                 accountNumber: "0",
                 sequence: "0"
@@ -70,29 +53,23 @@ class StakingManager {
         }
     }
 
-    // ===================================
-    // 3. STAKING MESSAGE CREATION (Cosmos SDK 0.50.10 Format)
-    // ===================================
-
     createDelegateMessage(delegatorAddress, validatorAddress, amount) {
-        // Cosmos SDK 0.50.10 MsgDelegate
         return {
-            type: "cosmos-sdk/MsgDelegate",  // Amino type for legacy compatibility
+            type: "cosmos-sdk/MsgDelegate",
             value: {
                 delegator_address: delegatorAddress,
                 validator_address: validatorAddress,
                 amount: {
                     denom: this.denom,
-                    amount: amount.toString() // Amount in umedas (micro-MEDAS)
+                    amount: amount.toString()
                 }
             }
         };
     }
 
     createUndelegateMessage(delegatorAddress, validatorAddress, amount) {
-        // Cosmos SDK 0.50.10 MsgUndelegate
         return {
-            type: "cosmos-sdk/MsgUndelegate",  // Amino type
+            type: "cosmos-sdk/MsgUndelegate",
             value: {
                 delegator_address: delegatorAddress,
                 validator_address: validatorAddress,
@@ -105,9 +82,8 @@ class StakingManager {
     }
 
     createWithdrawRewardsMessage(delegatorAddress, validatorAddress) {
-        // Cosmos SDK 0.50.10 MsgWithdrawDelegatorReward
         return {
-            type: "cosmos-sdk/MsgWithdrawDelegatorReward",  // Amino type
+            type: "cosmos-sdk/MsgWithdrawDelegatorReward",
             value: {
                 delegator_address: delegatorAddress,
                 validator_address: validatorAddress
@@ -115,13 +91,8 @@ class StakingManager {
         };
     }
 
-    // ===================================
-    // 4. FEE CALCULATION (Cosmos SDK 0.50.10)
-    // ===================================
-
     calculateFee(gasLimit) {
         const gasAmount = Math.ceil(gasLimit * this.gasPrice);
-        
         return {
             gas: gasLimit.toString(),
             amount: [{
@@ -131,21 +102,15 @@ class StakingManager {
         };
     }
 
-    // ===================================
-    // 5. AMINO SIGNING (Keplr-kompatibel)
-    // ===================================
-
     async signWithAmino(signerAddress, messages, fee, memo = "") {
         try {
-            // Get account info for sequence and account number
             const accountInfo = await this.getAccountInfo(signerAddress);
             
-            // Create StdSignDoc (Amino format)
             const signDoc = {
                 chain_id: this.chainId,
                 account_number: accountInfo.accountNumber,
                 sequence: accountInfo.sequence,
-                timeout_height: "0", // Optional for Cosmos SDK 0.50.10
+                timeout_height: "0",
                 fee: fee,
                 msgs: messages,
                 memo: memo
@@ -153,39 +118,32 @@ class StakingManager {
 
             console.log('📝 Signing document:', signDoc);
 
-            // Sign with Keplr using Amino
             const signResponse = await window.keplr.signAmino(
                 this.chainId,
                 signerAddress,
                 signDoc,
                 {
-                    preferNoSetFee: false,    // Allow user to modify fee
-                    preferNoSetMemo: false,   // Allow user to modify memo
-                    disableBalanceCheck: false // Check balance
+                    preferNoSetFee: false,
+                    preferNoSetMemo: false,
+                    disableBalanceCheck: false
                 }
             );
 
             console.log('✅ Amino signing successful');
             return signResponse;
-
         } catch (error) {
             console.error('❌ Amino signing failed:', error);
             throw error;
         }
     }
 
-    // ===================================
-    // 6. TRANSACTION BROADCASTING
-    // ===================================
-
     async broadcastTransaction(signedTx) {
         try {
             const restUrl = window.MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
             
-            // Create broadcast request (Cosmos SDK 0.50.10 format)
             const broadcastReq = {
                 tx: signedTx.signed,
-                mode: "BROADCAST_MODE_SYNC" // Use sync mode for immediate response
+                mode: "BROADCAST_MODE_SYNC"
             };
 
             console.log('📡 Broadcasting transaction...');
@@ -215,7 +173,6 @@ class StakingManager {
                 code: result.tx_response.code,
                 rawLog: result.tx_response.raw_log
             };
-
         } catch (error) {
             console.error('❌ Transaction broadcast failed:', error);
             return {
@@ -225,41 +182,29 @@ class StakingManager {
         }
     }
 
-    // ===================================
-    // 7. DELEGATION FUNCTION (Vollständig)
-    // ===================================
-
     async delegate(delegatorAddress, validatorAddress, amountInMedas) {
         try {
             console.log('🥩 Starting delegation process...');
-            console.log(`  Delegator: ${delegatorAddress}`);
-            console.log(`  Validator: ${validatorAddress}`);
-            console.log(`  Amount: ${amountInMedas} MEDAS`);
-
-            // Step 1: Connect Keplr
+            
             const account = await this.connectKeplr();
             if (account.address !== delegatorAddress) {
                 throw new Error('Connected account does not match delegator address');
             }
 
-            // Step 2: Convert amount to umedas
             const amountInUmedas = Math.floor(parseFloat(amountInMedas) * Math.pow(10, this.decimals));
-            console.log(`  Amount in umedas: ${amountInUmedas}`);
+            console.log(`Amount in umedas: ${amountInUmedas}`);
 
-            // Step 3: Create delegation message
             const delegateMsg = this.createDelegateMessage(
                 delegatorAddress,
                 validatorAddress,
                 amountInUmedas
             );
 
-            // Step 4: Calculate fee (standard gas limit for delegation)
             const gasLimit = 300000;
             const fee = this.calculateFee(gasLimit);
 
             console.log('💰 Transaction fee:', fee);
 
-            // Step 5: Sign transaction with Amino
             const signedTx = await this.signWithAmino(
                 delegatorAddress,
                 [delegateMsg],
@@ -267,12 +212,10 @@ class StakingManager {
                 `Stake ${amountInMedas} MEDAS to validator`
             );
 
-            // Step 6: Broadcast transaction
             const result = await this.broadcastTransaction(signedTx);
 
             if (result.success) {
                 console.log('🎉 Delegation successful!');
-                console.log(`📡 Transaction Hash: ${result.txHash}`);
                 return {
                     success: true,
                     txHash: result.txHash,
@@ -281,7 +224,6 @@ class StakingManager {
             } else {
                 throw new Error(result.error);
             }
-
         } catch (error) {
             console.error('❌ Delegation failed:', error);
             return {
@@ -290,10 +232,6 @@ class StakingManager {
             };
         }
     }
-
-    // ===================================
-    // 8. UNDELEGATION FUNCTION
-    // ===================================
 
     async undelegate(delegatorAddress, validatorAddress, amountInMedas) {
         try {
@@ -308,7 +246,7 @@ class StakingManager {
                 amountInUmedas
             );
 
-            const gasLimit = 350000; // Higher gas for undelegation
+            const gasLimit = 350000;
             const fee = this.calculateFee(gasLimit);
 
             const signedTx = await this.signWithAmino(
@@ -330,7 +268,6 @@ class StakingManager {
             } else {
                 throw new Error(result.error);
             }
-
         } catch (error) {
             console.error('❌ Undelegation failed:', error);
             return {
@@ -340,22 +277,16 @@ class StakingManager {
         }
     }
 
-    // ===================================
-    // 9. REWARDS CLAIMING FUNCTION
-    // ===================================
-
     async claimRewards(delegatorAddress, validatorAddresses) {
         try {
             console.log('🏆 Starting rewards claiming process...');
 
             const account = await this.connectKeplr();
 
-            // Create withdraw messages for each validator
             const withdrawMsgs = validatorAddresses.map(validatorAddress =>
                 this.createWithdrawRewardsMessage(delegatorAddress, validatorAddress)
             );
 
-            // Calculate gas (base + per validator)
             const gasLimit = 200000 + (validatorAddresses.length * 100000);
             const fee = this.calculateFee(gasLimit);
 
@@ -378,7 +309,6 @@ class StakingManager {
             } else {
                 throw new Error(result.error);
             }
-
         } catch (error) {
             console.error('❌ Rewards claiming failed:', error);
             return {
@@ -387,10 +317,6 @@ class StakingManager {
             };
         }
     }
-
-    // ===================================
-    // 10. UTILITY FUNCTIONS
-    // ===================================
 
     formatMedas(amountInUmedas) {
         return (parseInt(amountInUmedas) / Math.pow(10, this.decimals)).toFixed(6);
@@ -401,18 +327,35 @@ class StakingManager {
     }
 }
 
+// Export
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = StakingManager;
+} else {
+    window.StakingManager = StakingManager;
+    console.log('🥩 StakingManager loaded - Cosmos SDK 0.50.10 + Keplr compatible');
+}
+
 // ===================================
-// INTEGRATION MIT UI-MANAGER
+// 2. ÄNDERUNG IN ui-manager.js - Constructor
 // ===================================
 
-// In ui-manager.js verwenden:
 class UIManager {
     constructor() {
-        // ... existing code ...
+        this.activeTab = 'comm';
+        this.messageHistory = new Map();
+        this.contacts = new Map();
+        this.validatorNameCache = new Map();
+        
+        // ✅ NEUE ZEILE: StakingManager hinzufügen
         this.stakingManager = new StakingManager();
+        
+        this.init();
     }
 
-    // Neue vereinfachte Staking-Funktion
+    // ===================================
+    // 3. ÄNDERUNG IN ui-manager.js - performStaking Methode ERSETZEN
+    // ===================================
+
     async performStaking() {
         const validatorSelect = document.getElementById('validator-select');
         const stakeAmountInput = document.getElementById('stake-amount');
@@ -439,7 +382,7 @@ class UIManager {
             const validatorAddress = validatorSelect.value;
             const delegatorAddress = window.terminal.account.address;
             
-            // Use the new StakingManager
+            // ✅ VERWENDE DEN NEUEN STAKINGMANAGER
             const result = await this.stakingManager.delegate(
                 delegatorAddress,
                 validatorAddress,
@@ -462,18 +405,19 @@ class UIManager {
                         this.updateBalanceOverview();
                     }
                 }, 2000);
-                
             } else {
                 throw new Error(result.error);
             }
-            
         } catch (error) {
             console.error('❌ Staking failed:', error);
             this.showNotification(`❌ Staking failed: ${error.message}`, 'error');
         }
     }
 
-    // Neue Claim-All-Rewards Funktion
+    // ===================================
+    // 4. ÄNDERUNG IN ui-manager.js - claimAllRewards Methode ERSETZEN
+    // ===================================
+
     async claimAllRewards() {
         if (!window.terminal?.connected || !window.terminal?.account?.address) {
             this.showNotification('❌ Please connect your wallet first', 'error');
@@ -485,7 +429,6 @@ class UIManager {
             
             const delegatorAddress = window.terminal.account.address;
             
-            // Get all delegations to extract validator addresses
             const delegations = await this.fetchUserDelegations(delegatorAddress);
             
             if (!delegations || delegations.length === 0) {
@@ -495,6 +438,7 @@ class UIManager {
             
             const validatorAddresses = delegations.map(d => d.validator_address);
             
+            // ✅ VERWENDE DEN NEUEN STAKINGMANAGER
             const result = await this.stakingManager.claimRewards(
                 delegatorAddress,
                 validatorAddresses
@@ -512,35 +456,108 @@ class UIManager {
                         this.updateBalanceOverview();
                     }
                 }, 3000);
-                
             } else {
                 throw new Error(result.error);
             }
-            
         } catch (error) {
             console.error('❌ Claim failed:', error);
             this.showNotification(`❌ Claim failed: ${error.message}`, 'error');
         }
     }
+
+    // ===================================
+    // 5. ÄNDERUNG IN ui-manager.js - performUnstaking Methode ERSETZEN
+    // ===================================
+
+    async performUnstaking(validatorAddress, amount) {
+        if (!window.terminal?.connected || !window.terminal?.account?.address) {
+            this.showNotification('❌ Please connect your wallet first', 'error');
+            return;
+        }
+        
+        try {
+            this.showNotification('🔄 Preparing undelegation...', 'info');
+            
+            const delegatorAddress = window.terminal.account.address;
+            
+            // ✅ VERWENDE DEN NEUEN STAKINGMANAGER
+            const result = await this.stakingManager.undelegate(
+                delegatorAddress,
+                validatorAddress, 
+                amount
+            );
+            
+            if (result.success) {
+                this.showNotification(`✅ Undelegation successful!`, 'success');
+                this.showNotification('⏰ Note: Unbonding period is 21 days', 'info');
+                
+                if (result.txHash) {
+                    this.showNotification(`📡 TX Hash: ${result.txHash}`, 'info');
+                }
+                
+                setTimeout(() => {
+                    this.populateUserDelegations(delegatorAddress);
+                    if (this.updateBalanceOverview) {
+                        this.updateBalanceOverview();
+                    }
+                }, 3000);
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (error) {
+            console.error('❌ Unstaking failed:', error);
+            
+            if (error.message?.includes('Request rejected') || 
+                error.message?.includes('User denied')) {
+                this.showNotification('❌ Unstaking cancelled by user', 'error');
+            } else {
+                this.showNotification(`❌ Unstaking failed: ${error.message}`, 'error');
+            }
+        }
+    }
+
+    // ===================================
+    // 6. ALLE ALTEN CORS-FIX METHODEN LÖSCHEN
+    // ===================================
+    // LÖSCHEN SIE DIESE METHODEN AUS ui-manager.js:
+    // - performStakingCorsFix()
+    // - performClaimCorsFix()
+    // - performUnstakingCorsFix()
+    // - getAccountInfoViaProxy()
+    // - broadcastViaProxy()
+    
 }
 
 // ===================================
-// TESTING & DEBUGGING
+// 7. ÄNDERUNG IN index.html - Script Tags
 // ===================================
 
+// ✅ FÜGEN SIE DIESE ZEILE NACH keplr-manager.js HINZU:
+// <script src="assets/js/staking-manager.js"></script>
+
+// VOLLSTÄNDIGE SCRIPT-REIHENFOLGE:
+// <script src="assets/js/config.js"></script>
+// <script src="assets/js/mock-data.js"></script>
+// <script src="assets/js/keplr-manager.js"></script>
+// <script src="assets/js/staking-manager.js"></script>  <!-- NEU -->
+// <script src="assets/js/ui-manager.js"></script>
+// <script src="assets/js/staking-helpers.js"></script>
+// <script src="assets/js/main.js"></script>
+// <script src="assets/js/mobile-navigation.js"></script>
+
+// ===================================
+// 8. TESTEN & DEBUGGING
+// ===================================
+
+// Nach den Änderungen in der Browser-Konsole testen:
 window.testStakingManager = async function() {
-    console.log('🧪 TESTING STAKING MANAGER...');
-    
-    const stakingManager = new StakingManager();
+    console.log('🧪 TESTING NEW STAKING MANAGER...');
     
     try {
         // Test connection
+        const stakingManager = new StakingManager();
         const account = await stakingManager.connectKeplr();
         console.log('✅ Keplr connected:', account.address);
-        
-        // Test account info
-        const accountInfo = await stakingManager.getAccountInfo(account.address);
-        console.log('✅ Account info:', accountInfo);
         
         // Test message creation
         const testMsg = stakingManager.createDelegateMessage(
@@ -554,21 +571,10 @@ window.testStakingManager = async function() {
         const testFee = stakingManager.calculateFee(300000);
         console.log('✅ Fee calculated:', testFee);
         
-        return 'StakingManager test complete - all functions working!';
+        return 'NEW StakingManager test complete - all functions working!';
         
     } catch (error) {
         console.error('❌ StakingManager test failed:', error);
         return `Test failed: ${error.message}`;
     }
 };
-
-// ===================================
-// EXPORT
-// ===================================
-
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = StakingManager;
-} else {
-    window.StakingManager = StakingManager;
-    console.log('🥩 StakingManager loaded - Cosmos SDK 0.50.10 + Keplr compatible');
-}
