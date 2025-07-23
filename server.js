@@ -266,7 +266,6 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log('   📊 isProduction:', isProduction);
     console.log('   📊 Vite Object:', vite ? '✅ Created' : '❌ Failed');
     console.log('   📊 Working Directory:', process.cwd());
-    console.log('   📊 Config File:', './vite.config.js exists?', 
     
     console.log('');
     console.log('💡 NEXT STEPS:');
