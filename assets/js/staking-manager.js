@@ -258,7 +258,7 @@ async broadcastTransaction(signedTx) {
             return await this.handleCommitResponse(commitResponse);
         }
         
-        // ✅ METHODE 2: Keplr's signedTx serialisieren
+        // ✅ METHODE 2: Keplrs signedTx serialisieren
         if (signedTx.signed && signedTx.signature) {
             console.log('📡 Using Keplr signedTx serialization...');
             
