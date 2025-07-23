@@ -726,32 +726,22 @@ details[open] {
 </div>
     </div>
 
-<!-- ===================================== -->
-<!-- BEREINIGTES SCRIPT-LOADING (Kein Duplikat) -->
-<!-- ===================================== -->
-
-<!-- Step 1: Load CosmJS as ES Module FIRST -->
+<!-- Step 1: Load CosmJS via Vite (Korrekt!) -->
 <script type="module">
     try {
-        // Import CosmJS modules
-        const { SigningStargateClient } = await import('/node_modules/@cosmjs/stargate/build/index.js');
-        const { coins } = await import('/node_modules/@cosmjs/stargate/build/index.js');
+        // Import CosmJS using Vite's import system (RICHTIG!)
+        const { SigningStargateClient, coins } = await import('@cosmjs/stargate');
         
-        // Make available globally for other scripts
+        // Make globally available
         window.SigningStargateClient = SigningStargateClient;
         window.coins = coins;
-        
-        console.log('✅ CosmJS ES modules loaded successfully');
-        
-        // Signal that CosmJS is ready
         window.cosmjsReady = true;
+        
+        console.log('✅ CosmJS loaded via Vite successfully');
         window.dispatchEvent(new Event('cosmjs-loaded'));
         
     } catch (error) {
-        console.warn('⚠️ CosmJS ES modules failed to load:', error.message);
-        console.log('🔄 Will use fallback browser-compatible version');
-        
-        // Fallback: CosmJS is not available
+        console.warn('⚠️ CosmJS loading failed:', error.message);
         window.cosmjsReady = false;
         window.dispatchEvent(new Event('cosmjs-failed'));
     }
