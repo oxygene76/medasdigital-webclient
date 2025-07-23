@@ -224,9 +224,8 @@ async encodeTxForBroadcast(signedTx) {
 // 🚀 PRODUCTION-READY BROADCAST SOLUTION
 // ===================================
 
-// Ersetzen Sie Ihre broadcastTransaction Methode:
 async broadcastTransaction(signedTx) {
-    console.log('📡 Broadcasting with CORRECT HEX encoding...');
+    console.log('📡 Broadcasting with CORRECT Base64 encoding (not HEX)...');
     
     try {
         // ✅ SCHRITT 1: Protobuf → Amino Message Conversion
@@ -268,9 +267,9 @@ async broadcastTransaction(signedTx) {
             return msg;
         });
         
-        // ✅ SCHRITT 2: StdTx Format
+        // ✅ SCHRITT 2: StdTx Format (korrigiert!)
         const stdTx = {
-            msg: convertedMsgs,
+            msg: convertedMsgs,  // ← Amino messages
             fee: {
                 amount: signedTx.signed.fee.amount,
                 gas: signedTx.signed.fee.gas
@@ -284,32 +283,29 @@ async broadcastTransaction(signedTx) {
         
         console.log('📊 StdTx:', stdTx);
         console.log('✅ Message count:', stdTx.msg.length);
+        console.log('📊 First message type:', stdTx.msg[0]?.type);
         
-        // ✅ SCHRITT 3: JSON → UTF-8 Bytes → HEX (NICHT Base64!)
+        // ✅ SCHRITT 3: JSON → Base64 (NICHT HEX!)
         const txJson = JSON.stringify(stdTx);
         console.log('📊 TX JSON length:', txJson.length);
         console.log('📊 TX JSON preview:', txJson.substring(0, 200));
         
-        // ✅ PROBLEM IDENTIFIZIERT: CometBFT will HEX, nicht Base64!
-        // JSON String → UTF-8 Bytes → Hex String
-        const encoder = new TextEncoder();
-        const txBytes = encoder.encode(txJson);  // UTF-8 bytes
-        const txHex = Array.from(txBytes, byte => byte.toString(16).padStart(2, '0')).join('');
+        // ✅ RICHTIG: Base64 encoding (wie in CometBFT Doku)
+        const txBase64 = btoa(txJson);
+        console.log('📊 TX Base64 length:', txBase64.length);
+        console.log('📊 TX Base64 preview:', txBase64.substring(0, 100));
         
-        console.log('📊 TX Bytes length:', txBytes.length);
-        console.log('📊 TX Hex length:', txHex.length);
-        console.log('📊 TX Hex preview:', txHex.substring(0, 100));
+        // ✅ VALIDATION: Base64 decode back
+        const decoded = JSON.parse(atob(txBase64));
+        console.log('✅ Base64 validation: Message count =', decoded.msg?.length);
+        console.log('✅ Base64 validation: First message type =', decoded.msg?.[0]?.type);
         
-        // ✅ VALIDATION: Hex decode back
-        const hexBytes = new Uint8Array(txHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-        const decodedJson = new TextDecoder().decode(hexBytes);
-        const decoded = JSON.parse(decodedJson);
+        if (!decoded.msg || decoded.msg.length === 0) {
+            throw new Error('Validation failed: No messages after encoding');
+        }
         
-        console.log('✅ Hex validation: Message count =', decoded.msg?.length);
-        console.log('✅ Hex validation: First message type =', decoded.msg?.[0]?.type);
-        
-        // ✅ SCHRITT 4: Broadcast mit HEX (laut CometBFT Doku)
-        console.log('📡 Broadcasting with HEX encoding...');
+        // ✅ SCHRITT 4: Broadcast mit Base64 (wie in CometBFT Doku!)
+        console.log('📡 Broadcasting with Base64 encoding (CometBFT standard)...');
         
         const rpcResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_sync', {
             method: 'POST',
@@ -322,7 +318,7 @@ async broadcastTransaction(signedTx) {
                 id: 1,
                 method: 'broadcast_tx_sync',
                 params: { 
-                    tx: '0x' + txHex  // ← HEX mit 0x prefix wie in Doku!
+                    tx: txBase64  // ← Base64 (NICHT 0x+hex!)
                 }
             })
         });
@@ -332,7 +328,7 @@ async broadcastTransaction(signedTx) {
         }
 
         const result = await rpcResponse.json();
-        console.log('📡 HEX broadcast response:', result);
+        console.log('📡 Base64 broadcast response:', result);
 
         if (result.error) {
             throw new Error(`RPC Error: ${result.error.message}`);
@@ -350,7 +346,7 @@ async broadcastTransaction(signedTx) {
         }
 
         // ✅ SUCCESS!
-        console.log('🎉 Transaction accepted with HEX encoding!');
+        console.log('🎉 Transaction accepted with Base64 encoding!');
         console.log('📊 TX Hash:', checkTx.hash);
         console.log('📊 Gas Wanted:', checkTx.gas_wanted);
         console.log('📊 Gas Used:', checkTx.gas_used);
@@ -368,7 +364,7 @@ async broadcastTransaction(signedTx) {
         };
 
     } catch (error) {
-        console.error('❌ HEX broadcast failed:', error);
+        console.error('❌ Base64 broadcast failed:', error);
         throw error;
     }
 }
