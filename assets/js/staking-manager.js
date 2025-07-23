@@ -154,92 +154,141 @@ createWithdrawRewardsMessage(delegatorAddress, validatorAddress) {
 
 async encodeTxForBroadcast(signedTx) {
     try {
-        console.log('🔧 Encoding transaction for Cosmos SDK 0.50.10...');
-        console.log('📊 SignedTx messages:', signedTx.signed.msgs);
+        console.log('🔍 VOLLSTÄNDIGES ENCODING DEBUG:');
+        console.log('================================');
         
-        // ✅ VALIDIERE DASS MESSAGES EXISTIEREN
-        if (!signedTx.signed.msgs || signedTx.signed.msgs.length === 0) {
-            throw new Error('No messages in transaction');
+        // ✅ SCHRITT 1: SignedTx komplett analysieren
+        console.log('📊 ROHE SignedTx Struktur:');
+        console.log('- signedTx:', signedTx);
+        console.log('- signedTx.signed:', signedTx.signed);
+        console.log('- signedTx.signed.msgs:', signedTx.signed.msgs);
+        console.log('- signedTx.signed.msgs.length:', signedTx.signed.msgs?.length);
+        
+        if (signedTx.signed.msgs && signedTx.signed.msgs.length > 0) {
+            signedTx.signed.msgs.forEach((msg, i) => {
+                console.log(`- Message ${i}:`, msg);
+                console.log(`- Message ${i} keys:`, Object.keys(msg));
+                console.log(`- Message ${i} @type:`, msg['@type']);
+                console.log(`- Message ${i} type:`, msg.type);
+            });
+        } else {
+            console.error('❌ PROBLEM: Keine Messages gefunden!');
         }
         
-        // ✅ VALIDIERE MESSAGE FORMAT
-        signedTx.signed.msgs.forEach((msg, index) => {
-            console.log(`📊 Message ${index}:`, msg);
-            
-            if (!msg['@type']) {
-                console.error(`❌ Message ${index} missing @type:`, msg);
-                throw new Error(`Message ${index} missing @type field`);
-            }
-            
-            if (!msg.delegator_address && !msg.validator_address) {
-                console.error(`❌ Message ${index} missing required fields:`, msg);
-                throw new Error(`Message ${index} missing required address fields`);
-            }
-        });
-        
-        // ✅ AMINO TX FORMAT für RPC broadcast_tx_sync (SDK 0.50.10)
+        // ✅ SCHRITT 2: Amino TX erstellen mit DEBUG
         const aminoTx = {
-            msg: signedTx.signed.msgs,      // ← Sollte jetzt korrekte @type haben
+            msg: signedTx.signed.msgs,
             fee: signedTx.signed.fee,
             signatures: [signedTx.signature],
             memo: signedTx.signed.memo || ""
         };
         
-        console.log('🔧 Cosmos SDK 0.50.10 Amino TX (validated):', aminoTx);
+        console.log('📊 AMINO TX STRUKTUR:');
+        console.log('- aminoTx:', aminoTx);
+        console.log('- aminoTx.msg:', aminoTx.msg);
+        console.log('- aminoTx.msg.length:', aminoTx.msg?.length);
         
-        // ✅ JSON STRING für Base64 encoding
+        // ✅ SCHRITT 3: JSON Serialization mit DEBUG
         const jsonString = JSON.stringify(aminoTx);
-        console.log('📊 JSON string length:', jsonString.length);
+        console.log('📊 JSON SERIALIZATION:');
+        console.log('- JSON string length:', jsonString.length);
+        console.log('- JSON string (first 500 chars):', jsonString.substring(0, 500));
         
+        // ✅ SCHRITT 4: Base64 mit DEBUG  
+        const base64String = btoa(jsonString);
+        console.log('📊 BASE64 ENCODING:');
+        console.log('- Base64 length:', base64String.length);
+        console.log('- Base64 (first 100 chars):', base64String.substring(0, 100));
+        
+        // ✅ SCHRITT 5: Validierung
+        if (jsonString === '{"msg":[],"fee":{},"signatures":[],"memo":""}') {
+            console.error('❌ LEER: Transaction ist komplett leer!');
+            throw new Error('Transaction is empty - all fields are empty');
+        }
+        
+        if (!aminoTx.msg || aminoTx.msg.length === 0) {
+            console.error('❌ LEER: Messages Array ist leer!');
+            throw new Error('Messages array is empty');
+        }
+        
+        console.log('✅ Encoding validation passed');
         return jsonString;
         
     } catch (error) {
-        console.error('❌ Transaction encoding failed:', error);
-        console.error('❌ SignedTx structure:', signedTx);
-        throw new Error(`Encoding failed: ${error.message}`);
+        console.error('❌ Encoding failed with full debug:', error);
+        throw error;
     }
 }
 
 async broadcastTransaction(signedTx) {
     try {
-        console.log('📡 Broadcasting via RPC (Cosmos SDK 0.50.10)...');
+        console.log('🔍 VOLLSTÄNDIGES BROADCAST DEBUG:');
+        console.log('==================================');
         
-        // ✅ SCHRITT 1: Amino JSON erstellen
+        // ✅ SCHRITT 1: Encoding mit Debug
         const aminoTxString = await this.encodeTxForBroadcast(signedTx);
-        
-        // ✅ SCHRITT 2: Base64 encode für RPC
         const txBytes = btoa(aminoTxString);
         
-        console.log('📡 TX bytes prepared for RPC broadcast');
+        // ✅ SCHRITT 2: RPC Request Body erstellen
+        const rpcRequestBody = {
+            jsonrpc: "2.0",
+            id: 1,
+            method: "broadcast_tx_sync",
+            params: {
+                tx: txBytes
+            }
+        };
         
-        // ✅ SCHRITT 3: RPC broadcast_tx_sync (Cosmos SDK 0.50.10 compatible)
+        console.log('📊 RPC REQUEST DEBUG:');
+        console.log('- Request body:', rpcRequestBody);
+        console.log('- Request body JSON:', JSON.stringify(rpcRequestBody));
+        console.log('- TX bytes in request:', rpcRequestBody.params.tx);
+        console.log('- TX bytes length:', rpcRequestBody.params.tx.length);
+        
+        // ✅ SCHRITT 3: Decodiere TX bytes zurück zum Testen
+        try {
+            const decodedTx = atob(rpcRequestBody.params.tx);
+            const parsedTx = JSON.parse(decodedTx);
+            console.log('📊 VERIFICATION - Decoded TX:');
+            console.log('- Decoded tx:', parsedTx);
+            console.log('- Decoded msg count:', parsedTx.msg?.length);
+            console.log('- Decoded first message:', parsedTx.msg?.[0]);
+        } catch (decodeError) {
+            console.error('❌ Could not decode TX for verification:', decodeError);
+        }
+        
+        // ✅ SCHRITT 4: RPC Call
+        console.log('📡 Making RPC call...');
         const rpcResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_sync', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                jsonrpc: "2.0",
-                id: 1,
-                method: "broadcast_tx_sync",
-                params: {
-                    tx: txBytes
-                }
-            })
+            body: JSON.stringify(rpcRequestBody)
         });
 
         console.log('📡 RPC Response status:', rpcResponse.status);
-
+        
         if (!rpcResponse.ok) {
             const errorText = await rpcResponse.text();
-            console.error('❌ RPC broadcast failed:', errorText);
-            throw new Error(`RPC broadcast failed: HTTP ${rpcResponse.status} - ${errorText}`);
+            console.error('❌ RPC HTTP Error:', errorText);
+            throw new Error(`RPC HTTP failed: ${rpcResponse.status} - ${errorText}`);
         }
 
         const rpcResult = await rpcResponse.json();
-        console.log('📡 RPC Result:', rpcResult);
+        console.log('📊 VOLLSTÄNDIGES RPC RESULT:');
+        console.log('- RPC result:', rpcResult);
+        console.log('- RPC result.result:', rpcResult.result);
+        console.log('- RPC result.result.hash:', rpcResult.result?.hash);
+        console.log('- RPC result.result.log:', rpcResult.result?.log);
         
-        // ✅ SCHRITT 4: RPC Response verarbeiten (Cosmos SDK 0.50.10 format)
+        // ✅ Prüfe auf Empty Hash (SHA256 von leerem String)
+        const emptyHash = "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855";
+        if (rpcResult.result?.hash === emptyHash) {
+            console.error('❌ EMPTY HASH DETECTED: Transaction arrived empty at server!');
+            console.error('❌ This means the encoding or transmission failed');
+        }
+        
         if (rpcResult.error) {
             console.error('❌ RPC Error:', rpcResult.error);
             throw new Error(`RPC Error: ${rpcResult.error.message || rpcResult.error.data}`);
@@ -255,27 +304,22 @@ async broadcastTransaction(signedTx) {
             throw new Error(`Transaction failed: ${errorMsg}`);
         }
 
-        console.log('🎉 Cosmos SDK 0.50.10 RPC broadcast successful!');
-        
+        console.log('🎉 RPC broadcast successful!');
         return {
             success: true,
             txHash: rpcResult.result.hash,
             code: rpcResult.result.code,
-            rawLog: rpcResult.result.log || 'Transaction successful',
-            height: rpcResult.result.height || null,
-            gasWanted: rpcResult.result.gas_wanted || null,
-            gasUsed: rpcResult.result.gas_used || null
+            rawLog: rpcResult.result.log || 'Transaction successful'
         };
 
     } catch (error) {
-        console.error('❌ Cosmos SDK 0.50.10 RPC broadcast failed:', error);
+        console.error('❌ Broadcast failed with full debug:', error);
         return {
             success: false,
             error: error.message
         };
     }
 }
-
 
 // ===================================
 // 📝 WAS PASSIERT:
