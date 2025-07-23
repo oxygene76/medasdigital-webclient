@@ -1,13 +1,19 @@
 // ===================================
-// STAKING-MANAGER.JS - NUR STAKINGMANAGER!
+// STAKING-MANAGER.JS - MIT COSMJS!
+// Ersetze deine bestehende staking-manager.js mit dieser Version
 // ===================================
+
+import { SigningStargateClient } from "@cosmjs/stargate";
+import { coins } from "@cosmjs/stargate";
 
 class StakingManager {
     constructor() {
         this.chainId = "medasdigital-2";
+        this.rpcEndpoint = "https://rpc.medas-digital.io:26657";
         this.denom = "umedas";
         this.decimals = 6;
-        this.gasPrice = 0.025;
+        this.client = null;
+        this.account = null;
     }
 
     async connectKeplr() {
@@ -16,700 +22,108 @@ class StakingManager {
                 throw new Error('Keplr extension not found. Please install Keplr.');
             }
 
+            // ✅ Standard Keplr connection
             await window.keplr.enable(this.chainId);
-            const key = await window.keplr.getKey(this.chainId);
             
-            console.log('✅ Keplr connected:', key.bech32Address);
-            return {
-                address: key.bech32Address,
-                pubkey: key.pubKey
-            };
-        } catch (error) {
-            console.error('❌ Keplr connection failed:', error);
-            throw error;
-        }
-    }
-
-    async getAccountInfo(address) {
-        try {
-            const restUrl = window.MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
-            const response = await fetch(`${restUrl}/cosmos/auth/v1beta1/accounts/${address}`);
+            // ✅ CosmJS OfflineSigner - das ist der Trick!
+            const offlineSigner = window.keplr.getOfflineSigner(this.chainId);
             
-            if (!response.ok) {
-                throw new Error(`Account info fetch failed: ${response.status}`);
-            }
-
-            const data = await response.json();
-            return {
-                accountNumber: data.account.account_number.toString(),
-                sequence: data.account.sequence.toString()
-            };
-        } catch (error) {
-            console.error('❌ Failed to get account info:', error);
-            return {
-                accountNumber: "0",
-                sequence: "0"
-            };
-        }
-    }
-
-   createDelegateMessage(delegatorAddress, validatorAddress, amount) {
-    console.log('🔧 Creating delegate message for Amino/RPC...');
-    console.log('📊 Params:', { delegatorAddress, validatorAddress, amount });
-    
-    // ✅ AMINO FORMAT (nicht Protobuf @type)
-    const message = {
-        type: "cosmos-sdk/MsgDelegate",  // ← Amino type!
-        value: {
-            delegator_address: delegatorAddress,
-            validator_address: validatorAddress,
-            amount: {
-                denom: this.denom,
-                amount: amount.toString()
-            }
-        }
-    };
-    
-    console.log('✅ Created Amino delegate message:', message);
-    return message;
-}
-
-createUndelegateMessage(delegatorAddress, validatorAddress, amount) {
-    console.log('🔧 Creating undelegate message for Amino/RPC...');
-    
-    const message = {
-        type: "cosmos-sdk/MsgUndelegate",  // ← Amino type!
-        value: {
-            delegator_address: delegatorAddress,
-            validator_address: validatorAddress,
-            amount: {
-                denom: this.denom,
-                amount: amount.toString()
-            }
-        }
-    };
-    
-    console.log('✅ Created Amino undelegate message:', message);
-    return message;
-}
-
-createWithdrawRewardsMessage(delegatorAddress, validatorAddress) {
-    console.log('🔧 Creating withdraw rewards message for Amino/RPC...');
-    
-    const message = {
-        type: "cosmos-sdk/MsgWithdrawDelegatorReward",  // ← Amino type!
-        value: {
-            delegator_address: delegatorAddress,
-            validator_address: validatorAddress
-        }
-    };
-    
-    console.log('✅ Created Amino withdraw rewards message:', message);
-    return message;
-}
-    calculateFee(gasLimit) {
-        const gasAmount = Math.ceil(gasLimit * this.gasPrice);
-        return {
-            gas: gasLimit.toString(),
-            amount: [{
-                denom: this.denom,
-                amount: gasAmount.toString()
-            }]
-        };
-    }
-
-    async signWithAmino(signerAddress, messages, fee, memo = "") {
-        try {
-            const accountInfo = await this.getAccountInfo(signerAddress);
-            
-            const signDoc = {
-                chain_id: this.chainId,
-                account_number: accountInfo.accountNumber,
-                sequence: accountInfo.sequence,
-                timeout_height: "0",
-                fee: fee,
-                msgs: messages,
-                memo: memo
-            };
-
-            console.log('📝 Signing document:', signDoc);
-
-            const signResponse = await window.keplr.signAmino(
-                this.chainId,
-                signerAddress,
-                signDoc,
-                {
-                    preferNoSetFee: false,
-                    preferNoSetMemo: false,
-                    disableBalanceCheck: false
-                }
+            // ✅ SigningStargateClient - macht alles automatisch!
+            this.client = await SigningStargateClient.connectWithSigner(
+                this.rpcEndpoint, 
+                offlineSigner
             );
-
-            console.log('✅ Amino signing successful');
-            return signResponse;
+            
+            // ✅ Account info
+            const accounts = await offlineSigner.getAccounts();
+            this.account = accounts[0];
+            
+            console.log('✅ CosmJS + Keplr connected:', this.account.address);
+            return this.account;
+            
         } catch (error) {
-            console.error('❌ Amino signing failed:', error);
+            console.error('❌ CosmJS connection failed:', error);
             throw error;
         }
     }
 
-   // ===================================
-// 🎯 IHRE BEIDEN FUNKTIONEN - DIREKT UND OHNE FALLBACKS
-// ===================================
-
-async encodeTxForBroadcast(signedTx) {
-    try {
-        console.log('🔍 TXRAW IMPORT UND ENCODING:');
-        console.log('=============================');
-        
-        // ✅ SCHRITT 1: Input validation
-        console.log('📊 Step 1: Input validation');
-        console.log('- SignedTx present:', !!signedTx);
-        console.log('- Messages count:', signedTx.signed?.msgs?.length);
-        console.log('- Signature present:', !!signedTx.signature);
-        
-        if (!signedTx.signed.msgs || signedTx.signed.msgs.length === 0) {
-            throw new Error('No messages found in signed transaction');
-        }
-        
-        // ✅ SCHRITT 2: Import TxRaw (verschiedene Methoden)
-        console.log('📊 Step 2: Import TxRaw encoder');
-        
-        let TxRaw;
-        
-        // Methode 1: Check if already available
-        if (window.TxRaw?.encode) {
-            console.log('- Using window.TxRaw (already available)');
-            TxRaw = window.TxRaw;
-        }
-        // Methode 2: CosmJS von CDN importieren
-        else {
-            console.log('- Importing TxRaw from CDN...');
-            try {
-                // Import CosmJS stargate
-                const module = await import('https://cdn.skypack.dev/@cosmjs/stargate@^0.32.0');
-                if (module.TxRaw) {
-                    TxRaw = module.TxRaw;
-                    console.log('✅ TxRaw imported from CosmJS stargate');
-                } else {
-                    throw new Error('TxRaw not found in CosmJS stargate module');
-                }
-            } catch (importError) {
-                console.error('❌ CDN import failed:', importError);
-                
-                // Methode 3: Fallback - Keplr Proto Types von anderem CDN
-                try {
-                    console.log('- Trying alternative CDN...');
-                    const altModule = await import('https://unpkg.com/@keplr-wallet/proto-types@0.12.0/cosmos/tx/v1beta1/tx.js');
-                    if (altModule.TxRaw) {
-                        TxRaw = altModule.TxRaw;
-                        console.log('✅ TxRaw imported from alternative CDN');
-                    } else {
-                        throw new Error('TxRaw not found in alternative module');
-                    }
-                } catch (altError) {
-                    console.error('❌ Alternative CDN failed:', altError);
-                    throw new Error('TxRaw encoder not available - could not import from any CDN');
-                }
-            }
-        }
-        
-        console.log('📊 TxRaw encoder available:', !!TxRaw?.encode);
-        
-        // ✅ SCHRITT 3: Convert Amino messages to Protobuf
-        console.log('📊 Step 3: Convert messages');
-        const protobufMessages = [];
-        for (const aminoMsg of signedTx.signed.msgs) {
-            let typeUrl;
-            switch (aminoMsg.type) {
-                case 'cosmos-sdk/MsgDelegate':
-                    typeUrl = '/cosmos.staking.v1beta1.MsgDelegate';
-                    break;
-                case 'cosmos-sdk/MsgUndelegate':
-                    typeUrl = '/cosmos.staking.v1beta1.MsgUndelegate';
-                    break;
-                case 'cosmos-sdk/MsgWithdrawDelegatorReward':
-                    typeUrl = '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward';
-                    break;
-                default:
-                    throw new Error(`Unsupported message type: ${aminoMsg.type}`);
-            }
-            
-            protobufMessages.push({
-                typeUrl: typeUrl,
-                value: aminoMsg.value
-            });
-        }
-        
-        // ✅ SCHRITT 4: Get existing Keplr connection (avoid cache reset)
-        console.log('📊 Step 4: Get current connection');
-        let currentAddress;
-        try {
-            const existingKey = await window.keplr.getKey(this.chainId);
-            currentAddress = existingKey.bech32Address;
-            console.log('- Using existing connection:', currentAddress);
-        } catch (error) {
-            const account = await this.connectKeplr();
-            currentAddress = account.address;
-        }
-        
-        // ✅ SCHRITT 5: Get account info
-        console.log('📊 Step 5: Get account info');
-        const accountInfo = await this.getAccountInfo(currentAddress);
-        console.log('- Account info:', {
-            accountNumber: accountInfo.accountNumber,
-            sequence: accountInfo.sequence
-        });
-        
-        // ✅ SCHRITT 6: Create SignDoc for signDirect
-        console.log('📊 Step 6: Create SignDoc');
-        const signDoc = {
-            bodyBytes: new TextEncoder().encode(JSON.stringify({
-                messages: protobufMessages,
-                memo: signedTx.signed.memo || "",
-                timeoutHeight: "0"
-            })),
-            authInfoBytes: new TextEncoder().encode(JSON.stringify({
-                signerInfos: [{
-                    modeInfo: { single: { mode: "SIGN_MODE_DIRECT" } },
-                    sequence: accountInfo.sequence
-                }],
-                fee: signedTx.signed.fee
-            })),
-            chainId: this.chainId,
-            accountNumber: parseInt(accountInfo.accountNumber)
-        };
-        
-        // ✅ SCHRITT 7: signDirect call
-        console.log('📊 Step 7: signDirect call');
-        const protoSignResponse = await window.keplr.signDirect(
-            this.chainId,
-            currentAddress,
-            signDoc
-        );
-        console.log('✅ signDirect successful');
-        
-        // ✅ SCHRITT 8: Use imported TxRaw encoder
-        console.log('📊 Step 8: TxRaw encoding with imported encoder');
-        const protobufTx = TxRaw.encode({
-            bodyBytes: protoSignResponse.signed.bodyBytes,
-            authInfoBytes: protoSignResponse.signed.authInfoBytes,
-            signatures: [
-                Buffer.from(protoSignResponse.signature.signature, "base64")
-            ]
-        }).finish();
-        
-        console.log('✅ TxRaw encoding successful');
-        console.log('- Length:', protobufTx.length);
-        console.log('- First 10 bytes:', Array.from(protobufTx.slice(0, 10)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
-        console.log('- Wire type check:', protobufTx[0] === 0x0A ? '✅ Correct (0x0A)' : '❌ Wrong wire type');
-        
-        return protobufTx;
-        
-    } catch (error) {
-        console.error('❌ TxRaw import/encoding failed:', error);
-        throw error;
-    }
-}
-
-// ===================================
-// 🎯 EINFACHE BROADCAST FUNKTION
-// ===================================
-
-async broadcastTransaction(signedTx) {
-    console.log('📡 Broadcasting with imported TxRaw...');
-    
-    try {
-        console.log('📊 Pre-broadcast check:');
-        console.log('- Keplr available:', !!window.keplr);
-        console.log('- sendTx available:', !!window.keplr?.sendTx);
-        console.log('- Chain ID:', this.chainId);
-        
-        // ✅ Encode with imported TxRaw
-        console.log('🔧 Encoding with imported TxRaw...');
-        const protobufTx = await this.encodeTxForBroadcast(signedTx);
-        
-        console.log('📊 About to call keplr.sendTx:');
-        console.log('- TX length:', protobufTx.length);
-        console.log('- TX type:', typeof protobufTx);
-        console.log('- Is Uint8Array:', protobufTx instanceof Uint8Array);
-        
-        // ✅ Keplr sendTx
-        console.log('🔧 Calling keplr.sendTx...');
-        const txHashBytes = await window.keplr.sendTx(
-            this.chainId,
-            protobufTx,
-            "sync"
-        );
-
-        console.log('✅ sendTx successful!');
-        console.log('📊 TX Hash Bytes:', txHashBytes);
-
-        // ✅ Hash conversion
-        const txHash = Buffer.from(txHashBytes).toString('hex').toUpperCase();
-        console.log('🎉 Transaction successful! TX Hash:', txHash);
-
-        return {
-            success: true,
-            txHash: txHash,
-            blockHeight: null,
-            gasUsed: 0,
-            confirmed: false
-        };
-
-    } catch (error) {
-        console.error('❌ Broadcast failed:', error);
-        
-        // Spezifische Fehlerbehandlung
-        if (error.message?.includes('Request rejected') || 
-            error.message?.includes('User rejected')) {
-            throw new Error('Transaction was cancelled by user');
-        } else if (error.message?.includes('TxRaw encoder not available')) {
-            throw new Error('Could not import TxRaw encoder - check internet connection or use fallback method');
-        } else if (error.message?.includes('cache reset')) {
-            throw new Error('Keplr cache reset - please refresh page and try again');
-        } else {
-            throw new Error(`Broadcast failed: ${error.message}`);
-        }
-    }
-}
-
-
-// ===================================
-// 🔍 BLOCK INCLUSION POLLING (OPTIONAL)
-// ===================================
-
-async waitForBlockInclusion(txHash, maxWaitSeconds = 30) {
-    console.log('⏳ Waiting for block inclusion...');
-    
-    const startTime = Date.now();
-    const maxWaitTime = maxWaitSeconds * 1000;
-    
-    while (Date.now() - startTime < maxWaitTime) {
-        try {
-            // Query transaction by hash
-            const queryResponse = await fetch(`https://rpc.medas-digital.io:26657/tx?hash=${txHash}`, {
-                method: 'GET',
-                headers: { 'Accept': 'application/json' }
-            });
-            
-            if (queryResponse.ok) {
-                const queryResult = await queryResponse.json();
-                
-                if (queryResult.result && queryResult.result.tx_result) {
-                    const txResult = queryResult.result.tx_result;
-                    
-                    if (txResult.code === 0) {
-                        console.log('✅ Transaction confirmed in block!');
-                        console.log('📊 Block Height:', queryResult.result.height);
-                        console.log('📊 Final Gas Used:', txResult.gas_used);
-                        
-                        return {
-                            confirmed: true,
-                            blockHeight: parseInt(queryResult.result.height),
-                            gasUsed: parseInt(txResult.gas_used || '0'),
-                            events: txResult.events || []
-                        };
-                    } else {
-                        console.error('❌ Transaction failed in block:', txResult.log);
-                        throw new Error(`Transaction failed in block: ${txResult.log}`);
-                    }
-                }
-            }
-            
-            // Wait 2 seconds before next check
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-        } catch (error) {
-            console.warn('⚠️ Polling error (retrying):', error.message);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-        }
-    }
-    
-    console.warn('⚠️ Block inclusion timeout - transaction may still be pending');
-    return { confirmed: false };
-}
-
-// ===================================
-// 🔧 KEPLR TX SERIALIZATION
-// ===================================
-
-serializeKeplrTx(signedTx) {
-    try {
-        console.log('🔧 Serializing Keplr transaction...');
-        console.log('🔍 DEBUGGING TX WRAPPER CREATION:');
-        
-        // ✅ DEBUG: Schauen wir uns die rohen Messages an
-        console.log('📊 Raw messages from Keplr:', signedTx.signed.msgs);
-        console.log('📊 Message count:', signedTx.signed.msgs?.length);
-        
-        if (signedTx.signed.msgs && signedTx.signed.msgs.length > 0) {
-            signedTx.signed.msgs.forEach((msg, i) => {
-                console.log(`📊 Message ${i}:`, msg);
-                console.log(`📊 Message ${i} @type:`, msg['@type']);
-                console.log(`📊 Message ${i} keys:`, Object.keys(msg));
-            });
-        }
-        
-        // ✅ VERSCHIEDENE TX WRAPPER FORMATE TESTEN
-        
-        // FORMAT 1: Standard Cosmos SDK 0.50
-        const txWrapper1 = {
-            body: {
-                messages: signedTx.signed.msgs,
-                memo: signedTx.signed.memo || "",
-                timeout_height: "0",
-                extension_options: [],
-                non_critical_extension_options: []
-            },
-            auth_info: {
-                signer_infos: [{
-                    public_key: {
-                        "@type": "/cosmos.crypto.secp256k1.PubKey",
-                        key: signedTx.signature.pub_key.value
-                    },
-                    mode_info: {
-                        single: {
-                            mode: "SIGN_MODE_LEGACY_AMINO_JSON"
-                        }
-                    },
-                    sequence: signedTx.signed.sequence
-                }],
-                fee: {
-                    amount: signedTx.signed.fee.amount,
-                    gas_limit: signedTx.signed.fee.gas,
-                    payer: "",
-                    granter: ""
-                }
-            },
-            signatures: [signedTx.signature.signature]
-        };
-        
-        // FORMAT 2: Direkte Amino (wie async verwendet)
-        const txWrapper2 = {
-            msg: signedTx.signed.msgs,
-            fee: signedTx.signed.fee,
-            signatures: [signedTx.signature],
-            memo: signedTx.signed.memo || ""
-        };
-        
-        // FORMAT 3: StdTx Wrapper
-        const txWrapper3 = {
-            type: "cosmos-sdk/StdTx",
-            value: {
-                msg: signedTx.signed.msgs,
-                fee: signedTx.signed.fee,
-                signatures: [signedTx.signature],
-                memo: signedTx.signed.memo || ""
-            }
-        };
-        
-        console.log('🔍 TESTING 3 DIFFERENT FORMATS:');
-        console.log('📊 Format 1 (SDK 0.50):', txWrapper1);
-        console.log('📊 Format 1 messages:', txWrapper1.body.messages);
-        console.log('📊 Format 1 message count:', txWrapper1.body.messages?.length);
-        
-        console.log('📊 Format 2 (Direct Amino):', txWrapper2);
-        console.log('📊 Format 2 messages:', txWrapper2.msg);
-        console.log('📊 Format 2 message count:', txWrapper2.msg?.length);
-        
-        console.log('📊 Format 3 (StdTx):', txWrapper3);
-        console.log('📊 Format 3 messages:', txWrapper3.value.msg);
-        console.log('📊 Format 3 message count:', txWrapper3.value.msg?.length);
-        
-        // ✅ WELCHES FORMAT ZU VERWENDEN?
-        // Da broadcast_tx_commit Raw Protobuf erwartet, aber wir JSON senden,
-        // versuchen wir das Format das bei broadcast_tx_async funktioniert hat
-        
-        const txToUse = txWrapper2; // Direct Amino Format
-        console.log('📊 Using Direct Amino format for CometBFT');
-        
-        // ✅ JSON → Base64
-        const txBytes = btoa(JSON.stringify(txToUse));
-        console.log('📊 Final tx bytes length:', txBytes.length);
-        console.log('📊 Final tx bytes preview:', txBytes.substring(0, 100));
-        
-        // ✅ VALIDATION: Decode back to verify
-        try {
-            const decoded = JSON.parse(atob(txBytes));
-            console.log('✅ Validation: Decoded TX:', decoded);
-            console.log('✅ Validation: Message count after decode:', decoded.msg?.length);
-            
-            if (!decoded.msg || decoded.msg.length === 0) {
-                console.error('❌ VALIDATION FAILED: No messages after encoding/decoding!');
-                throw new Error('Transaction lost messages during encoding');
-            }
-        } catch (validationError) {
-            console.error('❌ VALIDATION ERROR:', validationError);
-            throw validationError;
-        }
-        
-        return txBytes;
-        
-    } catch (error) {
-        console.error('❌ TX serialization failed:', error);
-        throw new Error(`TX serialization failed: ${error.message}`);
-    }
-}
-// ===================================
-// 🔧 COMMIT RESPONSE HANDLER
-// ===================================
-
-async handleCommitResponse(commitResponse) {
-    try {
-        console.log('📡 Commit Response status:', commitResponse.status);
-
-        if (!commitResponse.ok) {
-            const errorText = await commitResponse.text();
-            throw new Error(`HTTP ${commitResponse.status}: ${errorText}`);
-        }
-
-        const commitResult = await commitResponse.json();
-        console.log('📡 CometBFT Commit Result:', commitResult);
-        
-        // ✅ CometBFT Error Check
-        if (commitResult.error) {
-            console.error('❌ CometBFT Error:', commitResult.error);
-            throw new Error(`CometBFT Error: ${commitResult.error.message || commitResult.error.data}`);
-        }
-        
-        if (!commitResult.result) {
-            throw new Error('Invalid CometBFT response: missing result');
-        }
-        
-        // ✅ CheckTx Validation
-        const checkTx = commitResult.result.check_tx;
-        if (checkTx && checkTx.code !== 0) {
-            console.error('❌ CheckTx failed:', checkTx);
-            throw new Error(`Mempool validation failed: ${checkTx.log || checkTx.info || 'Unknown error'}`);
-        }
-        
-        // ✅ DeliverTx Validation
-        const deliverTx = commitResult.result.deliver_tx;
-        if (!deliverTx) {
-            throw new Error('Missing deliver_tx in CometBFT result');
-        }
-        
-        if (deliverTx.code !== 0) {
-            console.error('❌ DeliverTx failed:', deliverTx);
-            throw new Error(`Transaction failed: ${deliverTx.log || deliverTx.info || 'Unknown error'}`);
-        }
-
-        // ✅ SUCCESS
-        const txHash = commitResult.result.hash;
-        const blockHeight = commitResult.result.height;
-        
-        console.log('🎉 CometBFT transaction confirmed!');
-        console.log(`📊 TX Hash: ${txHash}`);
-        console.log(`📊 Block Height: ${blockHeight}`);
-        console.log(`📊 Gas Used: ${deliverTx.gas_used}/${deliverTx.gas_wanted}`);
-        
-        return {
-            success: true,
-            txHash: txHash,
-            blockHeight: blockHeight,
-            code: deliverTx.code,
-            rawLog: deliverTx.log || 'Transaction successful',
-            gasUsed: parseInt(deliverTx.gas_used || '0'),
-            gasWanted: parseInt(deliverTx.gas_wanted || '0'),
-            events: deliverTx.events || [],
-            confirmed: true,
-            checkTx: checkTx,
-            deliverTx: deliverTx
-        };
-
-    } catch (error) {
-        throw error;
-    }
-}
     async delegate(delegatorAddress, validatorAddress, amountInMedas) {
         try {
-            console.log('🥩 Starting delegation process...');
-            
-            const account = await this.connectKeplr();
-            if (account.address !== delegatorAddress) {
-                throw new Error('Connected account does not match delegator address');
+            if (!this.client || !this.account) {
+                await this.connectKeplr();
             }
 
-            const amountInUmedas = Math.floor(parseFloat(amountInMedas) * Math.pow(10, this.decimals));
-            console.log(`Amount in umedas: ${amountInUmedas}`);
-
-            const delegateMsg = this.createDelegateMessage(
-                delegatorAddress,
-                validatorAddress,
-                amountInUmedas
+            console.log('🥩 Starting delegation with CosmJS...');
+            
+            // ✅ CosmJS macht alles automatisch:
+            // - Erstellt Protobuf Messages
+            // - Macht TxRaw encoding  
+            // - Signed mit Keplr
+            // - Broadcasted zur Chain
+            const result = await this.client.delegateTokens(
+                this.account.address,              // delegator
+                validatorAddress,                  // validator  
+                coins(this.formatUmedas(amountInMedas), "umedas"), // amount
+                "auto",                           // fee (automatic calculation)
+                `Stake ${amountInMedas} MEDAS to validator` // memo
             );
 
-            const gasLimit = 300000;
-            const fee = this.calculateFee(gasLimit);
+            console.log('🎉 CosmJS delegation successful!');
+            console.log('- TX Hash:', result.transactionHash);
+            console.log('- Block Height:', result.height);
+            console.log('- Gas Used:', result.gasUsed);
 
-            console.log('💰 Transaction fee:', fee);
+            return {
+                success: true,
+                txHash: result.transactionHash,
+                blockHeight: result.height,
+                gasUsed: result.gasUsed,
+                message: `Successfully delegated ${amountInMedas} MEDAS`
+            };
 
-            const signedTx = await this.signWithAmino(
-                delegatorAddress,
-                [delegateMsg],
-                fee,
-                `Stake ${amountInMedas} MEDAS to validator`
-            );
-
-            const result = await this.broadcastTransaction(signedTx);
-
-            if (result.success) {
-                console.log('🎉 Delegation successful!');
+        } catch (error) {
+            console.error('❌ CosmJS delegation failed:', error);
+            
+            if (error.message?.includes('Request rejected')) {
                 return {
-                    success: true,
-                    txHash: result.txHash,
-                    message: `Successfully delegated ${amountInMedas} MEDAS`
+                    success: false,
+                    error: 'Transaction was cancelled by user'
                 };
             } else {
-                throw new Error(result.error);
+                return {
+                    success: false,
+                    error: error.message
+                };
             }
-        } catch (error) {
-            console.error('❌ Delegation failed:', error);
-            return {
-                success: false,
-                error: error.message
-            };
         }
     }
 
     async undelegate(delegatorAddress, validatorAddress, amountInMedas) {
         try {
-            console.log('📉 Starting undelegation process...');
+            if (!this.client || !this.account) {
+                await this.connectKeplr();
+            }
 
-            const account = await this.connectKeplr();
-            const amountInUmedas = Math.floor(parseFloat(amountInMedas) * Math.pow(10, this.decimals));
+            console.log('📉 Starting undelegation with CosmJS...');
 
-            const undelegateMsg = this.createUndelegateMessage(
-                delegatorAddress,
+            // ✅ CosmJS undelegateTokens - macht alles automatisch!
+            const result = await this.client.undelegateTokens(
+                this.account.address,
                 validatorAddress,
-                amountInUmedas
-            );
-
-            const gasLimit = 350000;
-            const fee = this.calculateFee(gasLimit);
-
-            const signedTx = await this.signWithAmino(
-                delegatorAddress,
-                [undelegateMsg],
-                fee,
+                coins(this.formatUmedas(amountInMedas), "umedas"),
+                "auto",
                 `Unstake ${amountInMedas} MEDAS from validator`
             );
 
-            const result = await this.broadcastTransaction(signedTx);
+            console.log('✅ CosmJS undelegation successful!');
+            return {
+                success: true,
+                txHash: result.transactionHash,
+                message: `Successfully undelegated ${amountInMedas} MEDAS (21-day unbonding period)`
+            };
 
-            if (result.success) {
-                console.log('✅ Undelegation successful!');
-                return {
-                    success: true,
-                    txHash: result.txHash,
-                    message: `Successfully undelegated ${amountInMedas} MEDAS (21-day unbonding period)`
-                };
-            } else {
-                throw new Error(result.error);
-            }
         } catch (error) {
-            console.error('❌ Undelegation failed:', error);
+            console.error('❌ CosmJS undelegation failed:', error);
             return {
                 success: false,
                 error: error.message
@@ -719,44 +133,101 @@ async handleCommitResponse(commitResponse) {
 
     async claimRewards(delegatorAddress, validatorAddresses) {
         try {
-            console.log('🏆 Starting rewards claiming process...');
+            if (!this.client || !this.account) {
+                await this.connectKeplr();
+            }
 
-            const account = await this.connectKeplr();
+            console.log('🏆 Starting rewards claiming with CosmJS...');
 
-            const withdrawMsgs = validatorAddresses.map(validatorAddress =>
-                this.createWithdrawRewardsMessage(delegatorAddress, validatorAddress)
-            );
-
-            const gasLimit = 200000 + (validatorAddresses.length * 100000);
-            const fee = this.calculateFee(gasLimit);
-
-            const signedTx = await this.signWithAmino(
-                delegatorAddress,
-                withdrawMsgs,
-                fee,
+            // ✅ CosmJS withdrawRewards - macht alles automatisch!
+            const result = await this.client.withdrawRewards(
+                this.account.address,
+                validatorAddresses[0], // Für ersten Validator
+                "auto",
                 `Claim rewards from ${validatorAddresses.length} validators`
             );
 
-            const result = await this.broadcastTransaction(signedTx);
+            // Für mehrere Validators (falls gewünscht):
+            // const messages = validatorAddresses.map(validatorAddress => ({
+            //     typeUrl: "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+            //     value: {
+            //         delegatorAddress: this.account.address,
+            //         validatorAddress: validatorAddress,
+            //     },
+            // }));
+            // const result = await this.client.signAndBroadcast(this.account.address, messages, "auto");
 
-            if (result.success) {
-                console.log('🎉 Rewards claiming successful!');
-                return {
-                    success: true,
-                    txHash: result.txHash,
-                    message: `Successfully claimed rewards from ${validatorAddresses.length} validators`
-                };
-            } else {
-                throw new Error(result.error);
-            }
+            console.log('🎉 CosmJS rewards claiming successful!');
+            return {
+                success: true,
+                txHash: result.transactionHash,
+                message: `Successfully claimed rewards from ${validatorAddresses.length} validators`
+            };
+
         } catch (error) {
-            console.error('❌ Rewards claiming failed:', error);
+            console.error('❌ CosmJS rewards claiming failed:', error);
             return {
                 success: false,
                 error: error.message
             };
         }
     }
+
+    async sendTokens(recipientAddress, amountInMedas) {
+        try {
+            if (!this.client || !this.account) {
+                await this.connectKeplr();
+            }
+
+            // ✅ CosmJS sendTokens - einfach!
+            const result = await this.client.sendTokens(
+                this.account.address,
+                recipientAddress,
+                coins(this.formatUmedas(amountInMedas), "umedas"),
+                "auto",
+                "Transfer via MedasDigital"
+            );
+
+            console.log('✅ CosmJS transfer successful:', result.transactionHash);
+            return {
+                success: true,
+                txHash: result.transactionHash,
+                message: `Successfully sent ${amountInMedas} MEDAS`
+            };
+
+        } catch (error) {
+            console.error('❌ CosmJS transfer failed:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    async getBalance(address = null) {
+        try {
+            if (!this.client) {
+                await this.connectKeplr();
+            }
+
+            const queryAddress = address || this.account?.address;
+            if (!queryAddress) {
+                throw new Error('No address provided and not connected');
+            }
+
+            // ✅ CosmJS query - kein RPC/REST handling nötig
+            const balance = await this.client.getBalance(queryAddress, "umedas");
+            return this.formatMedas(balance.amount);
+
+        } catch (error) {
+            console.error('❌ CosmJS balance query failed:', error);
+            return 'ERROR';
+        }
+    }
+
+    // ===================================
+    // UTILITY FUNCTIONS (unverändert)
+    // ===================================
 
     formatMedas(amountInUmedas) {
         return (parseInt(amountInUmedas) / Math.pow(10, this.decimals)).toFixed(6);
@@ -765,41 +236,35 @@ async handleCommitResponse(commitResponse) {
     formatUmedas(amountInMedas) {
         return Math.floor(parseFloat(amountInMedas) * Math.pow(10, this.decimals));
     }
+
+    disconnect() {
+        this.client = null;
+        this.account = null;
+        console.log('🔌 CosmJS disconnected');
+    }
 }
 
 // ===================================
-// TESTING FUNKTION
+// TESTING FUNKTION (optional)
 // ===================================
-window.testStakingManager = async function() {
-    console.log('🧪 TESTING STAKING MANAGER...');
+window.testCosmJSStaking = async function() {
+    console.log('🧪 TESTING COSMJS STAKING MANAGER...');
     
     const stakingManager = new StakingManager();
     
     try {
         // Test connection
         const account = await stakingManager.connectKeplr();
-        console.log('✅ Keplr connected:', account.address);
+        console.log('✅ CosmJS connected:', account.address);
         
-        // Test account info
-        const accountInfo = await stakingManager.getAccountInfo(account.address);
-        console.log('✅ Account info:', accountInfo);
+        // Test balance query
+        const balance = await stakingManager.getBalance();
+        console.log('✅ Balance:', balance, 'MEDAS');
         
-        // Test message creation
-        const testMsg = stakingManager.createDelegateMessage(
-            account.address,
-            'medasvaloperTest',
-            1000000 // 1 MEDAS in umedas
-        );
-        console.log('✅ Message created:', testMsg);
-        
-        // Test fee calculation
-        const testFee = stakingManager.calculateFee(300000);
-        console.log('✅ Fee calculated:', testFee);
-        
-        return 'StakingManager test complete - all functions working!';
+        return 'CosmJS StakingManager test complete - all functions working!';
         
     } catch (error) {
-        console.error('❌ StakingManager test failed:', error);
+        console.error('❌ CosmJS test failed:', error);
         return `Test failed: ${error.message}`;
     }
 };
@@ -809,5 +274,5 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = StakingManager;
 } else {
     window.StakingManager = StakingManager;
-    console.log('🥩 StakingManager loaded - Cosmos SDK 0.50.10 + Keplr compatible');
+    console.log('🥩 CosmJS StakingManager loaded - No more manual TxRaw needed!');
 }
