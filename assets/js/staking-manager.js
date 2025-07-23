@@ -225,84 +225,55 @@ async encodeTxForBroadcast(signedTx) {
     }
 }
 
-async broadcastTransaction(messages, fee, memo = "") {
-    console.log('📡 Broadcasting via Keplr signDirect + sendTx...');
+async broadcastTransaction(signedTx) {
+    console.log('📡 Broadcasting Amino SignedTx via Keplr sendTx...');
     
     try {
-        // ✅ SCHRITT 1: Account Connection
-        const account = await this.connectKeplr();
-        console.log('📊 Account:', account.address);
+        console.log('📊 Received signedTx:', signedTx);
+        console.log('📊 signedTx.signed:', signedTx.signed);
 
-        // ✅ SCHRITT 2: Account Info für Protobuf
-        const accountInfo = await this.getAccountInfo(account.address);
-        console.log('📊 Account Info:', accountInfo);
-
-        // ✅ SCHRITT 3: Erstelle SignDoc für signDirect
-        const signDoc = {
-            bodyBytes: null, // Keplr generiert automatisch
-            authInfoBytes: null, // Keplr generiert automatisch  
-            chainId: this.chainId,
-            accountNumber: parseInt(accountInfo.accountNumber) // Einfacher parseInt statt Long
+        // ✅ SCHRITT 1: Konvertiere Amino SignedTx zu Uint8Array
+        const aminoTx = {
+            msg: signedTx.signed.msgs,
+            fee: signedTx.signed.fee,
+            signatures: [signedTx.signature],
+            memo: signedTx.signed.memo || ""
         };
 
-        console.log('📊 SignDoc:', signDoc);
-        console.log('📊 Messages:', messages);  
-        console.log('📊 Fee:', fee);
+        console.log('📊 Amino TX Structure:', aminoTx);
 
-        // ✅ SCHRITT 4: signDirect (Protobuf Signing)
-        const signResponse = await window.keplr.signDirect(
-            this.chainId,
-            account.address,
-            signDoc,
-            // SignOptions mit Messages und Fee
-            {
-                msgs: messages,
-                fee: fee, 
-                memo: memo || ""
-            }
-        );
-
-        console.log('✅ signDirect successful');
-        console.log('📊 Signed Response:', signResponse);
-        console.log('📊 bodyBytes length:', signResponse.signed.bodyBytes?.length);
-        console.log('📊 authInfoBytes length:', signResponse.signed.authInfoBytes?.length);
-        console.log('📊 signature length:', signResponse.signature.signature?.length);
-
-        // ✅ SCHRITT 5: Erstelle TxRaw Structure (OHNE externe Library)
-        const txRaw = {
-            bodyBytes: signResponse.signed.bodyBytes,
-            authInfoBytes: signResponse.signed.authInfoBytes,
-            signatures: [
-                // Convert base64 signature to Uint8Array
-                Uint8Array.from(atob(signResponse.signature.signature), c => c.charCodeAt(0))
-            ]
-        };
-
-        console.log('📊 TxRaw Structure:', txRaw);
-        console.log('📊 Signatures[0] length:', txRaw.signatures[0].length);
-
-        // ✅ SCHRITT 6: Einfache Protobuf Serialisierung
-        // Da TxRaw.encode nicht verfügbar ist, verwenden wir eine vereinfachte Methode
-        const serializedTx = this.simpleTxRawSerialization(txRaw);
+        // ✅ SCHRITT 2: JSON zu Uint8Array konvertieren
+        const jsonString = JSON.stringify(aminoTx);
+        console.log('📊 JSON String length:', jsonString.length);
         
-        console.log('📊 Serialized TX:', serializedTx);
-        console.log('📊 Is Uint8Array:', serializedTx instanceof Uint8Array);
-        console.log('📊 Length:', serializedTx.length);
+        const encoder = new TextEncoder();
+        const txBytes = encoder.encode(jsonString);
+        
+        console.log('📊 Converted to Uint8Array:', txBytes);
+        console.log('📊 Is Uint8Array:', txBytes instanceof Uint8Array);
+        console.log('📊 Length:', txBytes.length);
 
-        // ✅ SCHRITT 7: Keplr sendTx mit Uint8Array
+        // ✅ SCHRITT 3: Verwende Keplr sendTx
         const txHashBytes = await window.keplr.sendTx(
             this.chainId,
-            serializedTx,
+            txBytes,
             "sync"
         );
 
         console.log('✅ sendTx successful');
         console.log('📊 TX Hash Bytes:', txHashBytes);
 
-        // ✅ SCHRITT 8: Convert Hash zu String
-        const txHash = Buffer ? 
-            Buffer.from(txHashBytes).toString('hex').toUpperCase() :
-            Array.from(txHashBytes).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+        // ✅ SCHRITT 4: Convert Hash zu String
+        let txHash;
+        if (Buffer && Buffer.from) {
+            txHash = Buffer.from(txHashBytes).toString('hex').toUpperCase();
+        } else {
+            // Fallback für Browser ohne Buffer
+            txHash = Array.from(txHashBytes)
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('')
+                .toUpperCase();
+        }
 
         console.log('🎉 Keplr broadcast successful!');
         console.log('📊 TX Hash:', txHash);
@@ -316,17 +287,60 @@ async broadcastTransaction(messages, fee, memo = "") {
         };
 
     } catch (error) {
-        console.error('❌ Keplr broadcast failed:', error);
+        console.error('❌ Keplr sendTx failed, trying fallback API:', error);
         
-        // Spezifische Fehlerbehandlung
-        if (error.message.includes('User rejected')) {
-            throw new Error('Transaction was cancelled by user');
-        } else if (error.message.includes('insufficient funds')) {
-            throw new Error('Insufficient funds for transaction');  
-        } else if (error.message.includes('sequence mismatch')) {
-            throw new Error('Account sequence mismatch - please retry');
-        } else {
-            throw new Error(`Transaction failed: ${error.message}`);
+        // ✅ FALLBACK: Verwende direkte API mit CORS Proxy
+        try {
+            console.log('🔄 Fallback: Broadcasting via direct API...');
+            
+            const response = await fetch('https://app.medas-digital.io:8080/api/lcd/cosmos/tx/v1beta1/txs', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    tx_bytes: btoa(JSON.stringify({
+                        msg: signedTx.signed.msgs,
+                        fee: signedTx.signed.fee,
+                        signatures: [signedTx.signature],
+                        memo: signedTx.signed.memo || ""
+                    })),
+                    mode: "BROADCAST_MODE_SYNC"
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`API Error: ${response.status} - ${errorText}`);
+            }
+
+            const result = await response.json();
+            console.log('📡 API Result:', result);
+
+            if (result.tx_response && result.tx_response.code === 0) {
+                console.log('🎉 API broadcast successful!');
+                return {
+                    success: true,
+                    txHash: result.tx_response.txhash,
+                    blockHeight: result.tx_response.height,
+                    gasUsed: parseInt(result.tx_response.gas_used || '0'),
+                    confirmed: true
+                };
+            } else {
+                throw new Error(`API Error: ${result.tx_response?.raw_log || 'Unknown error'}`);
+            }
+
+        } catch (apiError) {
+            console.error('❌ API fallback also failed:', apiError);
+            
+            // Spezifische Fehlerbehandlung
+            if (error.message.includes('User rejected')) {
+                throw new Error('Transaction was cancelled by user');
+            } else if (error.message.includes('insufficient funds')) {
+                throw new Error('Insufficient funds for transaction');  
+            } else {
+                throw new Error(`Transaction failed: ${apiError.message}`);
+            }
         }
     }
 }
