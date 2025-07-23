@@ -159,282 +159,104 @@ createWithdrawRewardsMessage(delegatorAddress, validatorAddress) {
 
 async encodeTxForBroadcast(signedTx) {
     try {
-        console.log('🔍 AMINO → PROTOBUF CONVERSION FÜR KEPLR:');
-        console.log('==========================================');
+        console.log('🔍 EINFACHE KEPLR TXRAW ENCODING:');
+        console.log('=================================');
         
-        // ✅ SCHRITT 1: Analysiere SignedTx (von signAmino)
-        console.log('📊 SignedTx from signAmino:', signedTx);
-        console.log('📊 Messages:', signedTx.signed.msgs);
-        console.log('📊 Signature:', signedTx.signature);
-        
-        if (!signedTx.signed.msgs || signedTx.signed.msgs.length === 0) {
-            throw new Error('No messages found in signed transaction');
-        }
-        
-        // ✅ SCHRITT 2: Konvertiere Amino Messages zu Protobuf Any
-        const protobufMessages = this.convertAminoToProtobufAny(signedTx.signed.msgs);
-        console.log('📊 Protobuf Any Messages:', protobufMessages);
-        
-        // ✅ SCHRITT 3: Erstelle TxBody (Protobuf)
-        const txBody = {
-            messages: protobufMessages,
-            memo: signedTx.signed.memo || "",
-            timeout_height: "0"
-        };
-        
-        // ✅ SCHRITT 4: Erstelle AuthInfo (Protobuf)
-        const authInfo = {
-            signer_infos: [{
-                public_key: {
-                    "@type": "/cosmos.crypto.secp256k1.PubKey",
-                    key: signedTx.signature.pub_key.value
-                },
-                mode_info: {
-                    single: {
-                        mode: "SIGN_MODE_LEGACY_AMINO_JSON"
-                    }
-                },
-                sequence: signedTx.signed.sequence
-            }],
-            fee: {
-                amount: signedTx.signed.fee.amount,
-                gas_limit: signedTx.signed.fee.gas,
-                payer: "",
-                granter: ""
-            }
-        };
-        
-        // ✅ SCHRITT 5: Serialisiere zu Protobuf TxRaw
-        const txBodyBytes = new TextEncoder().encode(JSON.stringify(txBody));
-        const authInfoBytes = new TextEncoder().encode(JSON.stringify(authInfo));
-        const signatureBytes = new TextEncoder().encode(signedTx.signature.signature);
-        
-        // ✅ SCHRITT 6: Erstelle Protobuf TxRaw Wire Format
-        const protobufTxRaw = this.createProtobufTxRaw(txBodyBytes, authInfoBytes, signatureBytes);
-        
-        console.log('📊 PROTOBUF TXRAW RESULT:');
-        console.log('- Is Uint8Array:', protobufTxRaw instanceof Uint8Array);
-        console.log('- Length:', protobufTxRaw.length);
-        console.log('- First 20 bytes:', Array.from(protobufTxRaw.slice(0, 20)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
-        console.log('- Expected first byte: 0x0A (Wire Type 2)');
-        
-        // ✅ SCHRITT 7: Validierung
-        if (protobufTxRaw.length === 0) {
-            throw new Error('Protobuf encoding resulted in empty data');
-        }
-        
-        if (protobufTxRaw[0] !== 0x0A) {
-            throw new Error(`Wrong wire type: expected 0x0A, got 0x${protobufTxRaw[0].toString(16)}`);
-        }
-        
-        console.log('✅ Protobuf TxRaw encoding completed successfully');
-        console.log('📊 Ready for Keplr sendTx with Wire Type 2');
-        
-        return protobufTxRaw; // ← Protobuf TxRaw für Keplr sendTx
-        
-    } catch (error) {
-        console.error('❌ Protobuf encoding failed:', error);
-        throw error;
-    }
-}
-
-// ===================================
-// 🔧 AMINO → PROTOBUF ANY CONVERSION
-// ===================================
-
-convertAminoToProtobufAny(aminoMsgs) {
-    try {
-        console.log('🔧 Converting Amino messages to Protobuf Any...');
-        
-        const protobufMsgs = [];
-        
-        for (const aminoMsg of aminoMsgs) {
-            console.log('📊 Converting Amino message:', aminoMsg);
-            
-            let typeUrl, value;
-            
+        // ✅ SCHRITT 1: Konvertiere Amino Messages zu Protobuf
+        const protobufMessages = [];
+        for (const aminoMsg of signedTx.signed.msgs) {
+            let typeUrl;
             switch (aminoMsg.type) {
                 case 'cosmos-sdk/MsgDelegate':
                     typeUrl = '/cosmos.staking.v1beta1.MsgDelegate';
-                    value = {
-                        delegator_address: aminoMsg.value.delegator_address,
-                        validator_address: aminoMsg.value.validator_address,
-                        amount: aminoMsg.value.amount
-                    };
                     break;
-                    
                 case 'cosmos-sdk/MsgUndelegate':
                     typeUrl = '/cosmos.staking.v1beta1.MsgUndelegate';
-                    value = {
-                        delegator_address: aminoMsg.value.delegator_address,
-                        validator_address: aminoMsg.value.validator_address,
-                        amount: aminoMsg.value.amount
-                    };
                     break;
-                    
                 case 'cosmos-sdk/MsgWithdrawDelegatorReward':
                     typeUrl = '/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward';
-                    value = {
-                        delegator_address: aminoMsg.value.delegator_address,
-                        validator_address: aminoMsg.value.validator_address
-                    };
                     break;
-                    
                 default:
-                    throw new Error(`Unsupported Amino message type: ${aminoMsg.type}`);
+                    throw new Error(`Unsupported message type: ${aminoMsg.type}`);
             }
             
-            // Protobuf Any structure
-            const protobufAny = {
-                "@type": typeUrl,
-                ...value
-            };
-            
-            console.log('✅ Converted to Protobuf Any:', protobufAny);
-            protobufMsgs.push(protobufAny);
+            protobufMessages.push({
+                typeUrl: typeUrl,
+                value: aminoMsg.value
+            });
         }
         
-        return protobufMsgs;
+        // ✅ SCHRITT 2: Hole Account Info für signDirect
+        const account = await this.connectKeplr();
+        const accountInfo = await this.getAccountInfo(account.address);
+        
+        // ✅ SCHRITT 3: Erstelle SignDoc für signDirect
+        const signDoc = {
+            bodyBytes: new TextEncoder().encode(JSON.stringify({
+                messages: protobufMessages,
+                memo: signedTx.signed.memo || "",
+                timeoutHeight: "0"
+            })),
+            authInfoBytes: new TextEncoder().encode(JSON.stringify({
+                signerInfos: [{
+                    modeInfo: { single: { mode: "SIGN_MODE_DIRECT" } },
+                    sequence: accountInfo.sequence
+                }],
+                fee: signedTx.signed.fee
+            })),
+            chainId: this.chainId,
+            accountNumber: parseInt(accountInfo.accountNumber)
+        };
+        
+        // ✅ SCHRITT 4: signDirect (wie im Keplr Beispiel)
+        const protoSignResponse = await window.keplr.signDirect(
+            this.chainId,
+            account.address,
+            signDoc
+        );
+        
+        // ✅ SCHRITT 5: TxRaw.encode().finish() (wie im Keplr Beispiel)
+        const protobufTx = window.TxRaw.encode({
+            bodyBytes: protoSignResponse.signed.bodyBytes,
+            authInfoBytes: protoSignResponse.signed.authInfoBytes,
+            signatures: [
+                Buffer.from(protoSignResponse.signature.signature, "base64")
+            ]
+        }).finish();
+        
+        console.log('📊 TxRaw encoded, length:', protobufTx.length);
+        console.log('📊 First 10 bytes:', Array.from(protobufTx.slice(0, 10)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
+        
+        return protobufTx;
         
     } catch (error) {
-        console.error('❌ Amino to Protobuf Any conversion failed:', error);
+        console.error('❌ TxRaw encoding failed:', error);
         throw error;
     }
 }
 
 // ===================================
-// 🔧 PROTOBUF TXRAW CREATION
-// ===================================
-
-createProtobufTxRaw(bodyBytes, authInfoBytes, signatureBytes) {
-    try {
-        console.log('🔧 Creating Protobuf TxRaw with Wire Type 2...');
-        
-        // ✅ Calculate total length for TxRaw
-        let totalLength = 0;
-        
-        // Field 1: body_bytes (wire type 2)
-        totalLength += 1; // field tag 0x0A
-        totalLength += this.getVarintLength(bodyBytes.length);
-        totalLength += bodyBytes.length;
-        
-        // Field 2: auth_info_bytes (wire type 2) 
-        totalLength += 1; // field tag 0x12
-        totalLength += this.getVarintLength(authInfoBytes.length);
-        totalLength += authInfoBytes.length;
-        
-        // Field 3: signatures (wire type 2)
-        totalLength += 1; // field tag 0x1A
-        totalLength += this.getVarintLength(signatureBytes.length);
-        totalLength += signatureBytes.length;
-        
-        console.log('📊 TxRaw components:');
-        console.log('- Body bytes length:', bodyBytes.length);
-        console.log('- AuthInfo bytes length:', authInfoBytes.length);
-        console.log('- Signature bytes length:', signatureBytes.length);
-        console.log('- Total TxRaw length:', totalLength);
-        
-        // ✅ Create TxRaw buffer
-        const txRaw = new Uint8Array(totalLength);
-        let offset = 0;
-        
-        // ✅ Field 1: body_bytes (field number 1, wire type 2)
-        txRaw[offset++] = (1 << 3) | 2; // 0x0A
-        offset += this.writeVarint(txRaw, offset, bodyBytes.length);
-        txRaw.set(bodyBytes, offset);
-        offset += bodyBytes.length;
-        
-        // ✅ Field 2: auth_info_bytes (field number 2, wire type 2)
-        txRaw[offset++] = (2 << 3) | 2; // 0x12
-        offset += this.writeVarint(txRaw, offset, authInfoBytes.length);
-        txRaw.set(authInfoBytes, offset);
-        offset += authInfoBytes.length;
-        
-        // ✅ Field 3: signatures (field number 3, wire type 2)
-        txRaw[offset++] = (3 << 3) | 2; // 0x1A
-        offset += this.writeVarint(txRaw, offset, signatureBytes.length);
-        txRaw.set(signatureBytes, offset);
-        
-        console.log('✅ Protobuf TxRaw created successfully');
-        console.log('📊 Final offset:', offset, 'Expected:', totalLength);
-        console.log('📊 Wire format check:', txRaw[0] === 0x0A ? '✅ Correct (0x0A)' : '❌ Wrong');
-        
-        return txRaw;
-        
-    } catch (error) {
-        console.error('❌ Protobuf TxRaw creation failed:', error);
-        throw error;
-    }
-}
-
-// ===================================
-// 🔧 VARINT HELPERS
-// ===================================
-
-getVarintLength(value) {
-    if (value < 0x80) return 1;
-    if (value < 0x4000) return 2;
-    if (value < 0x200000) return 3;
-    if (value < 0x10000000) return 4;
-    return 5;
-}
-
-writeVarint(buffer, offset, value) {
-    let bytesWritten = 0;
-    while (value >= 0x80) {
-        buffer[offset + bytesWritten] = (value & 0xFF) | 0x80;
-        value >>>= 7;
-        bytesWritten++;
-    }
-    buffer[offset + bytesWritten] = value & 0xFF;
-    return bytesWritten + 1;
-}
-
-// ===================================
-// 🎯 AKTUALISIERTE broadcastTransaction
+// 🎯 EINFACHE broadcastTransaction
 // ===================================
 
 async broadcastTransaction(signedTx) {
-    console.log('📡 Broadcasting with Amino → Protobuf conversion...');
+    console.log('📡 Broadcasting with Keplr TxRaw...');
     
     try {
-        console.log('📊 Input signedTx:', signedTx);
-
-        // ✅ Convert Amino zu Protobuf TxRaw
-        const protobufTxRaw = await this.encodeTxForBroadcast(signedTx);
+        // ✅ Encode mit TxRaw
+        const protobufTx = await this.encodeTxForBroadcast(signedTx);
         
-        console.log('📊 KEPLR SENDTX CALL:');
-        console.log('- Chain ID:', this.chainId);
-        console.log('- TX data type:', typeof protobufTxRaw);
-        console.log('- TX data length:', protobufTxRaw.length);
-        console.log('- Is Uint8Array:', protobufTxRaw instanceof Uint8Array);
-        console.log('- First 10 bytes:', Array.from(protobufTxRaw.slice(0, 10)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
-        console.log('- Wire type check:', protobufTxRaw[0] === 0x0A ? '✅ Type 2' : '❌ Wrong type');
-
-        // ✅ Keplr sendTx mit Protobuf TxRaw
-        console.log('🔧 Calling keplr.sendTx with Protobuf TxRaw...');
-        
+        // ✅ Keplr sendTx (wie im Beispiel)
         const txHashBytes = await window.keplr.sendTx(
             this.chainId,
-            protobufTxRaw,  // ← Protobuf TxRaw
+            protobufTx,
             "sync"
         );
 
-        console.log('✅ Keplr sendTx successful!');
-        console.log('📊 TX Hash Bytes:', txHashBytes);
-
         // ✅ Hash conversion
-        let txHash;
-        if (txHashBytes instanceof Uint8Array) {
-            txHash = Array.from(txHashBytes).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-        } else if (typeof txHashBytes === 'string') {
-            txHash = txHashBytes.toUpperCase();
-        } else {
-            txHash = Buffer.from(txHashBytes).toString('hex').toUpperCase();
-        }
+        const txHash = Buffer.from(txHashBytes).toString('hex').toUpperCase();
 
-        console.log('🎉 Protobuf transaction broadcast successful!');
-        console.log('📊 Final TX Hash:', txHash);
+        console.log('🎉 Transaction successful! TX Hash:', txHash);
 
         return {
             success: true,
@@ -445,19 +267,8 @@ async broadcastTransaction(signedTx) {
         };
 
     } catch (error) {
-        console.error('❌ Protobuf broadcast failed:', error);
-        
-        if (error.message?.includes('Request rejected') || 
-            error.message?.includes('User denied') ||
-            error.message?.includes('User rejected')) {
-            throw new Error('Transaction was cancelled by user');
-        } else if (error.message?.includes('insufficient funds')) {
-            throw new Error('Insufficient funds for transaction');  
-        } else if (error.message?.includes('tx parse error')) {
-            throw new Error('Protobuf encoding error - transaction format invalid');
-        } else {
-            throw new Error(`Keplr sendTx failed: ${error.message}`);
-        }
+        console.error('❌ Broadcast failed:', error);
+        throw new Error(`Keplr sendTx failed: ${error.message}`);
     }
 }
 
