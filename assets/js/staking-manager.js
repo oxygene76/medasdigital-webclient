@@ -300,24 +300,25 @@ async broadcastTransaction(signedTx) {
         // ✅ SCHRITT 3: Broadcast via REST API (wie medasdigital-client es machen würde)
         console.log('📡 Broadcasting via REST API /cosmos/tx/v1beta1/txs...');
         
-        // ✅ NEU (ohne Preflight):
+       // ✅ NEU (ohne Preflight):
 const response = await fetch('https://lcd.medas-digital.io:1317/cosmos/tx/v1beta1/txs', {
     method: 'POST',
     body: JSON.stringify(signedTx)  // Browser setzt automatisch text/plain
 });
 
-        if (!restResponse.ok) {
-            const errorText = await restResponse.text();
-            throw new Error(`REST API failed: ${restResponse.status} - ${errorText}`);
-        }
+// ❌ ALT: restResponse
+// ✅ NEU: response
+if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`REST API failed: ${response.status} - ${errorText}`);
+}
 
-        const result = await restResponse.json();
-        console.log('📡 REST API broadcast response:', result);
+const result = await response.json();
+console.log('📡 REST API broadcast response:', result);
 
-        if (!result.tx_response) {
-            throw new Error('Invalid response: missing tx_response');
-        }
-        
+if (!result.tx_response) {
+    throw new Error('Invalid response: missing tx_response');
+}
         const txResponse = result.tx_response;
         
         if (txResponse.code !== 0) {
