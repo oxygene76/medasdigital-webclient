@@ -906,25 +906,106 @@ details[open] {
     </div>
 
    <!-- Ersetzen Sie Ihre bestehenden JavaScript-Includes mit diesen -->
+<!-- ===================================== -->
+<!-- ERSETZEN SIE NUR DIESEN TEIL IN IHRER INDEX.HTML -->
+<!-- Alles andere (HTML Body) bleibt unverändert! -->
+<!-- ===================================== -->
+
+<!-- Step 1: Load CosmJS as ES Module FIRST -->
 <script type="module">
-  // Import CosmJS modules
-  import { SigningStargateClient } from "@cosmjs/stargate";
-  import { coins } from "@cosmjs/stargate";
-  
-  // Make available globally
-  window.SigningStargateClient = SigningStargateClient;
-  window.coins = coins;
-  
-  console.log('✅ CosmJS modules loaded');
+    try {
+        // Import CosmJS modules
+        const { SigningStargateClient } = await import('/node_modules/@cosmjs/stargate/build/index.js');
+        const { coins } = await import('/node_modules/@cosmjs/stargate/build/index.js');
+        
+        // Make available globally for other scripts
+        window.SigningStargateClient = SigningStargateClient;
+        window.coins = coins;
+        
+        console.log('✅ CosmJS ES modules loaded successfully');
+        
+        // Signal that CosmJS is ready
+        window.cosmjsReady = true;
+        window.dispatchEvent(new Event('cosmjs-loaded'));
+        
+    } catch (error) {
+        console.warn('⚠️ CosmJS ES modules failed to load:', error.message);
+        console.log('🔄 Will use fallback browser-compatible version');
+        
+        // Fallback: CosmJS is not available
+        window.cosmjsReady = false;
+        window.dispatchEvent(new Event('cosmjs-failed'));
+    }
 </script>
-<!-- JavaScript Modules -->
-<script src="assets/js/config.js"></script>
-<script src="assets/js/mock-data.js"></script>
-<script src="assets/js/keplr-manager.js"></script>
-<script src="assets/js/staking-manager.js"></script> 
-<script src="assets/js/ui-manager.js"></script>
-<script src="assets/js/staking-helpers.js"></script>
-<script src="assets/js/main.js"></script>
-<script src="assets/js/mobile-navigation.js"></script>
+
+<!-- Step 2: Wait for CosmJS, then load scripts in correct order -->
+<script>
+    function loadScriptsInOrder() {
+        console.log('📚 Loading scripts in correct order...');
+        
+        // Scripts to load in sequence
+        const scripts = [
+            'assets/js/config.js',
+            'assets/js/mock-data.js', 
+            'assets/js/keplr-manager.js',
+            'assets/js/staking-manager.js',  // This will use window.SigningStargateClient
+            'assets/js/ui-manager.js',
+            'assets/js/staking-helpers.js',
+            'assets/js/main.js',
+            'assets/js/mobile-navigation.js'
+        ];
+        
+        let currentIndex = 0;
+        
+        function loadNextScript() {
+            if (currentIndex >= scripts.length) {
+                console.log('✅ All scripts loaded successfully!');
+                console.log('🚀 MedasDigital WebClient ready');
+                return;
+            }
+            
+            const script = document.createElement('script');
+            script.src = scripts[currentIndex];
+            script.onload = () => {
+                console.log(`✅ Loaded: ${scripts[currentIndex]}`);
+                currentIndex++;
+                loadNextScript();
+            };
+            script.onerror = () => {
+                console.error(`❌ Failed to load: ${scripts[currentIndex]}`);
+                currentIndex++;
+                loadNextScript(); // Continue even if one fails
+            };
+            
+            document.head.appendChild(script);
+        }
+        
+        loadNextScript();
+    }
+
+    // Wait for CosmJS to load (or fail), then load other scripts
+    window.addEventListener('cosmjs-loaded', () => {
+        console.log('🎉 CosmJS loaded, proceeding with other scripts');
+        loadScriptsInOrder();
+    });
+
+    window.addEventListener('cosmjs-failed', () => {
+        console.log('⚠️ CosmJS failed, loading scripts anyway (will use fallback)');
+        loadScriptsInOrder();
+    });
+
+    // Fallback: If events don't fire within 3 seconds, load anyway
+    setTimeout(() => {
+        if (!window.scriptsStartedLoading) {
+            console.log('⏰ Timeout reached, loading scripts without CosmJS');
+            window.scriptsStartedLoading = true;
+            loadScriptsInOrder();
+        }
+    }, 3000);
+</script>
+
+<!-- Notification Container -->
+<div id="notification-container"></div>
+
 </body>
 </html>
