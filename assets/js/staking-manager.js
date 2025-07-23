@@ -298,9 +298,24 @@ async broadcastTransaction(signedTx) {
 serializeKeplrTx(signedTx) {
     try {
         console.log('🔧 Serializing Keplr transaction...');
+        console.log('🔍 DEBUGGING TX WRAPPER CREATION:');
         
-        // ✅ COSMOS SDK 0.50 Transaction Format für CometBFT
-        const txWrapper = {
+        // ✅ DEBUG: Schauen wir uns die rohen Messages an
+        console.log('📊 Raw messages from Keplr:', signedTx.signed.msgs);
+        console.log('📊 Message count:', signedTx.signed.msgs?.length);
+        
+        if (signedTx.signed.msgs && signedTx.signed.msgs.length > 0) {
+            signedTx.signed.msgs.forEach((msg, i) => {
+                console.log(`📊 Message ${i}:`, msg);
+                console.log(`📊 Message ${i} @type:`, msg['@type']);
+                console.log(`📊 Message ${i} keys:`, Object.keys(msg));
+            });
+        }
+        
+        // ✅ VERSCHIEDENE TX WRAPPER FORMATE TESTEN
+        
+        // FORMAT 1: Standard Cosmos SDK 0.50
+        const txWrapper1 = {
             body: {
                 messages: signedTx.signed.msgs,
                 memo: signedTx.signed.memo || "",
@@ -331,11 +346,64 @@ serializeKeplrTx(signedTx) {
             signatures: [signedTx.signature.signature]
         };
         
-        console.log('📊 TX Wrapper for CometBFT:', txWrapper);
+        // FORMAT 2: Direkte Amino (wie async verwendet)
+        const txWrapper2 = {
+            msg: signedTx.signed.msgs,
+            fee: signedTx.signed.fee,
+            signatures: [signedTx.signature],
+            memo: signedTx.signed.memo || ""
+        };
         
-        // ✅ JSON → Base64 (CometBFT erwartet Base64-encoded bytes)
-        const txBytes = btoa(JSON.stringify(txWrapper));
-        console.log('📊 Serialized tx bytes length:', txBytes.length);
+        // FORMAT 3: StdTx Wrapper
+        const txWrapper3 = {
+            type: "cosmos-sdk/StdTx",
+            value: {
+                msg: signedTx.signed.msgs,
+                fee: signedTx.signed.fee,
+                signatures: [signedTx.signature],
+                memo: signedTx.signed.memo || ""
+            }
+        };
+        
+        console.log('🔍 TESTING 3 DIFFERENT FORMATS:');
+        console.log('📊 Format 1 (SDK 0.50):', txWrapper1);
+        console.log('📊 Format 1 messages:', txWrapper1.body.messages);
+        console.log('📊 Format 1 message count:', txWrapper1.body.messages?.length);
+        
+        console.log('📊 Format 2 (Direct Amino):', txWrapper2);
+        console.log('📊 Format 2 messages:', txWrapper2.msg);
+        console.log('📊 Format 2 message count:', txWrapper2.msg?.length);
+        
+        console.log('📊 Format 3 (StdTx):', txWrapper3);
+        console.log('📊 Format 3 messages:', txWrapper3.value.msg);
+        console.log('📊 Format 3 message count:', txWrapper3.value.msg?.length);
+        
+        // ✅ WELCHES FORMAT ZU VERWENDEN?
+        // Da broadcast_tx_commit Raw Protobuf erwartet, aber wir JSON senden,
+        // versuchen wir das Format das bei broadcast_tx_async funktioniert hat
+        
+        const txToUse = txWrapper2; // Direct Amino Format
+        console.log('📊 Using Direct Amino format for CometBFT');
+        
+        // ✅ JSON → Base64
+        const txBytes = btoa(JSON.stringify(txToUse));
+        console.log('📊 Final tx bytes length:', txBytes.length);
+        console.log('📊 Final tx bytes preview:', txBytes.substring(0, 100));
+        
+        // ✅ VALIDATION: Decode back to verify
+        try {
+            const decoded = JSON.parse(atob(txBytes));
+            console.log('✅ Validation: Decoded TX:', decoded);
+            console.log('✅ Validation: Message count after decode:', decoded.msg?.length);
+            
+            if (!decoded.msg || decoded.msg.length === 0) {
+                console.error('❌ VALIDATION FAILED: No messages after encoding/decoding!');
+                throw new Error('Transaction lost messages during encoding');
+            }
+        } catch (validationError) {
+            console.error('❌ VALIDATION ERROR:', validationError);
+            throw validationError;
+        }
         
         return txBytes;
         
@@ -344,7 +412,6 @@ serializeKeplrTx(signedTx) {
         throw new Error(`TX serialization failed: ${error.message}`);
     }
 }
-
 // ===================================
 // 🔧 COMMIT RESPONSE HANDLER
 // ===================================
