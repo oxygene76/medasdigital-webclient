@@ -1318,52 +1318,7 @@ async performUnstakingCorsFix(delegatorAddress, validatorAddress, amountInUmedas
     }
 }
 
-// ===================================
-// DEBUGGING: Was verursacht Cache Reset?
-// ===================================
 
-window.debugCacheResetCause = function() {
-    console.log('🔍 CACHE RESET DEBUG:');
-    console.log('======================');
-    
-    console.log('❌ KNOWN CACHE RESET CAUSES:');
-    console.log('1. experimentalSuggestChain() - HAUPTVERURSACHER!');
-    console.log('2. Inkonsistente Chain Configs');
-    console.log('3. RPC/REST Endpoint Wechsel');
-    console.log('4. Falsche Chain IDs');
-    console.log('5. CORS-geblockte Requests');
-    
-    console.log('✅ CACHE RESET PREVENTION:');
-    console.log('1. KEIN experimentalSuggestChain verwenden');
-    console.log('2. Nur keplr.enable(chainId) verwenden');
-    console.log('3. Konsistente Endpoints verwenden');
-    console.log('4. Direkte RPC/REST für Keplr');
-    console.log('5. Proxy nur für WebClient API calls');
-    
-    return 'Cache reset analysis complete - avoid experimentalSuggestChain!';
-};
-
-// Test ohne experimentalSuggestChain
-window.testNoSuggestChain = async function() {
-    try {
-        console.log('🧪 Testing Keplr WITHOUT experimentalSuggestChain...');
-        
-        const chainId = "medasdigital-2";
-        
-        // ✅ NUR ENABLE
-        await window.keplr.enable(chainId);
-        console.log('✅ Keplr enabled successfully WITHOUT suggest chain');
-        
-        const accounts = await window.keplr.getKey(chainId);
-        console.log('✅ Got accounts without cache issues:', accounts.bech32Address);
-        
-        return 'Test successful - NO cache reset!';
-        
-    } catch (error) {
-        console.error('❌ Test failed:', error.message);
-        return `Test failed: ${error.message}`;
-    }
-};
     async getAccountInfoViaProxy(address) {
         try {
             // ✅ WEBCLIENT API-CALLS ÜBER PROXY
@@ -1857,6 +1812,52 @@ window.debugValidators = function() {
     return 'Debug complete - check console output above';
 };
 
+// ===================================
+// DEBUGGING: Was verursacht Cache Reset?
+// ===================================
+
+window.debugCacheResetCause = function() {
+    console.log('🔍 CACHE RESET DEBUG:');
+    console.log('======================');
+    
+    console.log('❌ KNOWN CACHE RESET CAUSES:');
+    console.log('1. experimentalSuggestChain() - HAUPTVERURSACHER!');
+    console.log('2. Inkonsistente Chain Configs');
+    console.log('3. RPC/REST Endpoint Wechsel');
+    console.log('4. Falsche Chain IDs');
+    console.log('5. CORS-geblockte Requests');
+    
+    console.log('✅ CACHE RESET PREVENTION:');
+    console.log('1. KEIN experimentalSuggestChain verwenden');
+    console.log('2. Nur keplr.enable(chainId) verwenden');
+    console.log('3. Konsistente Endpoints verwenden');
+    console.log('4. Direkte RPC/REST für Keplr');
+    console.log('5. Proxy nur für WebClient API calls');
+    
+    return 'Cache reset analysis complete - avoid experimentalSuggestChain!';
+};
+
+// Test ohne experimentalSuggestChain
+window.testNoSuggestChain = async function() {
+    try {
+        console.log('🧪 Testing Keplr WITHOUT experimentalSuggestChain...');
+        
+        const chainId = "medasdigital-2";
+        
+        // ✅ NUR ENABLE
+        await window.keplr.enable(chainId);
+        console.log('✅ Keplr enabled successfully WITHOUT suggest chain');
+        
+        const accounts = await window.keplr.getKey(chainId);
+        console.log('✅ Got accounts without cache issues:', accounts.bech32Address);
+        
+        return 'Test successful - NO cache reset!';
+        
+    } catch (error) {
+        console.error('❌ Test failed:', error.message);
+        return `Test failed: ${error.message}`;
+    }
+};
 window.checkValidatorHTML = function() {
     const stakingTab = document.getElementById('staking-tab');
     const validatorsList = document.getElementById('validators-list');
