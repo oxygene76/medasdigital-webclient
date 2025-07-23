@@ -143,146 +143,96 @@ class StakingManager {
 
 async encodeTxForBroadcast(signedTx) {
     try {
-        console.log('🔧 Encoding transaction via TxEncodeAmino (DIRECT URL)...');
-        console.log('🔍 SignedTx structure:', signedTx);
+        console.log('🔧 Encoding transaction for Cosmos SDK 0.50.10...');
         
-        // ✅ KORRIGIERTES AMINO FORMAT - StdTx Wrapper hinzufügen!
-        const stdTx = {
-            type: "cosmos-sdk/StdTx",      // ← DAS HAT GEFEHLT!
-            value: {
-                msg: signedTx.signed.msgs,
-                fee: signedTx.signed.fee,
-                signatures: [signedTx.signature],
-                memo: signedTx.signed.memo || "",
-                timeout_height: "0"        // ← DAS HAT AUCH GEFEHLT!
-            }
+        // ✅ AMINO TX FORMAT für RPC broadcast_tx_sync
+        const aminoTx = {
+            msg: signedTx.signed.msgs,
+            fee: signedTx.signed.fee,
+            signatures: [signedTx.signature],
+            memo: signedTx.signed.memo || ""
         };
         
-        console.log('🔧 Correct StdTx for encoding:', stdTx);
+        console.log('🔧 Cosmos SDK 0.50.10 Amino TX:', aminoTx);
         
-        // ✅ REQUEST BODY mit korrektem Format
-        const requestBody = {
-            amino_json: JSON.stringify(stdTx)  // ← Jetzt mit StdTx wrapper!
-        };
-        
-        console.log('🔧 Corrected Request Body:', requestBody);
-        
-        // ✅ DIREKTE LCD URL (kein Proxy mehr!)
-        const restUrl = 'https://lcd.medas-digital.io:1317';  // ← DIREKT!
-        const encodeResponse = await fetch(`${restUrl}/cosmos/tx/v1beta1/encode/amino`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-        });
-
-        console.log('🔧 Response Status:', encodeResponse.status);
-        
-        // ✅ SCHAUEN WIR UNS DIE ANTWORT AN
-        const responseText = await encodeResponse.text();
-        console.log('🔧 Raw Response Text:', responseText);
-        
-        let responseData;
-        try {
-            responseData = JSON.parse(responseText);
-            console.log('🔧 Parsed Response JSON:', responseData);
-        } catch (parseError) {
-            console.log('🔧 Response is not JSON:', parseError.message);
-            responseData = responseText;
-        }
-
-        if (!encodeResponse.ok) {
-            console.error('❌ TxEncodeAmino failed!');
-            console.error('❌ Status:', encodeResponse.status);
-            console.error('❌ Response:', responseData);
-            throw new Error(`TxEncodeAmino failed: HTTP ${encodeResponse.status} - ${responseText}`);
-        }
-
-        console.log('✅ TxEncodeAmino successful!');
-        console.log('✅ Response data:', responseData);
-        
-        if (responseData && responseData.amino_binary) {
-            console.log('✅ Got amino_binary:', responseData.amino_binary);
-            return responseData.amino_binary;
-        } else {
-            console.error('❌ No amino_binary in response!');
-            console.error('❌ Available keys:', Object.keys(responseData || {}));
-            throw new Error('No amino_binary in response');
-        }
+        // ✅ JSON STRING für Base64 encoding
+        return JSON.stringify(aminoTx);
         
     } catch (error) {
         console.error('❌ Transaction encoding failed:', error);
-        console.error('❌ SignedTx was:', signedTx);
         throw new Error(`Encoding failed: ${error.message}`);
     }
 }
 
 async broadcastTransaction(signedTx) {
     try {
-        // ✅ DIREKTE LCD URL (kein Proxy mehr!)
-        const restUrl = 'https://lcd.medas-digital.io:1317';  // ← DIREKT!
+        console.log('📡 Broadcasting via RPC (Cosmos SDK 0.50.10)...');
         
-        console.log('📡 Broadcasting transaction with modern API (DIRECT)...');
+        // ✅ SCHRITT 1: Amino JSON erstellen
+        const aminoTxString = await this.encodeTxForBroadcast(signedTx);
         
-        // ✅ SCHRITT 1: Transaction encodieren
-        const txBytes = await this.encodeTxForBroadcast(signedTx);
+        // ✅ SCHRITT 2: Base64 encode für RPC
+        const txBytes = btoa(aminoTxString);
         
-        const broadcastReq = {
-            tx_bytes: txBytes,
-            mode: "BROADCAST_MODE_SYNC"
-        };
+        console.log('📡 TX bytes prepared for RPC broadcast');
         
-        console.log('📡 Broadcasting with protobuf bytes...');
-        console.log('📡 Broadcast request:', broadcastReq);
-        
-        // ✅ SCHRITT 2: Broadcast mit moderner API (DIREKT!)
-        const response = await fetch(`${restUrl}/cosmos/tx/v1beta1/txs`, {
+        // ✅ SCHRITT 3: RPC broadcast_tx_sync (Cosmos SDK 0.50.10 compatible)
+        const rpcResponse = await fetch('https://rpc.medas-digital.io:26657/broadcast_tx_sync', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(broadcastReq)
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                id: 1,
+                method: "broadcast_tx_sync",
+                params: {
+                    tx: txBytes
+                }
+            })
         });
 
-        console.log('📡 Broadcast response status:', response.status);
+        console.log('📡 RPC Response status:', rpcResponse.status);
 
-        // ✅ SCHAUEN WIR UNS DIE KOMPLETTE BROADCAST-ANTWORT AN
-        const broadcastResponseText = await response.text();
-        console.log('📡 Raw Broadcast Response:', broadcastResponseText);
+        if (!rpcResponse.ok) {
+            const errorText = await rpcResponse.text();
+            console.error('❌ RPC broadcast failed:', errorText);
+            throw new Error(`RPC broadcast failed: HTTP ${rpcResponse.status} - ${errorText}`);
+        }
+
+        const rpcResult = await rpcResponse.json();
+        console.log('📡 RPC Result:', rpcResult);
         
-        let broadcastData;
-        try {
-            broadcastData = JSON.parse(broadcastResponseText);
-            console.log('📡 Parsed Broadcast Response:', broadcastData);
-        } catch (parseError) {
-            console.log('📡 Broadcast response is not JSON:', parseError.message);
-            broadcastData = broadcastResponseText;
+        // ✅ SCHRITT 4: RPC Response verarbeiten (Cosmos SDK 0.50.10 format)
+        if (rpcResult.error) {
+            console.error('❌ RPC Error:', rpcResult.error);
+            throw new Error(`RPC Error: ${rpcResult.error.message || rpcResult.error.data}`);
         }
-
-        if (!response.ok) {
-            console.error('❌ Broadcast failed!');
-            console.error('❌ Status:', response.status);
-            console.error('❌ Response:', broadcastData);
-            throw new Error(`Broadcast failed: HTTP ${response.status} - ${broadcastResponseText}`);
-        }
-
-        console.log('🎉 Broadcast successful!');
-        console.log('🎉 Broadcast result:', broadcastData);
         
-        if (broadcastData && broadcastData.tx_response && broadcastData.tx_response.code !== 0) {
-            throw new Error(`Transaction failed: ${broadcastData.tx_response.raw_log}`);
+        if (!rpcResult.result) {
+            throw new Error('Invalid RPC response: missing result');
+        }
+        
+        if (rpcResult.result.code !== 0) {
+            const errorMsg = rpcResult.result.log || 'Unknown transaction error';
+            console.error('❌ Transaction failed:', errorMsg);
+            throw new Error(`Transaction failed: ${errorMsg}`);
         }
 
+        console.log('🎉 Cosmos SDK 0.50.10 RPC broadcast successful!');
+        
         return {
             success: true,
-            txHash: broadcastData.tx_response?.txhash,
-            code: broadcastData.tx_response?.code,
-            rawLog: broadcastData.tx_response?.raw_log
+            txHash: rpcResult.result.hash,
+            code: rpcResult.result.code,
+            rawLog: rpcResult.result.log || 'Transaction successful',
+            height: rpcResult.result.height || null,
+            gasWanted: rpcResult.result.gas_wanted || null,
+            gasUsed: rpcResult.result.gas_used || null
         };
-        
+
     } catch (error) {
-        console.error('❌ Transaction broadcast failed:', error);
+        console.error('❌ Cosmos SDK 0.50.10 RPC broadcast failed:', error);
         return {
             success: false,
             error: error.message
