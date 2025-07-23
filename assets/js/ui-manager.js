@@ -6,8 +6,8 @@ class UIManager {
         this.messageHistory = new Map();
         this.contacts = new Map();
         this.validatorNameCache = new Map();
-        this.stakingManager = new StakingManager(); // ✅ HINZUFÜGEN
         this.init();
+        this.stakingManager = new StakingManager(); // ✅ HINZUFÜGEN
     }
 
     init() {
