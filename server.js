@@ -116,7 +116,13 @@ if (!isProduction) {
             appType: 'spa',
             root: process.cwd(),
             configFile: './vite.config.js',
-            logLevel: 'info'
+            logLevel: 'info',
+            // WICHTIG: Build Konfiguration für Custom Entry Point
+            build: {
+                rollupOptions: {
+                    input: './assets/js/main.js' // Verwende bestehende main.js
+                }
+            }
         });
         
         console.log('✅ Vite server created successfully');
