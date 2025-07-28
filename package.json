@@ -1,126 +1,62 @@
 {
   "name": "medasdigital-webclient",
   "version": "0.9.0",
-  "description": "Advanced blockchain web client with Planet 9 visualization for Medas Digital",
+  "description": "Advanced blockchain web client with WeedWallet-Pattern for Medas Digital",
   "main": "server.js",
   "type": "module",
   "scripts": {
     "start": "NODE_ENV=production node server.js",
     "dev": "NODE_ENV=development nodemon server.js",
-    "dev-stable": "NODE_ENV=development node server.js",
-    "build": "vite build",
-    "preview": "NODE_ENV=production node server.js",
     "legacy-start": "python -m http.server 8000",
-    "live-dev": "live-server --port=8000 --open=/",
-    "deploy": "./scripts/deploy.sh",
     "daemon": "docker run -d --name medas-digital-daemon -p 8080:8080 medas-digital/daemon:latest",
-    "test-cosmjs": "echo 'Stable Server: http://localhost:8080 | Test: window.testMedasOsmosisStyle()'",
-    "vite-dev": "vite --port 3000",
-    "vite-build": "vite build",
-    "full-dev": "concurrently \"npm run dev\" \"npm run vite-dev\"",
+    "test-cosmjs": "echo 'Simple Server: http://localhost:8080 | Test: window.cosmjsReady'",
     "stop": "pkill -f 'node server.js' || true"
   },
   "keywords": [
     "blockchain",
     "cosmos",
     "keplr",
-    "astronomy",
-    "planet9",
     "defi",
     "staking",
-    "research",
     "medas-digital",
-    "chat",
-    "real-time",
     "cosmjs",
-    "osmosis-style",
+    "weedwallet-pattern",
     "express",
-    "vite",
-    "stable"
+    "simplified"
   ],
   "author": "Medas Digital Team",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/yourusername/medas-digital-webclient.git"
-  },
-  "bugs": {
-    "url": "https://github.com/yourusername/medas-digital-webclient/issues"
-  },
-  "homepage": "https://yourusername.github.io/medas-digital-webclient",
   "dependencies": {
     "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "http-proxy-middleware": "^2.0.6",
-    "serve-static": "^1.15.0",
-    "@cosmjs/stargate": "^0.32.0",
-    "@cosmjs/proto-signing": "^0.32.0",
-    "@cosmjs/amino": "^0.32.0",
-    "@cosmjs/encoding": "^0.32.0",
-    "@cosmjs/math": "^0.32.0",
-    "@cosmjs/utils": "^0.32.0",
-    "cosmjs-types": "^0.9.0",
-    "buffer": "^6.0.3",
-    "process": "^0.11.10"
+    "cors": "^2.8.5"
   },
   "devDependencies": {
-    "live-server": "^1.2.2",
-    "nodemon": "^3.0.1",
-    "vite": "^5.0.0",
-    "@rollup/plugin-node-resolve": "^15.0.0",
-    "@rollup/plugin-commonjs": "^25.0.0",
-    "@rollup/plugin-inject": "^5.0.0",
-    "@rollup/plugin-replace": "^5.0.0",
-    "crypto-browserify": "^3.12.0",
-    "stream-browserify": "^3.0.0",
-    "https-browserify": "^1.0.0",
-    "stream-http": "^3.2.0",
-    "os-browserify": "^0.3.0",
-    "url": "^0.11.0",
-    "assert": "^2.0.0",
-    "util": "^0.12.0",
-    "events": "^3.3.0",
-    "path-browserify": "^1.0.1",
-    "concurrently": "^8.0.0"
+    "nodemon": "^3.0.1"
   },
   "engines": {
     "node": ">=16.0.0"
   },
   "config": {
-    "daemon": {
-      "urls": [
-        "http://localhost:8080", 
-        "http://127.0.0.1:8080", 
-        "http://localhost:8081"
-      ],
-      "endpoints": {
-        "status": "/api/v1/status",
-        "messages": "/api/v1/messages",
-        "contacts": "/api/v1/contacts",
-        "channels": "/api/v1/channels"
-      }
-    },
     "blockchain": {
-      "chainId": "medasdigital-2",
+      "chainId": "medas-digital-1",
       "rpc": "https://rpc.medas-digital.io:26657",
       "rest": "https://lcd.medas-digital.io:1317"
     },
     "cosmjs": {
+      "source": "esm.sh CDN",
       "gasPrice": "0.025umedas",
-      "broadcastTimeoutMs": 30000,
-      "broadcastPollIntervalMs": 1000
+      "pattern": "WeedWallet"
+    },
+    "daemon": {
+      "urls": [
+        "http://localhost:8080", 
+        "http://127.0.0.1:8080"
+      ],
+      "endpoints": {
+        "status": "/api/v1/status",
+        "messages": "/api/v1/messages",
+        "contacts": "/api/v1/contacts"
+      }
     }
-  },
-  "browser": {
-    "crypto": "crypto-browserify",
-    "stream": "stream-browserify",
-    "assert": "assert",
-    "http": "stream-http",
-    "https": "https-browserify", 
-    "os": "os-browserify",
-    "url": "url",
-    "util": "util",
-    "events": "events",
-    "path": "path-browserify"
   }
 }
