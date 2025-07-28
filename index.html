@@ -725,9 +725,367 @@ details[open] {
 
 </div>
     </div>
+<!-- ===================================
+         JAVASCRIPT OHNE VITE
+         WeedWallet-Pattern für MedasDigital
+         =================================== -->
+    
+    <!-- Browser Polyfills für CosmJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js"></script>
+    <script>
+        // Global polyfills
+        window.global = window;
+        window.process = { env: {} };
+        if (!window.Buffer) {
+            window.Buffer = buffer.Buffer;
+        }
+        console.log('✅ Browser polyfills loaded');
+    </script>
+    
+    <!-- CosmJS via ESM CDN (WeedWallet-Pattern) -->
+    <script type="module">
+        try {
+            console.log('🔄 Loading CosmJS via ESM CDN...');
+            
+            // Import CosmJS direkt über ESM CDN
+            const { SigningStargateClient, GasPrice } = await import('https://esm.sh/@cosmjs/stargate@0.32.0');
+            const { coins } = await import('https://esm.sh/@cosmjs/stargate@0.32.0');
+            
+            // Global verfügbar machen (WeedWallet-Pattern)
+            window.SigningStargateClient = SigningStargateClient;
+            window.GasPrice = GasPrice;
+            window.coins = coins;
+            window.cosmjsReady = true;
+            
+            console.log('✅ CosmJS loaded via CDN (WeedWallet-Pattern)!');
+            console.log('  SigningStargateClient:', typeof SigningStargateClient);
+            console.log('  GasPrice:', typeof GasPrice);
+            console.log('  coins:', typeof coins);
+            
+            // Signal für die App
+            window.dispatchEvent(new Event('cosmjs-loaded'));
+            
+        } catch (error) {
+            console.error('❌ CosmJS loading failed:', error);
+            window.cosmjsReady = false;
+            window.dispatchEvent(new Event('cosmjs-failed'));
+        }
+    </script>
+    
+    <!-- Basis-Konfiguration -->
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/mock-data.js"></script>
+    
+    <!-- Manager Classes -->
+    <script src="assets/js/keplr-manager.js"></script>
+    
+    <!-- SIMPLIFIED STAKING MANAGER (WeedWallet-Pattern) -->
+    <script>
+        // ===================================
+        // SIMPLIFIED STAKING MANAGER
+        // WeedWallet-Pattern ohne ES Modules
+        // ===================================
+        
+        class StakingManager {
+            constructor() {
+                this.chainId = 'medas-digital-1';  // Ihre Chain ID
+                this.rpcUrl = 'https://rpc.medas-digital.io:26657';
+                this.restUrl = 'https://lcd.medas-digital.io:1317';
+                this.denom = 'umedas';
+                this.client = null;
+                this.account = null;
+                
+                // Warte auf CosmJS
+                this.waitForCosmJS();
+                console.log('✅ StakingManager initialized (WeedWallet-Pattern)');
+            }
+            
+            async waitForCosmJS() {
+                let attempts = 0;
+                while (!window.cosmjsReady && attempts < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
+                }
+                
+                if (window.cosmjsReady) {
+                    console.log('✅ StakingManager: CosmJS ready!');
+                } else {
+                    console.warn('⚠️ StakingManager: CosmJS timeout');
+                }
+            }
+            
+            // WeedWallet-Pattern: Direkte Keplr-Verbindung
+            async connectKeplr() {
+                if (!window.keplr) {
+                    throw new Error('Keplr extension not found');
+                }
+                
+                // Chain vorschlagen
+                await this.suggestChain();
+                
+                // Keplr aktivieren
+                await window.keplr.enable(this.chainId);
+                
+                // Signer erstellen
+                const offlineSigner = window.getOfflineSigner(this.chainId);
+                
+                // Client erstellen (WeedWallet-Pattern)
+                this.client = await window.SigningStargateClient.connectWithSigner(
+                    this.rpcUrl,
+                    offlineSigner,
+                    { gasPrice: window.GasPrice.fromString("0.025umedas") }
+                );
+                
+                // Account
+                const accounts = await offlineSigner.getAccounts();
+                this.account = accounts[0];
+                
+                console.log('✅ Keplr connected (WeedWallet-Pattern):', this.account.address);
+                return this.account;
+            }
+            
+            async suggestChain() {
+                const chainConfig = {
+                    chainId: this.chainId,
+                    chainName: 'MedasDigital',
+                    rpc: this.rpcUrl,
+                    rest: this.restUrl,
+                    bip44: { coinType: 118 },
+                    bech32Config: {
+                        bech32PrefixAccAddr: 'medas',
+                        bech32PrefixAccPub: 'medaspub',
+                        bech32PrefixValAddr: 'medasvaloper',
+                        bech32PrefixValPub: 'medasvaloperpub',
+                        bech32PrefixConsAddr: 'medasvalcons',
+                        bech32PrefixConsPub: 'medasvalconspub'
+                    },
+                    currencies: [{
+                        coinDenom: 'MEDAS',
+                        coinMinimalDenom: 'umedas',
+                        coinDecimals: 6
+                    }],
+                    feeCurrencies: [{
+                        coinDenom: 'MEDAS',
+                        coinMinimalDenom: 'umedas',
+                        coinDecimals: 6,
+                        gasPriceStep: { low: 0.01, average: 0.025, high: 0.04 }
+                    }],
+                    stakeCurrency: {
+                        coinDenom: 'MEDAS',
+                        coinMinimalDenom: 'umedas',
+                        coinDecimals: 6
+                    }
+                };
+                
+                try {
+                    await window.keplr.experimentalSuggestChain(chainConfig);
+                    console.log('✅ Chain suggested to Keplr');
+                } catch (error) {
+                    console.log('ℹ️ Chain suggestion failed (might already exist)');
+                }
+            }
+            
+            // WeedWallet-Pattern: Direkte Delegation
+            async delegate(delegatorAddress, validatorAddress, amount) {
+                try {
+                    console.log('🔄 Starting delegation (WeedWallet-Pattern)...');
+                    
+                    if (!this.client) {
+                        await this.connectKeplr();
+                    }
+                    
+                    const amountInUmedas = parseFloat(amount) * 1000000;
+                    const coin = { denom: this.denom, amount: amountInUmedas.toString() };
+                    
+                    const msg = {
+                        typeUrl: "/cosmos.staking.v1beta1.MsgDelegate",
+                        value: { delegatorAddress, validatorAddress, amount: coin }
+                    };
+                    
+                    const result = await this.client.signAndBroadcast(
+                        delegatorAddress,
+                        [msg],
+                        "auto",
+                        "Delegation via MedasDigital WebClient"
+                    );
+                    
+                    console.log('✅ Delegation successful:', result);
+                    return { success: true, txHash: result.transactionHash };
+                    
+                } catch (error) {
+                    console.error('❌ Delegation failed:', error);
+                    return { success: false, error: error.message };
+                }
+            }
+            
+            async undelegate(delegatorAddress, validatorAddress, amount) {
+                try {
+                    if (!this.client) await this.connectKeplr();
+                    
+                    const amountInUmedas = parseFloat(amount) * 1000000;
+                    const coin = { denom: this.denom, amount: amountInUmedas.toString() };
+                    
+                    const msg = {
+                        typeUrl: "/cosmos.staking.v1beta1.MsgUndelegate",
+                        value: { delegatorAddress, validatorAddress, amount: coin }
+                    };
+                    
+                    const result = await this.client.signAndBroadcast(
+                        delegatorAddress,
+                        [msg],
+                        "auto",
+                        "Undelegation via MedasDigital WebClient"
+                    );
+                    
+                    return { success: true, txHash: result.transactionHash };
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+            
+            async claimRewards(delegatorAddress, validatorAddresses) {
+                try {
+                    if (!this.client) await this.connectKeplr();
+                    
+                    const messages = validatorAddresses.map(validatorAddress => ({
+                        typeUrl: "/cosmos.distribution.v1beta1.MsgWithdrawDelegatorReward",
+                        value: { delegatorAddress, validatorAddress }
+                    }));
+                    
+                    const result = await this.client.signAndBroadcast(
+                        delegatorAddress,
+                        messages,
+                        "auto",
+                        "Claim rewards via MedasDigital WebClient"
+                    );
+                    
+                    return { success: true, txHash: result.transactionHash };
+                } catch (error) {
+                    return { success: false, error: error.message };
+                }
+            }
+        }
+        
+        // Global verfügbar machen
+        window.stakingManager = new StakingManager();
+        
+        // Global helper functions (für UI buttons)
+        window.delegateTokens = async function(validatorAddress, amount) {
+            // Wenn keine Parameter, versuche aus UI zu lesen
+            if (!validatorAddress) {
+                validatorAddress = document.getElementById('validator-select')?.value;
+            }
+            if (!amount) {
+                amount = document.getElementById('stake-amount')?.value;
+            }
+            
+            if (!window.terminal?.account?.address) {
+                alert('Please connect your wallet first');
+                return;
+            }
+            
+            if (!validatorAddress || validatorAddress === 'Select a validator...') {
+                alert('Please select a validator');
+                return;
+            }
+            
+            if (!amount || parseFloat(amount) <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+            
+            try {
+                console.log('🔄 Delegating via global function...');
+                
+                const result = await window.stakingManager.delegate(
+                    window.terminal.account.address,
+                    validatorAddress,
+                    amount
+                );
+                
+                if (result.success) {
+                    alert(`✅ Successfully delegated ${amount} MEDAS!\nTx Hash: ${result.txHash}`);
+                    
+                    // UI refresh wenn verfügbar
+                    if (window.uiManager?.populateUserDelegations) {
+                        window.uiManager.populateUserDelegations(window.terminal.account.address);
+                    }
+                } else {
+                    alert(`❌ Delegation failed: ${result.error}`);
+                }
+                
+                return result;
+                
+            } catch (error) {
+                console.error('❌ Global delegation failed:', error);
+                alert(`❌ Delegation error: ${error.message}`);
+            }
+        };
+        
+        // Helper für Advanced Operations
+        window.performRedelegationFromForm = async function() {
+            const fromValidator = document.getElementById('redelegate-from-select')?.value;
+            const toValidator = document.getElementById('redelegate-to-select')?.value;
+            const amount = document.getElementById('redelegate-amount')?.value;
+            
+            if (!window.terminal?.account?.address) {
+                alert('Please connect your wallet first');
+                return;
+            }
+            
+            if (!fromValidator || !toValidator || !amount) {
+                alert('Please fill in all redelegation fields');
+                return;
+            }
+            
+            // Implementierung für Redelegation...
+            alert('Redelegation feature coming soon!');
+        };
+        
+        window.performUndelegationFromForm = async function() {
+            const validator = document.getElementById('undelegate-from-select')?.value;
+            const amount = document.getElementById('undelegate-amount')?.value;
+            
+            if (!window.terminal?.account?.address) {
+                alert('Please connect your wallet first');
+                return;
+            }
+            
+            if (!validator || !amount) {
+                alert('Please fill in all undelegation fields');
+                return;
+            }
+            
+            try {
+                const result = await window.stakingManager.undelegate(
+                    window.terminal.account.address,
+                    validator,
+                    amount
+                );
+                
+                if (result.success) {
+                    alert(`✅ Successfully undelegated ${amount} MEDAS!\nUnbonding period: 21 days\nTx Hash: ${result.txHash}`);
+                } else {
+                    alert(`❌ Undelegation failed: ${result.error}`);
+                }
+            } catch (error) {
+                alert(`❌ Undelegation error: ${error.message}`);
+            }
+        };
+        
+        console.log('✅ Simplified StakingManager loaded (WeedWallet-Pattern)!');
+    </script>
+    
+    <!-- UI Manager und andere Scripts -->
+    <script src="assets/js/ui-manager.js"></script>
+    <script src="assets/js/staking-helpers.js"></script>
+    <script src="assets/js/main.js"></script>  <!-- BEREINIGTE VERSION -->
+    <script src="assets/js/mobile-navigation.js"></script>
+    
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+</body>
+</html>
 
-<script type="module" src="/assets/js/main.js"></script>
-<!-- Notification Container -->
-<div id="notification-container"></div>
 </body>
 </html>
