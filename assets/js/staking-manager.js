@@ -7,7 +7,7 @@ class StakingManager {
     constructor() {
         this.client = null;
         this.account = null;
-        this.chainId = 'medas-digital-1'; // Ihre Chain ID
+        this.chainId = 'medasdigital-2'; // Ihre Chain ID
         this.rpcUrl = 'https://rpc.medas-digital.io:26657';
         this.restUrl = 'https://lcd.medas-digital.io:1317';
         this.denom = 'umedas';
