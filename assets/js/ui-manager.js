@@ -566,7 +566,7 @@ class UIManager {
         
         try {
             // ✅ VERWENDE WEBCLIENT PROXY FÜR API CALLS
-            const restUrl = window.WEBCLIENT_API_CONFIG?.rest || window.MEDAS_CHAIN_CONFIG?.rest || 'https://app.medas-digital.io:8080/api/lcd';
+            const restUrl = window.WEBCLIENT_API_CONFIG?.rest || window.MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
             const response = await fetch(`${restUrl}/cosmos/staking/v1beta1/validators?status=BOND_STATUS_BONDED&pagination.limit=100`, {
                 method: 'GET',
                 signal: AbortSignal.timeout(10000)
@@ -713,7 +713,7 @@ class UIManager {
     async fetchUserDelegations(delegatorAddress) {
         try {
             // ✅ VERWENDE WEBCLIENT PROXY FÜR API CALLS
-            const restUrl = window.WEBCLIENT_API_CONFIG?.rest || window.MEDAS_CHAIN_CONFIG?.rest || 'https://app.medas-digital.io:8080/api/lcd';
+            const restUrl = window.WEBCLIENT_API_CONFIG?.rest || window.MEDAS_CHAIN_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
             
             const delegationsResponse = await fetch(`${restUrl}/cosmos/staking/v1beta1/delegations/${delegatorAddress}`, {
                 method: 'GET',
