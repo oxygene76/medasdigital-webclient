@@ -1126,7 +1126,7 @@ class UIManager {
     async fetchUserBalances(address) {
         try {
             // ✅ VERWENDE WEBCLIENT PROXY FÜR API CALLS
-            const restUrl = window.WEBCLIENT_API_CONFIG?.rest || 'https://app.medas-digital.io:8080/api/lcd';
+            const restUrl = window.WEBCLIENT_API_CONFIG?.rest || 'https://lcd.medas-digital.io:1317';
             
             const balanceResponse = await fetch(`${restUrl}/cosmos/bank/v1beta1/balances/${address}`, {
                 method: 'GET',
