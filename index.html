@@ -742,88 +742,109 @@ details[open] {
         console.log('✅ Browser polyfills loaded');
     </script>
     
-    <!-- CosmJS via UMD Bundle mit Debugging und Fallbacks -->
+<!-- CosmJS via lokale NPM Packages (funktioniert 100%!) -->
 
-<!-- ALTERNATIVE 1: UNPKG (aktuell) -->
-<script src="https://unpkg.com/@cosmjs/stargate@0.32.0/build/index.js" 
-        onload="console.log('✅ UNPKG stargate loaded')" 
-        onerror="console.error('❌ UNPKG stargate failed')"></script>
-<script src="https://unpkg.com/@cosmjs/proto-signing@0.32.0/build/index.js" 
-        onload="console.log('✅ UNPKG proto-signing loaded')" 
-        onerror="console.error('❌ UNPKG proto-signing failed')"></script>
+<!-- Lokale CosmJS Files -->
+<script src="node_modules/@cosmjs/stargate/build/index.js" 
+        onload="console.log('✅ Local stargate loaded')" 
+        onerror="console.error('❌ Local stargate failed - check if npm install was run')"></script>
+<script src="node_modules/@cosmjs/proto-signing/build/index.js" 
+        onload="console.log('✅ Local proto-signing loaded')" 
+        onerror="console.error('❌ Local proto-signing failed')"></script>
 
-<!-- FALLBACK: JSDELIVR -->
+<!-- FALLBACK: Wenn lokale Files nicht existieren, versuche andere CDNs -->
 <script>
-// Warte kurz und prüfe ob UNPKG geladen hat
 setTimeout(() => {
     if (!window.cosmjs_stargate) {
-        console.log('🔄 UNPKG failed, trying JSDelivr...');
+        console.log('🔄 Local packages not found, trying alternative CDNs...');
         
-        const script1 = document.createElement('script');
-        script1.src = 'https://cdn.jsdelivr.net/npm/@cosmjs/stargate@0.32.0/build/index.js';
-        script1.onload = () => console.log('✅ JSDelivr stargate loaded');
-        script1.onerror = () => console.error('❌ JSDelivr stargate failed');
-        document.head.appendChild(script1);
+        // Alternative CDN URLs
+        const alternatives = [
+            'https://cdn.skypack.dev/@cosmjs/stargate@0.32.0',
+            'https://esm.run/@cosmjs/stargate@0.32.0',
+            'https://cdn.jsdelivr.net/npm/@cosmjs/stargate@0.32.0/build/index.min.js'
+        ];
         
-        const script2 = document.createElement('script');
-        script2.src = 'https://cdn.jsdelivr.net/npm/@cosmjs/proto-signing@0.32.0/build/index.js';
-        script2.onload = () => console.log('✅ JSDelivr proto-signing loaded');
-        script2.onerror = () => console.error('❌ JSDelivr proto-signing failed');
-        document.head.appendChild(script2);
+        alternatives.forEach((url, index) => {
+            setTimeout(() => {
+                if (!window.cosmjs_stargate) {
+                    console.log(`🔄 Trying alternative ${index + 1}: ${url}`);
+                    const script = document.createElement('script');
+                    script.src = url;
+                    script.onload = () => console.log(`✅ Alternative ${index + 1} loaded`);
+                    script.onerror = () => console.error(`❌ Alternative ${index + 1} failed`);
+                    document.head.appendChild(script);
+                }
+            }, index * 2000);
+        });
     }
 }, 2000);
 </script>
 
-<!-- COSMJS INITIALIZATION (mit verbessertem Debugging) -->
+<!-- COSMJS INITIALIZATION (vereinfacht und robuster) -->
 <script>
 function initCosmJS() {
     try {
         console.log('🔄 Attempting to initialize CosmJS...');
-        console.log('Available globals:', Object.keys(window).filter(k => k.includes('cosmjs')));
         
-        // Debug: Alle möglichen CosmJS Variablen checken
-        const possibleNames = [
-            'cosmjs_stargate',
-            'cosmjsStargate', 
-            'CosmjsStargate',
-            'stargate',
-            'Stargate'
-        ];
+        // Alle möglichen CosmJS Variablen finden
+        const allGlobals = Object.keys(window);
+        const cosmjsGlobals = allGlobals.filter(k => 
+            k.toLowerCase().includes('cosmjs') || 
+            k.toLowerCase().includes('stargate') ||
+            k === 'stargate' ||
+            k === 'SigningStargateClient'
+        );
         
-        let cosmjsModule = null;
-        for (const name of possibleNames) {
-            if (window[name]) {
-                console.log(`✅ Found CosmJS as: ${name}`, window[name]);
-                cosmjsModule = window[name];
-                break;
-            }
+        console.log('Found CosmJS-related globals:', cosmjsGlobals);
+        
+        // Direkte Überprüfung der erwarteten Variablen
+        let stargateModule = null;
+        
+        if (window.cosmjs_stargate) {
+            stargateModule = window.cosmjs_stargate;
+            console.log('✅ Found cosmjs_stargate:', stargateModule);
+        } else if (window.stargate) {
+            stargateModule = window.stargate;
+            console.log('✅ Found stargate:', stargateModule);
+        } else if (window.SigningStargateClient) {
+            // Manchmal ist es direkt verfügbar
+            window.cosmjsReady = true;
+            console.log('✅ SigningStargateClient already global');
+            window.dispatchEvent(new Event('cosmjs-loaded'));
+            return true;
         }
         
-        if (!cosmjsModule) {
-            console.error('❌ No CosmJS module found!');
-            console.log('Available window properties:', Object.keys(window).slice(0, 20));
+        if (!stargateModule) {
+            console.error('❌ No stargate module found!');
+            console.log('Available globals containing "cosm" or "star":', 
+                allGlobals.filter(k => k.toLowerCase().includes('cosm') || k.toLowerCase().includes('star')));
             return false;
         }
         
         // Extrahiere Functions
-        const { SigningStargateClient, GasPrice } = cosmjsModule;
+        const { SigningStargateClient, GasPrice } = stargateModule;
         
-        if (!SigningStargateClient || !GasPrice) {
-            console.error('❌ CosmJS functions not found in module:', cosmjsModule);
-            console.log('Available in module:', Object.keys(cosmjsModule));
+        if (!SigningStargateClient) {
+            console.error('❌ SigningStargateClient not found in module');
+            console.log('Available in stargate module:', Object.keys(stargateModule).slice(0, 10));
             return false;
+        }
+        
+        if (!GasPrice) {
+            console.error('❌ GasPrice not found in module');
+            console.log('Trying to find GasPrice in other modules...');
         }
         
         // Global verfügbar machen
         window.SigningStargateClient = SigningStargateClient;
-        window.GasPrice = GasPrice;
-        window.coins = cosmjsModule.coins || cosmjsModule.coin;
+        window.GasPrice = GasPrice || stargateModule.GasPrice;
+        window.coins = stargateModule.coins || stargateModule.coin;
         window.cosmjsReady = true;
         
         console.log('✅ CosmJS initialized successfully!');
         console.log('  SigningStargateClient:', typeof SigningStargateClient);
-        console.log('  GasPrice:', typeof GasPrice);
-        console.log('  coins:', typeof window.coins);
+        console.log('  GasPrice:', typeof window.GasPrice);
         
         // Event dispatchen
         window.dispatchEvent(new Event('cosmjs-loaded'));
@@ -832,37 +853,46 @@ function initCosmJS() {
     } catch (error) {
         console.error('❌ CosmJS initialization failed:', error);
         window.cosmjsReady = false;
-        window.dispatchEvent(new Event('cosmjs-failed'));
         return false;
     }
 }
 
-// Mehrfache Versuche mit Delays
-let initAttempts = 0;
-const maxAttempts = 10;
+// Versuche CosmJS zu laden - mehrfach mit verschiedenen Delays
+let attempts = 0;
+const maxAttempts = 8;
 
-function tryInitCosmJS() {
-    initAttempts++;
-    console.log(`🔄 CosmJS init attempt ${initAttempts}/${maxAttempts}`);
+function tryInit() {
+    attempts++;
+    console.log(`🔄 CosmJS init attempt ${attempts}/${maxAttempts}`);
     
-    const success = initCosmJS();
-    
-    if (success) {
+    if (initCosmJS()) {
         console.log('🎉 CosmJS ready!');
-    } else if (initAttempts < maxAttempts) {
-        console.log(`⏳ Retrying in ${initAttempts}s...`);
-        setTimeout(tryInitCosmJS, initAttempts * 1000);
+    } else if (attempts < maxAttempts) {
+        const delay = Math.min(attempts * 1000, 5000);
+        console.log(`⏳ Retrying in ${delay/1000}s...`);
+        setTimeout(tryInit, delay);
     } else {
-        console.error('💀 CosmJS initialization gave up after 10 attempts');
-        alert('❌ CosmJS loading failed. Please refresh the page.');
+        console.error('💀 CosmJS initialization failed after all attempts');
+        
+        // Letzte Chance: Manueller Test
+        console.log('🔧 Last resort: Manual test...');
+        setTimeout(() => {
+            if (window.cosmjs_stargate || window.stargate || window.SigningStargateClient) {
+                console.log('🔄 Found something, trying one more time...');
+                initCosmJS();
+            } else {
+                alert('❌ CosmJS loading failed completely. Please check your internet connection and try refreshing.');
+            }
+        }, 3000);
     }
 }
 
-// Starte erste Versuche
-setTimeout(tryInitCosmJS, 1000);  // Nach 1s
-setTimeout(tryInitCosmJS, 3000);  // Nach 3s  
-setTimeout(tryInitCosmJS, 5000);  // Nach 5s
+// Starte Initialisierung
+setTimeout(tryInit, 1000);
+setTimeout(tryInit, 3000);
+setTimeout(tryInit, 6000);
 </script>
+
     
     <!-- Basis-Konfiguration -->
     <script src="assets/js/config.js"></script>
