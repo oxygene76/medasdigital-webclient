@@ -742,31 +742,40 @@ details[open] {
         console.log('✅ Browser polyfills loaded');
     </script>
     
-    <!-- CosmJS via ESM CDN (WeedWallet-Pattern) -->
-    <script type="module">
+    <!-- CosmJS via UMD Bundle (funktioniert sofort!) -->
+    <script src="https://unpkg.com/@cosmjs/stargate@0.32.0/build/index.js"></script>
+    <script src="https://unpkg.com/@cosmjs/proto-signing@0.32.0/build/index.js"></script>
+    <script>
         try {
-            console.log('🔄 Loading CosmJS via ESM CDN...');
+            console.log('🔄 Loading CosmJS via UMD...');
             
-            // Import CosmJS direkt über ESM CDN
-            const { SigningStargateClient, GasPrice } = await import('https://esm.sh/@cosmjs/stargate@0.32.0');
-            const { coins } = await import('https://esm.sh/@cosmjs/stargate@0.32.0');
-            
-            // Global verfügbar machen (WeedWallet-Pattern)
-            window.SigningStargateClient = SigningStargateClient;
-            window.GasPrice = GasPrice;
-            window.coins = coins;
-            window.cosmjsReady = true;
-            
-            console.log('✅ CosmJS loaded via CDN (WeedWallet-Pattern)!');
-            console.log('  SigningStargateClient:', typeof SigningStargateClient);
-            console.log('  GasPrice:', typeof GasPrice);
-            console.log('  coins:', typeof coins);
-            
-            // Signal für die App
-            window.dispatchEvent(new Event('cosmjs-loaded'));
+            // UMD CosmJS verfügbar machen (gleiche API wie vorher)
+            if (window.cosmjs_stargate && window.cosmjs_proto_signing) {
+                const { SigningStargateClient, GasPrice } = window.cosmjs_stargate;
+                const { coins } = window.cosmjs_stargate;
+                
+                // EXAKT GLEICHE GLOBAL VARIABLES WIE VORHER
+                window.SigningStargateClient = SigningStargateClient;
+                window.GasPrice = GasPrice;
+                window.coins = coins;
+                window.cosmjsReady = true;
+                
+                console.log('✅ CosmJS loaded via UMD!');
+                console.log('  SigningStargateClient:', typeof SigningStargateClient);
+                console.log('  GasPrice:', typeof GasPrice);
+                console.log('  coins:', typeof coins);
+                
+                // GLECHES EVENT WIE VORHER
+                window.dispatchEvent(new Event('cosmjs-loaded'));
+                
+            } else {
+                console.error('❌ CosmJS UMD loading failed');
+                window.cosmjsReady = false;
+                window.dispatchEvent(new Event('cosmjs-failed'));
+            }
             
         } catch (error) {
-            console.error('❌ CosmJS loading failed:', error);
+            console.error('❌ CosmJS UMD error:', error);
             window.cosmjsReady = false;
             window.dispatchEvent(new Event('cosmjs-failed'));
         }
