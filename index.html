@@ -742,44 +742,127 @@ details[open] {
         console.log('✅ Browser polyfills loaded');
     </script>
     
-    <!-- CosmJS via UMD Bundle (funktioniert sofort!) -->
-    <script src="https://unpkg.com/@cosmjs/stargate@0.32.0/build/index.js"></script>
-    <script src="https://unpkg.com/@cosmjs/proto-signing@0.32.0/build/index.js"></script>
-    <script>
-        try {
-            console.log('🔄 Loading CosmJS via UMD...');
-            
-            // UMD CosmJS verfügbar machen (gleiche API wie vorher)
-            if (window.cosmjs_stargate && window.cosmjs_proto_signing) {
-                const { SigningStargateClient, GasPrice } = window.cosmjs_stargate;
-                const { coins } = window.cosmjs_stargate;
-                
-                // EXAKT GLEICHE GLOBAL VARIABLES WIE VORHER
-                window.SigningStargateClient = SigningStargateClient;
-                window.GasPrice = GasPrice;
-                window.coins = coins;
-                window.cosmjsReady = true;
-                
-                console.log('✅ CosmJS loaded via UMD!');
-                console.log('  SigningStargateClient:', typeof SigningStargateClient);
-                console.log('  GasPrice:', typeof GasPrice);
-                console.log('  coins:', typeof coins);
-                
-                // GLECHES EVENT WIE VORHER
-                window.dispatchEvent(new Event('cosmjs-loaded'));
-                
-            } else {
-                console.error('❌ CosmJS UMD loading failed');
-                window.cosmjsReady = false;
-                window.dispatchEvent(new Event('cosmjs-failed'));
+    <!-- CosmJS via UMD Bundle mit Debugging und Fallbacks -->
+
+<!-- ALTERNATIVE 1: UNPKG (aktuell) -->
+<script src="https://unpkg.com/@cosmjs/stargate@0.32.0/build/index.js" 
+        onload="console.log('✅ UNPKG stargate loaded')" 
+        onerror="console.error('❌ UNPKG stargate failed')"></script>
+<script src="https://unpkg.com/@cosmjs/proto-signing@0.32.0/build/index.js" 
+        onload="console.log('✅ UNPKG proto-signing loaded')" 
+        onerror="console.error('❌ UNPKG proto-signing failed')"></script>
+
+<!-- FALLBACK: JSDELIVR -->
+<script>
+// Warte kurz und prüfe ob UNPKG geladen hat
+setTimeout(() => {
+    if (!window.cosmjs_stargate) {
+        console.log('🔄 UNPKG failed, trying JSDelivr...');
+        
+        const script1 = document.createElement('script');
+        script1.src = 'https://cdn.jsdelivr.net/npm/@cosmjs/stargate@0.32.0/build/index.js';
+        script1.onload = () => console.log('✅ JSDelivr stargate loaded');
+        script1.onerror = () => console.error('❌ JSDelivr stargate failed');
+        document.head.appendChild(script1);
+        
+        const script2 = document.createElement('script');
+        script2.src = 'https://cdn.jsdelivr.net/npm/@cosmjs/proto-signing@0.32.0/build/index.js';
+        script2.onload = () => console.log('✅ JSDelivr proto-signing loaded');
+        script2.onerror = () => console.error('❌ JSDelivr proto-signing failed');
+        document.head.appendChild(script2);
+    }
+}, 2000);
+</script>
+
+<!-- COSMJS INITIALIZATION (mit verbessertem Debugging) -->
+<script>
+function initCosmJS() {
+    try {
+        console.log('🔄 Attempting to initialize CosmJS...');
+        console.log('Available globals:', Object.keys(window).filter(k => k.includes('cosmjs')));
+        
+        // Debug: Alle möglichen CosmJS Variablen checken
+        const possibleNames = [
+            'cosmjs_stargate',
+            'cosmjsStargate', 
+            'CosmjsStargate',
+            'stargate',
+            'Stargate'
+        ];
+        
+        let cosmjsModule = null;
+        for (const name of possibleNames) {
+            if (window[name]) {
+                console.log(`✅ Found CosmJS as: ${name}`, window[name]);
+                cosmjsModule = window[name];
+                break;
             }
-            
-        } catch (error) {
-            console.error('❌ CosmJS UMD error:', error);
-            window.cosmjsReady = false;
-            window.dispatchEvent(new Event('cosmjs-failed'));
         }
-    </script>
+        
+        if (!cosmjsModule) {
+            console.error('❌ No CosmJS module found!');
+            console.log('Available window properties:', Object.keys(window).slice(0, 20));
+            return false;
+        }
+        
+        // Extrahiere Functions
+        const { SigningStargateClient, GasPrice } = cosmjsModule;
+        
+        if (!SigningStargateClient || !GasPrice) {
+            console.error('❌ CosmJS functions not found in module:', cosmjsModule);
+            console.log('Available in module:', Object.keys(cosmjsModule));
+            return false;
+        }
+        
+        // Global verfügbar machen
+        window.SigningStargateClient = SigningStargateClient;
+        window.GasPrice = GasPrice;
+        window.coins = cosmjsModule.coins || cosmjsModule.coin;
+        window.cosmjsReady = true;
+        
+        console.log('✅ CosmJS initialized successfully!');
+        console.log('  SigningStargateClient:', typeof SigningStargateClient);
+        console.log('  GasPrice:', typeof GasPrice);
+        console.log('  coins:', typeof window.coins);
+        
+        // Event dispatchen
+        window.dispatchEvent(new Event('cosmjs-loaded'));
+        return true;
+        
+    } catch (error) {
+        console.error('❌ CosmJS initialization failed:', error);
+        window.cosmjsReady = false;
+        window.dispatchEvent(new Event('cosmjs-failed'));
+        return false;
+    }
+}
+
+// Mehrfache Versuche mit Delays
+let initAttempts = 0;
+const maxAttempts = 10;
+
+function tryInitCosmJS() {
+    initAttempts++;
+    console.log(`🔄 CosmJS init attempt ${initAttempts}/${maxAttempts}`);
+    
+    const success = initCosmJS();
+    
+    if (success) {
+        console.log('🎉 CosmJS ready!');
+    } else if (initAttempts < maxAttempts) {
+        console.log(`⏳ Retrying in ${initAttempts}s...`);
+        setTimeout(tryInitCosmJS, initAttempts * 1000);
+    } else {
+        console.error('💀 CosmJS initialization gave up after 10 attempts');
+        alert('❌ CosmJS loading failed. Please refresh the page.');
+    }
+}
+
+// Starte erste Versuche
+setTimeout(tryInitCosmJS, 1000);  // Nach 1s
+setTimeout(tryInitCosmJS, 3000);  // Nach 3s  
+setTimeout(tryInitCosmJS, 5000);  // Nach 5s
+</script>
     
     <!-- Basis-Konfiguration -->
     <script src="assets/js/config.js"></script>
