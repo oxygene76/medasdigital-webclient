@@ -725,6 +725,362 @@ details[open] {
 
 </div>
     </div>
+
+    <!-- Ersetzen Sie das vorherige CSS mit diesem angepassten CSS -->
+
+<style>
+/* ===================================
+   MINI-EXPLORER SEARCH RESULTS CSS
+   ANGEPASST AN BESTEHENDE SCHRIFTARTEN
+   ================================= */
+
+#search-results-container {
+    margin-top: 16px !important;
+    border: 1px solid rgba(0, 255, 255, 0.3) !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    border-radius: 4px !important;
+    position: relative !important;
+    display: block !important;
+    overflow: visible !important;
+    font-family: 'Share Tech Mono', monospace !important; /* Konsistent mit Terminal */
+}
+
+#search-results-container::before {
+    content: 'SEARCH RESULTS';
+    position: absolute;
+    top: -8px;
+    left: 12px;
+    background: #0a0a0a;
+    padding: 0 8px;
+    font-size: 10px; /* Gleich wie andere ::before Labels */
+    color: #00cc66; /* Gleich wie Explorer Sections */
+    letter-spacing: 1px;
+    font-family: 'Share Tech Mono', monospace;
+    text-transform: uppercase;
+}
+
+/* Header - angepasst an bestehende comm-header */
+.search-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+    background: rgba(0, 255, 255, 0.05);
+}
+
+.search-result-header h3 {
+    color: #00ffff; /* Gleich wie stat-value */
+    margin: 0;
+    font-size: 16px; /* Gleich wie comm-title */
+    font-family: 'Share Tech Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+}
+
+/* Status Badges - angepasst an terminal-button Stil */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px; /* Gleich wie stat-label */
+    font-weight: 700;
+    font-family: 'Share Tech Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: 1px solid;
+}
+
+.status-success {
+    background: rgba(0, 255, 0, 0.1); /* Gleich wie btn-success hover */
+    border-color: #00ff00;
+    color: #00ff00;
+}
+
+.status-info {
+    background: rgba(0, 255, 255, 0.1); /* Gleich wie btn-primary hover */
+    border-color: #00ffff;
+    color: #00ffff;
+}
+
+.status-error {
+    background: rgba(255, 48, 48, 0.1); /* Gleich wie btn-danger hover */
+    border-color: #ff3030;
+    color: #ff3030;
+}
+
+/* Content Area */
+.search-result-content {
+    padding: 16px; /* Gleich wie explorer-section */
+}
+
+/* Result Rows - angepasst an system-item Stil */
+.result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 8px 0; /* Gleich wie system-item */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 16px;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.result-row:last-child {
+    border-bottom: none;
+}
+
+.result-row .label {
+    color: #999999; /* Gleich wie stat-label */
+    font-size: 12px; /* Gleich wie validator-details */
+    font-weight: 700;
+    min-width: 120px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.result-row .value {
+    color: #00ffff; /* Gleich wie stat-value */
+    font-size: 12px; /* Gleich wie search-input */
+    font-family: 'Share Tech Mono', monospace;
+    text-align: right;
+    flex: 1;
+    word-break: break-all;
+    line-height: 1.4;
+    font-weight: 400;
+}
+
+.result-row .value.hash {
+    font-size: 11px; /* Etwas kleiner für lange Hashes */
+    color: #ffaa00; /* Gleich wie system message farbe */
+    font-weight: 700;
+    text-shadow: 0 0 3px rgba(255, 170, 0, 0.3);
+}
+
+/* Loading State - angepasst an empty-state */
+.search-loading {
+    padding: 40px 20px;
+    text-align: center;
+    background: rgba(0, 255, 255, 0.05);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    border-radius: 4px;
+    font-family: 'Share Tech Mono', monospace;
+    color: #00ffff;
+    font-size: 12px;
+}
+
+.search-loading::before {
+    content: '🔍';
+    display: block;
+    font-size: 24px; /* Gleich wie empty-state icon */
+    margin-bottom: 8px;
+    animation: pulse 2s infinite;
+}
+
+/* Error State */
+.search-error {
+    padding: 20px;
+    text-align: center;
+    background: rgba(255, 48, 48, 0.1); /* Gleich wie error-display */
+    border: 1px solid #ff3030;
+    border-radius: 4px;
+    color: #ff3030;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+}
+
+.search-error::before {
+    content: '❌';
+    display: block;
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+/* Live Data Section - angepasst an success-display */
+.live-data-section {
+    background: rgba(0, 255, 0, 0.05) !important; /* Gleich wie success-display */
+    padding: 12px !important;
+    border-radius: 4px !important;
+    margin: 16px 0 !important;
+    border-left: 4px solid #00ff00 !important;
+    border: 1px solid #00ff00;
+}
+
+.live-data-title {
+    color: #00ff00 !important;
+    font-size: 12px !important; /* Gleich wie validator-details */
+    font-weight: 700 !important;
+    margin-bottom: 8px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+/* Node Limitation Notice */
+.node-limitation-notice {
+    margin: 16px 0 !important;
+    padding: 12px !important;
+    background: rgba(255, 170, 0, 0.1) !important;
+    border: 1px solid #ffaa00 !important;
+    border-radius: 4px !important;
+}
+
+.node-limitation-title {
+    color: #ffaa00 !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    margin-bottom: 8px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+.node-limitation-text {
+    color: #999999 !important; /* Gleich wie stat-label */
+    font-size: 11px !important; /* Gleich wie field-label */
+    line-height: 1.4 !important;
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+/* Transaction History Simulation */
+.simulated-tx-history {
+    margin: 16px 0 !important;
+    padding-top: 16px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.tx-history-title {
+    color: #00ffff !important; /* Gleich wie comm-title */
+    font-weight: 700 !important;
+    margin-bottom: 8px !important;
+    font-size: 12px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+/* Simulated TX Items - angepasst an tx-item */
+.simulated-tx-item {
+    padding: 8px !important;
+    background: rgba(0, 0, 0, 0.3) !important; /* Gleich wie tx-item */
+    margin-bottom: 4px !important;
+    border-radius: 4px !important;
+    border-left: 3px solid #00ffff !important; /* Gleich wie tx-item border */
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+.tx-item-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.tx-item-type {
+    color: #00ffff !important; /* Gleich wie tx-type */
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+.tx-item-time {
+    color: #999999 !important; /* Gleich wie tx-time */
+    font-size: 10px !important; /* Gleich wie tx-time */
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+.tx-item-details {
+    color: #999999 !important;
+    font-size: 10px !important;
+    margin-top: 4px !important;
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+.tx-item-meta {
+    color: #666666 !important;
+    font-size: 9px !important; /* Kleiner für Meta-Info */
+    margin-top: 2px !important;
+    font-style: italic !important;
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .result-row {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .result-row .label {
+        min-width: auto;
+        font-size: 11px; /* Etwas kleiner auf Mobile */
+    }
+    
+    .result-row .value {
+        text-align: left;
+        font-size: 11px; /* Etwas kleiner auf Mobile */
+    }
+    
+    .search-result-header {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+    
+    .search-result-header h3 {
+        font-size: 14px; /* Kleiner auf Mobile */
+    }
+}
+
+/* Slide-in Animation - gleich wie andere UI Animationen */
+#search-results-container {
+    animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Pulse Animation - gleich wie indicator-dot */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Zusätzliche Balances - angepasst an balance-item */
+.balance-highlight {
+    background: rgba(0, 255, 0, 0.05) !important;
+    border: 1px solid rgba(0, 255, 0, 0.2) !important;
+    padding: 8px 12px !important;
+    margin: 4px 0 !important;
+    border-radius: 4px !important;
+}
+
+.balance-highlight .result-row .value {
+    color: #00ff00 !important; /* Grün für positive Balances */
+    font-weight: 700 !important;
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.3) !important;
+}
+
+/* Staking Info Highlight */
+.staking-highlight .result-row .value {
+    color: #00ffff !important; /* Cyan für Staking */
+    font-weight: 700 !important;
+}
+
+/* Rewards Highlight */
+.rewards-highlight .result-row .value {
+    color: #ffaa00 !important; /* Orange für Rewards */
+    font-weight: 700 !important;
+}
+</style>
 <!-- ===================================
          JAVASCRIPT OHNE VITE
          WeedWallet-Pattern für MedasDigital
