@@ -549,32 +549,57 @@ class MiniExplorer {
         };
     }
 
-    // ===================================
-    // UI DISPLAY FUNCTIONS
-    // ===================================
+// ===================================
+// MINI-EXPLORER DISPLAY FIX
+// Ersetzen Sie die displaySearchResult Funktion in mini-explorer.js
+// ===================================
 
-    displaySearchResult(result) {
-        const container = this.getSearchResultsContainer();
-        
-        switch (result.type) {
-            case 'transaction':
-                container.innerHTML = this.renderTransaction(result.data);
-                break;
-            case 'address':
-                container.innerHTML = this.renderAddress(result.data);
-                break;
-            case 'validator':
-                container.innerHTML = this.renderValidator(result.data);
-                break;
-            case 'block':
-                container.innerHTML = this.renderBlock(result.data);
-                break;
-        }
-
-        // Show results container
-        container.style.display = 'block';
-        container.scrollIntoView({ behavior: 'smooth' });
+displaySearchResult(result) {
+    const container = this.getSearchResultsContainer();
+    
+    if (!container) {
+        console.error('❌ No search results container available');
+        return;
     }
+    
+    // Render the result content
+    switch (result.type) {
+        case 'transaction':
+            container.innerHTML = this.renderTransaction(result.data);
+            break;
+        case 'address':
+            container.innerHTML = this.renderAddress(result.data);
+            break;
+        case 'validator':
+            container.innerHTML = this.renderValidator(result.data);
+            break;
+        case 'block':
+            container.innerHTML = this.renderBlock(result.data);
+            break;
+        default:
+            container.innerHTML = '<div class="search-error">Unknown result type</div>';
+    }
+
+    // ✅ WICHTIGER FIX: Container sichtbar machen
+    const mainContainer = document.getElementById('search-results-container');
+    if (mainContainer) {
+        mainContainer.style.display = 'block';
+        mainContainer.style.visibility = 'visible';
+        mainContainer.style.opacity = '1';
+        
+        // Smooth scroll to results
+        setTimeout(() => {
+            mainContainer.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'nearest' 
+            });
+        }, 100);
+        
+        console.log('✅ Search results displayed and made visible');
+    } else {
+        console.error('❌ Main search results container not found');
+    }
+}
 
     renderTransaction(tx) {
         const statusClass = tx.success ? 'success' : 'error';
@@ -939,26 +964,44 @@ class MiniExplorer {
     // UTILITY FUNCTIONS
     // ===================================
 
-    getSearchResultsContainer() {
-        let container = document.getElementById('search-results-container');
+   getSearchResultsContainer() {
+    let container = document.getElementById('search-results-container');
+    
+    if (!container) {
+        console.log('🔧 Creating search results container...');
         
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'search-results-container';
-            container.className = 'explorer-section';
-            container.style.display = 'none';
-            container.innerHTML = '<div id="search-results-content"></div>';
-            
-            // Insert after search section
-            const searchSection = document.querySelector('#explorer-tab .search-section');
-            if (searchSection) {
-                searchSection.parentNode.insertBefore(container, searchSection.nextSibling);
-            }
+        container = document.createElement('div');
+        container.id = 'search-results-container';
+        container.className = 'explorer-section';
+        
+        // ✅ FIX: Starte mit display: none, aber stelle sicher dass es später geändert wird
+        container.style.cssText = `
+            margin-top: 16px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 4px;
+            position: relative;
+            display: none;
+        `;
+        
+        const content = document.createElement('div');
+        content.id = 'search-results-content';
+        container.appendChild(content);
+        
+        // Insert after search section
+        const searchSection = document.querySelector('#explorer-tab .search-section');
+        if (searchSection) {
+            searchSection.parentNode.insertBefore(container, searchSection.nextSibling);
+            console.log('✅ Search results container created and inserted');
+        } else {
+            console.error('❌ Could not find search section');
+            return null;
         }
-        
-        return container.querySelector('#search-results-content') || container;
     }
-
+    
+    const contentDiv = container.querySelector('#search-results-content');
+    return contentDiv || container;
+}
     showSearchLoading() {
         const container = this.getSearchResultsContainer();
         container.innerHTML = `
