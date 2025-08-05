@@ -157,25 +157,25 @@ class MiniExplorer {
     // SEARCH METHODS
     // ===================================
 
-    async searchTransaction(txHash) {
-        try {
-            console.log(`🔍 [SDK ${this.apiVersion}] Searching transaction: ${txHash}`);
-            
-            const response = await fetch(`${this.restUrl}${this.endpoints.txByHash}/${txHash}`);
-            if (!response.ok) throw new Error('Transaction not found');
-            
-            const data = await response.json();
-            console.log(`✅ [SDK ${this.apiVersion}] Transaction found`);
-            
-            return {
-                type: 'transaction',
-                data: this.formatTransactionData(data.tx_response || data.tx)
-            };
-        } catch (error) {
-            console.error('❌ Transaction search failed:', error);
-            throw error;
-        }
+   async searchTransaction(txHash) {
+    try {
+        console.log(`🔍 [SDK ${this.apiVersion}] Searching transaction: ${txHash}`);
+        
+        const response = await fetch(`${this.restUrl}${this.endpoints.txByHash}/${txHash}`);
+        if (!response.ok) throw new Error('Transaction not found');
+        
+        const data = await response.json();
+        console.log(`✅ [SDK ${this.apiVersion}] Transaction found`);
+        
+        return {
+            type: 'transaction',
+            data: this.formatRealTransactionData(data.tx_response || data.tx)  // ✅ KORRIGIERT: formatRealTransactionData statt formatTransactionData
+        };
+    } catch (error) {
+        console.error('❌ Transaction search failed:', error);
+        throw error;
     }
+}
 
     async searchAddress(address) {
         console.log(`🔍 [SDK ${this.apiVersion}] Searching address: ${address}`);
@@ -920,56 +920,87 @@ displaySearchResult(result) {
     }
 }
 
-    renderTransaction(tx) {
-        const statusClass = tx.success ? 'success' : 'error';
-        const statusText = tx.success ? 'SUCCESS' : 'FAILED';
-        
-        return `
-            <div class="search-result-header">
-                <h3>🔍 Transaction Details</h3>
-                <span class="status-badge status-${statusClass}">${statusText}</span>
+ renderTransaction(tx) {
+    const statusClass = tx.success ? 'success' : 'error';
+    const statusText = tx.success ? 'SUCCESS' : 'FAILED';
+    
+    return `
+        <div class="search-result-header">
+            <h3>${tx.icon} Transaction Details</h3>
+            <span class="status-badge status-${statusClass}">${statusText}</span>
+        </div>
+        <div class="search-result-content">
+            <div class="result-row">
+                <span class="label">Hash:</span>
+                <span class="value hash">${tx.hash}</span>
             </div>
-            <div class="search-result-content">
-                <div class="result-row">
-                    <span class="label">Hash:</span>
-                    <span class="value hash">${tx.hash}</span>
-                </div>
-                <div class="result-row">
-                    <span class="label">Block Height:</span>
-                    <span class="value">${tx.height}</span>
-                </div>
-                <div class="result-row">
-                    <span class="label">Timestamp:</span>
-                    <span class="value">${new Date(tx.timestamp).toLocaleString()}</span>
-                </div>
-                <div class="result-row">
-                    <span class="label">Gas Used:</span>
-                    <span class="value">${tx.gas_used} / ${tx.gas_wanted}</span>
-                </div>
-                <div class="result-row">
-                    <span class="label">Fee:</span>
-                    <span class="value">${(parseFloat(tx.fee.amount) / 1000000).toFixed(6)} MEDAS</span>
-                </div>
-                ${tx.memo ? `
-                <div class="result-row">
-                    <span class="label">Memo:</span>
-                    <span class="value">${tx.memo}</span>
-                </div>
-                ` : ''}
-                <div class="result-row">
-                    <span class="label">Messages:</span>
-                    <span class="value">${tx.messages.length} message(s)</span>
-                </div>
-                ${tx.events.length > 0 ? `
-                <div class="result-row">
-                    <span class="label">Events:</span>
-                    <span class="value">${tx.events.length} event(s)</span>
-                </div>
-                ` : ''}
+            <div class="result-row">
+                <span class="label">Type:</span>
+                <span class="value">${tx.type} (${tx.msg_type?.split('.').pop() || 'Unknown'})</span>
             </div>
-        `;
-    }
-
+            <div class="result-row">
+                <span class="label">Block Height:</span>
+                <span class="value">${tx.height}</span>
+            </div>
+            <div class="result-row">
+                <span class="label">Timestamp:</span>
+                <span class="value">${new Date(tx.timestamp).toLocaleString()}</span>
+            </div>
+            ${tx.amount && tx.amount !== '0 UMEDAS' ? `
+            <div class="result-row">
+                <span class="label">Amount:</span>
+                <span class="value" style="color: #00ffff; font-weight: bold;">${tx.amount}</span>
+            </div>
+            ` : ''}
+            ${tx.from_address ? `
+            <div class="result-row">
+                <span class="label">From:</span>
+                <span class="value hash">${tx.from_address}</span>
+            </div>
+            ` : ''}
+            ${tx.to_address ? `
+            <div class="result-row">
+                <span class="label">To:</span>
+                <span class="value hash">${tx.to_address}</span>
+            </div>
+            ` : ''}
+            <div class="result-row">
+                <span class="label">Gas Used:</span>
+                <span class="value">${tx.gas_used} / ${tx.gas_wanted}</span>
+            </div>
+            <div class="result-row">
+                <span class="label">Fee:</span>
+                <span class="value">${(parseFloat(tx.fee.amount) / 1000000).toFixed(6)} MEDAS</span>
+            </div>
+            ${tx.memo ? `
+            <div class="result-row">
+                <span class="label">Memo:</span>
+                <span class="value">${tx.memo}</span>
+            </div>
+            ` : ''}
+            <div class="result-row">
+                <span class="label">Messages:</span>
+                <span class="value">${tx.messages.length} message(s)</span>
+            </div>
+            ${tx.events.length > 0 ? `
+            <div class="result-row">
+                <span class="label">Events:</span>
+                <span class="value">${tx.events.length} event(s)</span>
+            </div>
+            ` : ''}
+            
+            <!-- REAL DATA INDICATOR -->
+            <div style="margin: 16px 0; padding: 8px; background: rgba(0,255,0,0.05); border: 1px solid rgba(0,255,0,0.3); border-radius: 4px;">
+                <div style="color: #00ff00; font-size: 11px; font-weight: bold; margin-bottom: 4px;">
+                    ✅ Real Blockchain Transaction
+                </div>
+                <div style="color: #999; font-size: 10px;">
+                    Direct lookup from Medas Digital network • Hash: ${tx.hash}
+                </div>
+            </div>
+        </div>
+    `;
+}
    renderAddress(addr) {
     const totalBalance = this.calculateBalance(addr.balances);
     const totalDelegated = this.calculateDelegated(addr.delegations);
